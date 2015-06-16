@@ -1,0 +1,1 @@
+../lib/nodemcu-modules/dht22/dht22.lua
