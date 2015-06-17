@@ -1,1 +1,0 @@
-../lib/nodemcu-firmware/lua_modules/bmp085/bmp085.lua

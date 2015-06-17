@@ -1,1 +1,0 @@
-../lib/nodemcu-firmware/lua_modules/dht22/dht_lib.lua
