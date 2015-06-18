@@ -1,3 +1,5 @@
 local M = {}
-M['EngValdebenito']='2006-10-14'
+M['SSID0']='PASS0'
+M['SSID1']='PASS1'
+M['SSID2']='PASS2'
 return M
