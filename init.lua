@@ -26,8 +26,17 @@ tmr.alarm(0,1000,0,function()   -- after 1s
     else
     -- otherwise, start up
       console=nil
+      print('Maintenance')
+      require('maintenance').clean()
+    --_G['maintenance'].compile({'maintenance'})
+    --_G['maintenance'].unload({'maintenance'})
       print('Start WiFi')
       require('wifi_init').connect()
+      if wifi.sta.status()~=5 then
+        return -- connection failed
+      end
+      -- verbose
+      require('test_met').read(true)
     end
   end)
 end)
