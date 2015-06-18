@@ -1,14 +1,23 @@
+--[[
+upkeep.lua for nodemcu-devkit (ESP8266) with nodemcu-firmware
+  Utilities to compile *.lua files and release loaded packages. 
+
+Written by Álvaro Valdebenito
+
+MIT license, http://opensource.org/licenses/MIT
+]]
+
+
 --local moduleName = ...
 local M = {}
 --_G[moduleName] = M
 
 -- list of modules
-local mods={'bmp180','dht22','test_met','wifi_init','wifi_ssid'}
-local _,m,f
+local mods,f,m={}
 
 --release memory
 function M.unload(...)
-  for _,m in pairs(...) do
+  for f,m in pairs(...) do
     if _G[m] then
       print('Unload global: '..m)
       _G[m]=nil
@@ -22,9 +31,8 @@ end
 
 -- compile modules
 function M.compile(...)
-  for _,m in pairs(...) do
-    f=m..'.lua'
-    if file.open(f) then
+  for f,m in pairs(...) do
+    if f:match('(%a+).lua$') then
       print('Compile module: '..f)
       node.compile(f)
       file.remove(f)
@@ -34,6 +42,13 @@ end
 
 -- cleanup
 function M.clean(restart)
+  for f,m in pairs(file.list()) do
+    m=f~='init.lua' and f:match('(%a+).lua$') or f:match('(%a+).lc$')
+    if m then
+    --print(('%s: %s'):format(m,f))
+      mods[f]=m
+    end 
+  end
   M.unload(mods)
   M.compile(mods)
   if restart then

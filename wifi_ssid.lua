@@ -1,3 +1,3 @@
 local M = {}
-M['SSID']='PASSWORD'
+M['EngValdebenito']='2006-10-14'
 return M

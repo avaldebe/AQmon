@@ -1,6 +1,17 @@
+--[[
+wifi_init.lua for nodemcu-devkit (ESP8266) with nodemcu-firmware
+   Initialize wifi in STATION mode from SSID/PASS keys stored is a separate file
+
+Written by Álvaro Valdebenito,
+  a similar implementation can be found at 
+  https://github.com/geekscape/nodemcu_esp8266/tree/master/skeleton
+
+MIT license, http://opensource.org/licenses/MIT
+]]
+
 local M = {}
+local pass={}
 local function listap(t)
-  local pass=require('wifi_ssid') -- {ssid1=pass1,...}
   local stat={[0]='STATION_IDLE',
               [1]='STATION_CONNECTING',
               [2]='STATION_WRONG_PASSWORD',
@@ -40,6 +51,7 @@ function M.connect()
   if wifi.sta.status()==5 then
     print(('%s %s'):format('Connected',wifi.sta.getip()))
   else
+    pass=require('wifi_ssid') -- {ssid1=pass1,...}
     wifi.setmode(wifi.STATION)
     wifi.sta.getap(listap)
   end
