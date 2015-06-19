@@ -4,7 +4,7 @@ _G[moduleName] = M
 
 M.p,M.t,M.h='NaN','NaN','NaN'
 function M.tostring(tag)
-  print(('%-7s: %s[C], %s[%%], %s[hPa]'):format(tag,M.t,M.h,M.p))
+  print(('  %-6s:%5s[C],%5s[%%],%7s[hPa]'):format(tag,M.t,M.h,M.p))
 end
 
 function M.read(verbose)

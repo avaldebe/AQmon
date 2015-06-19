@@ -1,31 +1,30 @@
 # **NodeMCU**
-version: [0.9.5](https://github.com/nodemcu/nodemcu-firmware) (20150318)<br/>
-Custom firmware built for [AQmonitor project](https://github.com/avaldebe/AQmon).<br/>
+[firmware][]: version 0.9.5 (20150318). Custom firmware built for [AQmon][] project.<br/>
 `node.heap()` after flash, `file.format()` and `node.restart()`: 25112
+
+[firmware]: https://github.com/nodemcu/nodemcu-firmware
+[AQmon]:   https://github.com/avaldebe/AQmon
 
 ##Build options
 Available modules:
-string,
-[node](http://www.nodemcu.com/docs/node-module),
-[file](http://www.nodemcu.com/docs/file-module),
-[gpio](http://www.nodemcu.com/docs/gpio-module),
-[wifi](http://www.nodemcu.com/docs/wifi-module),
-[net](http://www.nodemcu.com/docs/net-module),
-[i2c](http://www.nodemcu.com/docs/i2c-module),
-[tmr](http://www.nodemcu.com/docs/timer-module),
-[adc](http://www.nodemcu.com/docs/adc-module),
-[uart](http://www.nodemcu.com/docs/uart-module),
-[bit](http://www.nodemcu.com/docs/bit-module).<br/>
-Disabled modules:
-table,
-coroutine,
-math,
-[pwm](http://www.nodemcu.com/docs/pwm-module/),
-[ow](http://www.nodemcu.com/docs/onewire-module),
-[mqtt](http://www.nodemcu.com/docs/mqtt-module),
-u8g,
-ws2812,
-cjson.<br/>
+string, [node][], [file][], [gpio][], [wifi][], [net][], 
+[i2c][], [tmr][], [adc][], [uart][], [bit][].<br/>
+Disabled modules: table, coroutine, math,
+[pwm][], [ow][], [mqtt][], u8g, ws2812, cjson.<br/>
+
+[node]: http://www.nodemcu.com/docs/node-module
+[file]: http://www.nodemcu.com/docs/file-module
+[gpio]: http://www.nodemcu.com/docs/gpio-module
+[wifi]: http://www.nodemcu.com/docs/wifi-module
+[net]:  http://www.nodemcu.com/docs/net-module
+[i2c]:  http://www.nodemcu.com/docs/i2c-module
+[tmr]:  http://www.nodemcu.com/docs/timer-module
+[adc]:  http://www.nodemcu.com/docs/adc-module
+[uart]: http://www.nodemcu.com/docs/uart-module
+[bit]:  http://www.nodemcu.com/docs/bit-module
+[pwm]:  http://www.nodemcu.com/docs/pwm-module
+[ow]:   http://www.nodemcu.com/docs/onewire-module
+[mqtt]: http://www.nodemcu.com/docs/mqtt-module
 
 ####file ./app/include/user_modules.h
 ```c

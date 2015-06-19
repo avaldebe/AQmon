@@ -20,11 +20,11 @@ local function listap(t)
               [5]='STATION_GOT_IP'}
   for ssid,v in pairs(t) do
     if pass[ssid] and wifi.sta.status()==5 then
-      print(('Logged to: %s'):format(ssid))
-      print(('%s %s'):format(stat[5],wifi.sta.getip()))
+      print(('  Logged to: %s'):format(ssid))
+      print(('    %s %s'):format(stat[5],wifi.sta.getip()))
       return -- stop search
     elseif pass[ssid] then
-      print(('Loggin to: %s'):format(ssid))
+      print(('  Loggin to: %s'):format(ssid))
       wifi.sta.config(ssid,pass[ssid])
       local n=20
       tmr.alarm(0,10000,1,function()
@@ -34,14 +34,14 @@ local function listap(t)
           n=n-1
         elseif s==5 then
           tmr.stop(0)
-          print(('%s %s'):format(stat[5],wifi.sta.getip()))
+          print(('    %s %s'):format(stat[5],wifi.sta.getip()))
           return -- stop search
         elseif n>0 then
           tmr.stop(0)
-          print(stat[s])
+          print(('    %s'):format(stat[s]))
         else
           tmr.stop(0)
-          print('Timed out')
+          print('  Timed out')
         end
       end)
     end
@@ -49,9 +49,9 @@ local function listap(t)
 end
 function M.connect()
   if wifi.sta.status()==5 then
-    print(('%s %s'):format('Connected',wifi.sta.getip()))
+    print(('  %s %s'):format('Connected',wifi.sta.getip()))
   else
-    pass=require('wifi_ssid') -- {ssid1=pass1,...}
+    pass=require('keys').sta -- {ssid1=pass1,...}
     wifi.setmode(wifi.STATION)
     wifi.sta.getap(listap)
   end
