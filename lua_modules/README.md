@@ -1,6 +1,16 @@
 # lua_modules
 Lua modules for [AQmon][] project.<br/>
 
+### Upload files
+From command line with [luatool.py][]
+
+```sh
+luatool.py --src my_conf.lua --dst keys.lua --compile --restart
+# or
+luatool.py -f my_conf.lua -t keys.lua -c -r
+```
+[luatool.py]: https://github.com/4refr0nt/luatool
+
 ### Acknowledgements
 After many round of write/rewrite code it becomes hard to keep track of
 sources for code and ideas. Please let me know, if I have missed you.

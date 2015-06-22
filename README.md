@@ -33,9 +33,6 @@ DIY Air Quality Monitor
   - config.md: config page
     - save params to `keys.lua`
     - wifi.SOFTAP only
-  - replace `upkeep.lua` (compile) ny [luatool.py][] (upload & compile):
-    - modify `luatool.py` to handle multy line comments
-    - upload (& compile) modules with `make module.lc`.
   - new modules
     - [AM2321][]  (i2c)
     - [PMS3003][] (uart)
