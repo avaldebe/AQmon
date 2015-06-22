@@ -19,13 +19,33 @@ DIY Air Quality Monitor
 [PMS3003]: http://www.aliexpress.com/snapshot/6624872562.html?orderId=66919764160843
 
 ### ToDo
-- config page
-- remove DHT22
-- finish shield
-- lua module for [AM2321][] (i2c) sensor
-- lua module for [AM2321][] (uart) sensor
-- add [PMS3003][] sensor to shield
-- lua module for [PMS3003][] sensor
-- i2c.bmpXXX module: add native firmware support for BMP085/BMP180 sensors
-- i2c.am2321 module: add native firmware support for [AM2321][] sensor
-- pms3003 module: add native firmware support for [PMS3003][] sensor
+- hardware
+  - remove DHT22
+  - finish shield
+  - add [PMS3003][] sensor to shield
+- lua_modules
+  - sleep between measurements
+  - extend `wifi_init.lua` to `wifi.SOFTAP` and `wifi.STATIONAP`
+  - browser side makrdown with [strapdown.js][]
+  - index.md: index page
+    - Meteogram using [highcharts][]
+    - [yr.no][] and [aqicn.org][] widgets
+  - config.md: config page
+    - save params to `keys.lua`
+    - wifi.SOFTAP only
+  - replace `upkeep.lua` (compile) ny [luatool.py][] (upload & compile):
+    - modify `luatool.py` to handle multy line comments
+    - upload (& compile) modules with `make module.lc`.
+  - new modules
+    - [AM2321][]  (i2c)
+    - [PMS3003][] (uart)
+- nodemcu-firmware
+  - i2c.bmpXXX module for BMP085/BMP180 sensors
+  - i2c.am2321 module for [AM2321][] sensor
+  - pms3003    module for [PMS3003][] sensor
+
+[strapdown.js]: http://strapdownjs.com
+[luatool.py]: https://github.com/4refr0nt/luatool
+[highcharts]: http://www.highcharts.com
+[yr.no]:      http://www.yr.no/place/Norway/Oslo/Oslo/Marienlyst_skole/
+[aqicn.org]:  http://aqicn.org/city/norway/norway/oslo/kirkeveien/
