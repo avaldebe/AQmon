@@ -6,7 +6,7 @@ require('wifi_init').connect(wifi.STATION)
 
 met=require('met')
 met.key=require('keys').api.put
-dt=60000*5  -- send data every 5 min
+dt=60000*5/10  -- send data every 5 min
 gpio.mode(0,gpio.OUTPUT)
 tmr.alarm(0,dt,1,function()
   if wifi.sta.status()~=5 then

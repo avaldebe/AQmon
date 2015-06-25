@@ -3,7 +3,7 @@ init.lua for nodemcu-devkit (ESP8266) with nodemcu-firmware
   Exit infinite reboot caused by a PANIC error.
 
 Written by Álvaro Valdebenito,
-based on ideas from: 
+based on ideas from:
   https://bigdanzblog.wordpress.com/2015/04/24/esp8266-nodemcu-interrupting-init-lua-during-boot/
 
 MIT license, http://opensource.org/licenses/MIT
@@ -37,9 +37,6 @@ tmr.alarm(0,1000,0,function() -- 1s from boot
       ledD0,console=nil,nil
       print('Run mode')
       require('application')
-      print('Press KEY_FLASH to restart')
-      gpio.mode(3,gpio.INT)
-      gpio.trig(3,"low",function(state) node.restart() end)
     end
   end)
 end)
