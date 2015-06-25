@@ -1,4 +1,4 @@
-# **NodeMCU**
+# NodeMCU
 [firmware][]: version 0.9.5 (20150318). Custom firmware built for [AQmon][] project.<br/>
 `node.heap()` after flash, `file.format()` and `node.restart()`: 25112
 
@@ -7,7 +7,7 @@
 
 ##Build options
 Available modules:
-string, [node][], [file][], [gpio][], [wifi][], [net][], 
+string, [node][], [file][], [gpio][], [wifi][], [net][],
 [i2c][], [tmr][], [adc][], [uart][], [bit][].<br/>
 Disabled modules: table, coroutine, math,
 [pwm][], [ow][], [mqtt][], u8g, ws2812, cjson.<br/>
@@ -69,4 +69,3 @@ make blank
 make flash
 
 ```
-

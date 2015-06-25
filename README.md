@@ -1,15 +1,17 @@
 # AQmon
 DIY Air Quality Monitor
 
-###  Controler
+### Controler
+
 - ESP8266: [nodemcu-devkit][] with [nodemcu-firmware][] (custom built).
-- Send met data to [thingspeak][].
+- Send met data to [ThingSpeak][].
 
 [nodemcu-devkit]:   https://github.com/nodemcu/nodemcu-devkit
 [nodemcu-firmware]: https://github.com/nodemcu/nodemcu-firmware
-[thingspeak]:       https://thingspeak.com/channels/37527
+[thingspeak]:       https://thingspeak.com
 
 ### Sensors
+
 - BMP085: pressure and temperature
 - DHT22: relative humidity and temperature
 - [AM2321][]: relative humidity and temperature
@@ -18,21 +20,30 @@ DIY Air Quality Monitor
 [AM2321]:  http://www.aliexpress.com/snapshot/6399232524.html?orderId=65033515010843
 [PMS3003]: http://www.aliexpress.com/snapshot/6624872562.html?orderId=66919764160843
 
+### Plugins
+
+- [Meteogram][]: use [Highcharts][] to display met data from [channel][].
+
+[meteogram]: http://thingspeak.com/plugins/15643
+[highcharts]:http://www.highcharts.com
+[channel]:   http://thingspeak.com/channels/37527
+
 ### ToDo
 - hardware
-  - remove DHT22
   - finish shield
   - add [PMS3003][] sensor to shield
 - lua_modules
+  - send heap and uptime to [channel][]
   - sleep between measurements
-  - extend `wifi_init.lua` to `wifi.SOFTAP` and `wifi.STATIONAP`
+    - note: dsleep is incompatible with user blink of ledD0
   - browser side makrdown with [strapdown.js][]
-  - index.md: index page
-    - Meteogram using [highcharts][]
-    - [yr.no][] and [aqicn.org][] widgets
+  - index.md: index page with thingspeak plugins and external widgets
   - config.md: config page
     - save params to `keys.lua`
-    - wifi.SOFTAP only
+    - wifi.SOFTAP only(?)
+  - decode forecast & obervations from [yr.no][] using [highcharts][] pharser:<br/>
+      GET http://www.highcharts.com/samples/data/jsonp.php?url=http://www.yr.no/place/Norway/Oslo/Oslo/Marienlyst_skole/forecast.xml&callback=cjson.decode<br/>
+      loadstrng(payload)
   - new modules
     - [AM2321][]  (i2c)
     - [PMS3003][] (uart)
@@ -43,6 +54,3 @@ DIY Air Quality Monitor
 
 [strapdown.js]: http://strapdownjs.com
 [luatool.py]: https://github.com/4refr0nt/luatool
-[highcharts]: http://www.highcharts.com
-[yr.no]:      http://www.yr.no/place/Norway/Oslo/Oslo/Marienlyst_skole/
-[aqicn.org]:  http://aqicn.org/city/norway/norway/oslo/kirkeveien/
