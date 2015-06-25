@@ -2,12 +2,11 @@
 --require('upkeep').clean()
 
 print('Start WiFi')
-require('wifi_init').connect()
+require('wifi_init').connect(wifi.STATION)
 
 met=require('met')
 met.key=require('keys').api.put
 dt=60000*5  -- send data every 5 min
---=60000/2  -- send data every 30 sec
 gpio.mode(0,gpio.OUTPUT)
 tmr.alarm(0,dt,1,function()
   if wifi.sta.status()~=5 then
