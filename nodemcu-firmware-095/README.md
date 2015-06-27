@@ -1,6 +1,6 @@
 # NodeMCU
-[firmware][]: version 0.9.5 (20150318). Custom firmware built for [AQmon][] project.<br/>
-`node.heap()` after flash, `file.format()` and `node.restart()`: 25400
+[firmware][]: version 0.9.6 (20150618). Custom firmware built for [AQmon][] project.<br/>
+`node.heap()` after flash, `file.format()` and `node.restart()`: 23056
 
 [firmware]: https://github.com/nodemcu/nodemcu-firmware
 [AQmon]:   https://github.com/avaldebe/AQmon
