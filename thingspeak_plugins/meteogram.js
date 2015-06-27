@@ -1,5 +1,5 @@
 <script type="text/javascript">
-var channel={id:37527,read_key:''};       // channel variables
+var channel={id:37527,timezone:'Europe/Oslo',read_key:''};       // channel variables
 var days = 2;
 
 var fields=[                              // time series
@@ -10,8 +10,7 @@ var fields=[                              // time series
 var chart_title = 'Meteogram';            // plot titles
 var chart_subtitle = 'AQmon '+channel.id;
 
-var my_offset = new Date().getTimezoneOffset(); // user's timezone offset
-    my_offset = 0; // show local time
+//var my_offset = new Date().getTimezoneOffset(); // user's timezone offset
 var my_chart;                             // chart variable
 
 $(document).on('ready', function() {      // when the document is ready
@@ -107,7 +106,7 @@ function addSeries(channel, field, days, yAxis) {
 
   // get the data with a webservice call
   $.getJSON('https://api.thingspeak.com/channels/'+channel.id+'/fields/'+field.number+
-            '.json?offset=0&round=2&average=60&days='+days+'&api_key='+channel.read_key,function(data) {
+            '.json?timezone='+channel.timezone+'&round=2&average=60&days='+days+'&api_key='+channel.read_key,function(data) {
 
     var chart_data = [];      // blank array for holding chart data
 
@@ -137,6 +136,6 @@ function getChartDate(d) {    // converts date format from JSON
   // get the data using javascript's date object (year, month, day, hour, minute, second)
   // months in javascript start at 0, so remember to subtract 1 when specifying the month
   // offset in minutes is converted to milliseconds and subtracted so that chart's x-axis is correct
-  return Date.UTC(d.substring(0,4), d.substring(5,7)-1, d.substring(8,10), d.substring(11,13), d.substring(14,16), d.substring(17,19)) - (my_offset * 60000);
+  return Date.UTC(d.substring(0,4), d.substring(5,7)-1, d.substring(8,10), d.substring(11,13), d.substring(14,16), d.substring(17,19));// - (my_offset * 60000);
 }
 </script>
