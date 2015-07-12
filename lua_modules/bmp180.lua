@@ -105,7 +105,7 @@ local function read_pressure(oss)
   write_reg(REG_CONTROL, COMMAND_PRESSURE[oss + 1]);
   tmr.delay(30000);
   local dataP = read_reg(0xF6, 3)
-  local UP = string.byte(dataP, 1) * 65536 + string.byte(dataP, 2) * 256 + string.byte(dataP, 1)
+  local UP = string.byte(dataP, 1) * 65536 + string.byte(dataP, 2) * 256 + string.byte(dataP, 3)
   UP = UP / 2 ^ (8 - oss)
   local B6 = B5 - 4000
   local X1 = B2 * (B6 * B6 / 4096) / 2048
@@ -133,7 +133,7 @@ function M.read(oss)
   end
   if (not init) then
      print("init() must be called before read.")
-  else  
+  else
      read_temp()
      read_pressure(oss)
   end
