@@ -45,8 +45,10 @@ DIY Air Quality Monitor
       GET http://www.highcharts.com/samples/data/jsonp.php?url=http://www.yr.no/place/Norway/Oslo/Oslo/Marienlyst_skole/forecast.xml&callback=cjson.decode<br/>
       loadstrng(payload)
   - new modules
-    - [AM2321][]  (i2c)
+    - [AM2321][]  (i2c, done)
     - [PMS3003][] (uart)
+- plugins
+  - live update for the last hour datapoint
 - nodemcu-firmware
   - i2c.bmpXXX module for BMP085/BMP180 sensors
   - i2c.am2321 module for [AM2321][] sensor
