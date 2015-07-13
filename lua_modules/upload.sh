@@ -14,7 +14,7 @@ while (($#)); do
   wifi_init|met|application)
     luatool.py -p $PORT -c    -f $opt.lua;;
   init)
-    luatool.py -p $PORT    -r -f $opt.lua --list;;
+    luatool.py -p $PORT    -r -f $opt.lua;;
   *.lua)
     luatool.py -p $PORT -c    -f $opt;;
   *)
