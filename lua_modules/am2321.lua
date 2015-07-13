@@ -2,14 +2,9 @@ local moduleName = ...
 local M = {}
 _G[moduleName] = M
 
-local ADDR=bit.rshift(0xB8,1) -- use 7bit address
-local id=0  -- i2c interface ID
-local t,h   -- temperature and humidity
+require('i2d') -- i2c utility library
 
-local function short(MSB,LSB,signed)
-  local w=MSB*256+LSB
-  return signed and (w>32767) and (w-65536) or w
-end
+local ADDR=bit.rshift(0xB8,1) -- use 7bit address
 
 local function crc_check(c)
   local len=c:len()
@@ -26,46 +21,29 @@ local function crc_check(c)
       end
     end
   end
-  return (crc==short(c:byte(len),c:byte(len-1)))
+  return (crc==i2d.b2i(c:byte(len),c:byte(len-1)))
 end
 
-function M.init(da,cl)
-  local sda,scl=da,cl
-  i2c.setup(id, sda, scl, i2c.SLOW)
+function M.init(...)
+  i2d.init(ADDR,...)
 end
 
 function M.read()
 -- wakeup
-  i2c.start(id)
-  i2c.address(id,ADDR,i2c.RECEIVER)
-  i2c.stop(id)
+  i2d.wake()
 -- request HUMIDITY_MSB 0x00 .. TEMPERATURE_LSB 0x03
-  i2c.start(id)
-  i2c.address(id,ADDR,i2c.TRANSMITTER)
-  i2c.write(id,0x03,0x00,0x04)
-  i2c.stop(id)
+  i2d.write(0x03,0x00,0x04)
   tmr.delay(1600)         -- wait at least 1.5ms
 -- read HUMIDITY_MSB 0x00 .. TEMPERATURE_LSB 0x03
-  i2c.start(id)
-  i2c.address(id,ADDR,i2c.RECEIVER)
-  local c=i2c.read(id,8)  -- cmd(2)+data(4)+crc(2)
-  i2c.stop(id)
+  local c=i2d.read(8)     -- cmd(2)+data(4)+crc(2)
 
   if crc_check(c) then
-    h=short(c:byte(3,4))
-    t=short(c:byte(5,6))
+    M.humidity   =i2d.b2i(c:byte(3,4))
+    M.temperature=i2d.b2i(c:byte(5,6))
   else
-    h,t=nil,nil
+    M.humidity   =nil
+    M.temperature=nil
   end
-  --return h,t
-end
-
-function M.getTemperature()
-  return t
-end
-
-function M.getHumidity()
-  return h
 end
 
 return M

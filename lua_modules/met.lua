@@ -8,6 +8,7 @@ function M.tostring(tag)
 end
 
 local persistence=false -- use last values when read fails
+local cleanup=false     -- release modules after use
 function M.read(verbose)
   local p,t,h
   local sda,scl
@@ -16,11 +17,14 @@ function M.read(verbose)
   end
 
   sda,scl=3,4
-  require('bmp180').init(sda,scl)
-  bmp180.read(0)   -- low power, do not oversample
-  p,t = bmp180.getPressure(),bmp180.getTemperature()
-  bmp180,package.loaded.bmp180 = nil,nil -- release memory
-
+  require('i2d').init(nil,sda,scl)
+  require('bmp180').init()
+  bmp180.read(0)   -- 0:low power .. 3:oversample
+  p,t = bmp180.pressure,bmp180.temperature
+  if cleanup then  -- release memory
+    bmp180,package.loaded.bmp180 = nil,nil
+    i2d,package.loaded.i2d = nil,nil
+  end
   M.p = p and ('%.2f'):format(p/100) or M.p
   M.t = p and ('%.1f'):format(t/10)  or M.t
   if verbose then
@@ -28,18 +32,13 @@ function M.read(verbose)
   end
 
   sda,scl=2,1
-  gpio.mode(scl,gpio.INPUT)
-  if gpio.read(scl)==0 then
---  print('am2321:dht')
-    require('dht22').read(sda)
-    h,t = dht22.getHumidity(),dht22.getTemperature()
-    dht22,package.loaded.dht22 = nil,nil -- release memory
-  else
---  print('am2321:i2c')
-    require('am2321').init(sda,scl)
-    am2321.read()
-    h,t = am2321.getHumidity(),am2321.getTemperature()
-    am2321,package.loaded.am2321=nil,nil -- release memory
+  require('i2d').init(nil,sda,scl)
+  require('am2321').init()
+  am2321.read()
+  h,t = am2321.humidity,am2321.temperature
+  if cleanup then  -- release memory
+    am2321,package.loaded.am2321=nil,nil
+    i2d,package.loaded.i2d = nil,nil
   end
 
   M.h = h and ('%.1f'):format(h/10) or M.h

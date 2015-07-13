@@ -18,10 +18,13 @@ sources for code and ideas. Please let me know, if I have missed you.
 My biggest thanks to the following authors:
 
 - [bigdanz][]: `init.lua` is based on ideas form his article abut [interrupting][] `init.lua`.
-- @javieryanez: I took his nodemcu modules for the [BMP180 and DTH22][] sensors.
-- @saper-2: I used his nodemcu modules for the [AM2321][] before I wrote my own module.
+- @javieryanez: I used his nodemcu modules for the [BMP180 and DTH22][] sensors before I wrote my own module.
+  My `bmp180.lua` module is based on his.
+- @saper-2: I used his nodemcu modules for the [AM2321][] sensor before I wrote my own module.
+  My `am2321.lua` module is based on his.
 - [captain-slow][]: His short article on [posting to thingspeak][] helped me to get my data out.
-- @geekscape: his [skeleton][]/`setup.lua` is almost esactly the same as my first version of `wifi.init`. From him I took the idea of using a generic module name (`appliation.lua`) for the appliation specific code.
+- @geekscape: his [skeleton][]/`setup.lua` is almost esactly the same as my first version of `wifi.init`.
+  From him I took the idea of using a generic module name (`appliation.lua`) for the appliation specific code.
 - @hwiguna: his [esp8266 videos][] are an inspiration go out and play (or code).
 
 [AQmon]: https://github.com/avaldebe/AQmon
