@@ -23,8 +23,8 @@ function M.read(verbose)
   p,t = bmp180.pressure,bmp180.temperature
   if cleanup then  -- release memory
     bmp180,package.loaded.bmp180 = nil,nil
-    i2d,package.loaded.i2d = nil,nil
   end
+  i2d,package.loaded.i2d = nil,nil
   M.p = p and ('%.2f'):format(p/100) or M.p
   M.t = p and ('%.1f'):format(t/10)  or M.t
   if verbose then
@@ -38,8 +38,8 @@ function M.read(verbose)
   h,t = am2321.humidity,am2321.temperature
   if cleanup then  -- release memory
     am2321,package.loaded.am2321=nil,nil
-    i2d,package.loaded.i2d = nil,nil
   end
+  i2d,package.loaded.i2d = nil,nil
 
   M.h = h and ('%.1f'):format(h/10) or M.h
   M.t = h and ('%.1f'):format(t/10) or M.t

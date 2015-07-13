@@ -2,6 +2,8 @@ print('Start WiFi')
 require('wifi_init').connect(wifi.STATION)
 print('Sleep mode: MODEM_SLEEP')
 wifi.sleeptype(wifi.MODEM_SLEEP)
+-- release memory
+wifi_init,package.loaded.wifi_init=nil,nil
 
 local api=require('keys').api
 met=require('met')

@@ -9,7 +9,10 @@ Written by Álvaro Valdebenito,
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
+local moduleName = ...
 local M = {}
+_G[moduleName] = M
+
 local pass={}
 local function listap(t)
   local stat={[0]='STATION_IDLE',
