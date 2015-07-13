@@ -12,11 +12,11 @@ DIY Air Quality Monitor
 
 ### Sensors
 
-- BMP085: pressure and temperature
-- DHT22: relative humidity and temperature
+- BMP085/[BMP180][]: pressure and temperature
 - [AM2321][]: relative humidity and temperature
 - [PMS3003][]: PM1, PM2.5 and PM10
 
+[BMP180]: http://www.aliexpress.com/snapshot/6747685613.html?orderId=67922658930843
 [AM2321]:  http://www.aliexpress.com/snapshot/6399232524.html?orderId=65033515010843
 [PMS3003]: http://www.aliexpress.com/snapshot/6624872562.html?orderId=66919764160843
 
@@ -30,10 +30,11 @@ DIY Air Quality Monitor
 
 ### ToDo
 - hardware
-  - finish shield
-  - add [PMS3003][] sensor to shield
+  - prototype shield
+  - put BMP085 and  AM2321 sensors on the same i2c bus.
+  - test with BMP180 and  AM2320 sensors (newer and cheaper).
+  - add PMS3003 sensor to shield
 - lua_modules
-  - send heap and uptime to [channel][]
   - sleep between measurements
     - note: dsleep is incompatible with user blink of ledD0
   - browser side makrdown with [strapdown.js][]
@@ -43,16 +44,16 @@ DIY Air Quality Monitor
     - wifi.SOFTAP only(?)
   - decode forecast & obervations from [yr.no][] using [highcharts][] pharser:<br/>
       GET http://www.highcharts.com/samples/data/jsonp.php?url=http://www.yr.no/place/Norway/Oslo/Oslo/Marienlyst_skole/forecast.xml&callback=cjson.decode<br/>
-      loadstrng(payload)
+      ... loadstrng(payload)
   - new modules
-    - [AM2321][]  (i2c, done)
-    - [PMS3003][] (uart)
+    - AM2321  (i2c, done)
+    - PMS3003 (uart)
 - plugins
   - live update for the last hour datapoint
-- nodemcu-firmware
+- nodemcu-firmware(?)
   - i2c.bmpXXX module for BMP085/BMP180 sensors
-  - i2c.am2321 module for [AM2321][] sensor
-  - pms3003    module for [PMS3003][] sensor
+  - i2c.am2321 module for AM2320/AM2321 sensors
+  - pms3003    module for PMS3003 sensor
 
 [strapdown.js]: http://strapdownjs.com
 [luatool.py]: https://github.com/4refr0nt/luatool

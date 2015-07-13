@@ -1,15 +1,59 @@
 # lua_modules
 Lua modules for [AQmon][] project.<br/>
 
-### Upload files
-From command line with [luatool.py][]
+[luatool.py]: https://github.com/4refr0nt/luatool
+
+### Sensor modules
+- `bmp180.lua`: BMP085 / BMP180 sensors.
+- `am2321.lua`: AM2320 / AM2321 sensors.
+
+#### Upload from command line with [luatool.py][]
 
 ```sh
-luatool.py --src my_conf.lua --dst keys.lua --compile --restart
-# or
-luatool.py -f my_conf.lua -t keys.lua -c -r
+# find the port
+PORT=`ls /dev/ttyUSB? /dev/rfcomm? 2>/dev/null`
+# remove all *.lua and *.lc files
+luatool.py -p $PORT -w -r
+# upload, compile and restart
+luatool.py -p $PORT -c -r -f bmp180.lua
+luatool.py -p $PORT -c -r -f am2321.lua
 ```
-[luatool.py]: https://github.com/4refr0nt/luatool
+
+### Ussage example
+
+```lua
+-- module setup
+sda,scl=3,4
+require('bmp180').init(sda,scl)
+bmp180.read(0)   -- 0:low power .. 3:oversample
+p,t = bmp180.pressure,bmp180.temperature
+
+-- release memory
+bmp180,package.loaded.bmp180 = nil,nil
+i2d,package.loaded.i2d = nil,nil
+
+-- format and print the results
+p = p and ('%.2f'):format(p/100) or 'null'
+t = p and ('%.1f'):format(t/10)  or 'null'
+print(('p:%s, t:%s, heap:%d'):format(p,t,node.heap()))
+```
+
+```lua
+-- module setup
+sda,scl=2,1
+require('am2321').init(sda, scl)
+am2321.read()
+h,t = am2321.humidity,am2321.temperature
+
+-- release memory
+am2321,package.loaded.am2321 = nil,nil
+i2d,package.loaded.i2d = nil,nil
+
+-- format and print the results
+h=h and ('%.1f'):format(h/10) or 'null'
+t=t and ('%.1f'):format(t/10) or 'null'
+print(('h:%s, t:%s, heap:%d'):format(h,t,node.heap()))
+```
 
 ### Acknowledgements
 After many round of write/rewrite code it becomes hard to keep track of
