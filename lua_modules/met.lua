@@ -4,13 +4,16 @@ _G[moduleName] = M
 
 M.p,M.t,M.h='null','null','null'
 function M.tostring(tag)
-  print(('  %-6s:%5s[C],%5s[%%],%7s[hPa]'):format(tag,M.t,M.h,M.p))
+  print(('  %-6s:%5s[C],%5s[%%],%7s[hPa] heap:%d'):format(tag,M.t,M.h,M.p,node.heap()))
 end
 
 local persistence=false -- use last values when read fails
 function M.read(verbose)
   local p,t,h
   local sda,scl
+  if not persistence then
+    M.p,M.t,M.h='null','null','null'
+  end
 
   sda,scl=3,4
   require('bmp180').init(sda,scl)
@@ -18,8 +21,8 @@ function M.read(verbose)
   p,t = bmp180.getPressure(),bmp180.getTemperature()
   bmp180,package.loaded.bmp180 = nil,nil -- release memory
 
-  M.p = p and ('%.2f'):format(p/100) or persistence and M.p or 'null'
-  M.t = p and ('%.1f'):format(t/10)  or persistence and M.t or 'null'
+  M.p = p and ('%.2f'):format(p/100) or M.p
+  M.t = p and ('%.1f'):format(t/10)  or M.t
   if verbose then
     M.tostring('bmp085')
   end
@@ -39,8 +42,8 @@ function M.read(verbose)
     am2321,package.loaded.am2321=nil,nil -- release memory
   end
 
-  M.h = h and ('%.1f'):format(h/10) or persistence and M.h or 'null'
-  M.t = h and ('%.1f'):format(t/10) or persistence and M.t or 'null'
+  M.h = h and ('%.1f'):format(h/10) or M.h
+  M.t = h and ('%.1f'):format(t/10) or M.t
   if verbose then
     M.tostring('am2321')
   end

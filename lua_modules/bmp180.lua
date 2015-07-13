@@ -17,7 +17,10 @@ local REG_CONTROL = 0xF4
 local REG_RESULT = 0xF6
 
 local COMMAND_TEMPERATURE = 0x2E
-local COMMAND_PRESSURE = {0x34, 0x74, 0xB4, 0xF4}
+local COMMAND_PRESSURE = {[0]=0x34,[1]=0x74,[2]=0xB4,[3]=0xF4}
+local WAIT_TEMPERATURE = 5000 -- 5ms
+local WAIT_PRESSURE = {[0]=5000,[1]=8000,[2]=14000,[3]=26000}
+
 
 -- calibration coefficients
 local AC1, AC2, AC3, AC4, AC5, AC6, B1, B2, MB, MC, MD
@@ -30,82 +33,98 @@ local init = false
 -- i2c interface ID
 local id = 0
 
--- 16-bit  two's complement
--- value: 16-bit integer
-local function twoCompl(value)
- if value > 32767 then value = -(65535 - value + 1)
- end
- return value
+
+-- 2 bits to signed/unsigned int
+local function byte2int(MSB,LSB,signed)
+  local w=MSB*256+LSB
+  return signed and (w>32767) and (w-65536) or w
 end
 
--- read data register
--- reg_addr: address of the register in BMP180
--- lenght: bytes to read
-local function read_reg(reg_addr, length)
-  i2c.start(id)
-  i2c.address(id, ADDR, i2c.TRANSMITTER)
-  i2c.write(id, reg_addr)
-  i2c.stop(id)
-  i2c.start(id)
-  i2c.address(id, ADDR,i2c.RECEIVER)
-  c = i2c.read(id, length)
-  i2c.stop(id)
-  return c
-end
-
--- write data register
--- reg_addr: address of the register in BMP180
--- reg_val: value to write to the register
-local function write_reg(reg_addr, reg_val)
-  i2c.start(id)
-  i2c.address(id, ADDR, i2c.TRANSMITTER)
-  i2c.write(id, reg_addr)
-  i2c.write(id, reg_val)
-  i2c.stop(id)
+-- 3 bits to unsigned long
+local function byte3int(MSB,LSB,XLSB)
+  return MSB*65536+LSB*256+XLSB
 end
 
 -- initialize module
 -- sda: SDA pin
 -- scl SCL pin
-function M.init(sda, scl)
+function M.init(da,cl)
+  local sda,scl=da,cl
   i2c.setup(id, sda, scl, i2c.SLOW)
-  local calibration = read_reg(REG_CALIBRATION, 22)
-
-  AC1 = twoCompl(string.byte(calibration, 1) * 256 + string.byte(calibration, 2))
-  AC2 = twoCompl(string.byte(calibration, 3) * 256 + string.byte(calibration, 4))
-  AC3 = twoCompl(string.byte(calibration, 5) * 256 + string.byte(calibration, 6))
-  AC4 = string.byte(calibration, 7) * 256 + string.byte(calibration, 8)
-  AC5 = string.byte(calibration, 9) * 256 + string.byte(calibration, 10)
-  AC6 = string.byte(calibration, 11) * 256 + string.byte(calibration, 12)
-  B1 = twoCompl(string.byte(calibration, 13) * 256 + string.byte(calibration, 14))
-  B2 = twoCompl(string.byte(calibration, 15) * 256 + string.byte(calibration, 16))
-  MB = twoCompl(string.byte(calibration, 17) * 256 + string.byte(calibration, 18))
-  MC = twoCompl(string.byte(calibration, 19) * 256 + string.byte(calibration, 20))
-  MD = twoCompl(string.byte(calibration, 21) * 256 + string.byte(calibration, 22))
+-- request CALIBRATION
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.TRANSMITTER)
+  i2c.write(id,REG_CALIBRATION)
+  i2c.stop(id)
+-- read CALIBRATION
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.RECEIVER)
+  local c = i2c.read(id,22)
+  i2c.stop(id)
+-- unpack TEMPERATURE
+  AC1= byte2int(c:byte( 1),c:byte( 2),true)
+  AC2= byte2int(c:byte( 3),c:byte( 4),true)
+  AC3= byte2int(c:byte( 5),c:byte( 6),true)
+  AC4= byte2int(c:byte( 7),c:byte( 8))
+  AC5= byte2int(c:byte( 9),c:byte(10))
+  AC6= byte2int(c:byte(11),c:byte(12))
+  B1 = byte2int(c:byte(13),c:byte(14),true)
+  B2 = byte2int(c:byte(15),c:byte(16),true)
+  MB = byte2int(c:byte(17),c:byte(18),true)
+  MC = byte2int(c:byte(19),c:byte(20),true)
+  MD = byte2int(c:byte(21),c:byte(22),true)
 
   init = true
 end
 
 -- read temperature from BMP180
 local function read_temp()
-  write_reg(REG_CONTROL, COMMAND_TEMPERATURE)
-  tmr.delay(5000)
-  local dataT = read_reg(REG_RESULT, 2)
-  UT = string.byte(dataT, 1) * 256 + string.byte(dataT, 2)
+-- request TEMPERATURE
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.TRANSMITTER)
+  i2c.write(id,REG_CONTROL,COMMAND_TEMPERATURE)
+  i2c.stop(id)
+  tmr.delay(WAIT_TEMPERATURE)
+-- request RESULT
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.TRANSMITTER)
+  i2c.write(id,REG_RESULT)
+  i2c.stop(id)
+-- read RESULT
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.RECEIVER)
+  local c = i2c.read(id,2)
+  i2c.stop(id)
+-- unpack TEMPERATURE
+  local UT = byte2int(c:byte(1,2))
   local X1 = (UT - AC6) * AC5 / 32768
   local X2 = MC * 2048 / (X1 + MD)
   B5 = X1 + X2
   t = (B5 + 8) / 16
-  return(t)
+  return t
 end
 
 -- read pressure from BMP180
 -- must be read after read temperature
 local function read_pressure(oss)
-  write_reg(REG_CONTROL, COMMAND_PRESSURE[oss + 1]);
-  tmr.delay(30000);
-  local dataP = read_reg(0xF6, 3)
-  local UP = string.byte(dataP, 1) * 65536 + string.byte(dataP, 2) * 256 + string.byte(dataP, 3)
+-- request PRESSURE
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.TRANSMITTER)
+  i2c.write(id,REG_CONTROL,COMMAND_PRESSURE[oss])
+  i2c.stop(id)
+  tmr.delay(WAIT_PRESSURE[oss])
+-- request RESULT
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.TRANSMITTER)
+  i2c.write(id,REG_RESULT)
+  i2c.stop(id)
+-- read RESULT
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.RECEIVER)
+  local c = i2c.read(id,3)
+  i2c.stop(id)
+-- unpack PRESSURE
+  local UP = byte3int(c:byte(1,3))
   UP = UP / 2 ^ (8 - oss)
   local B6 = B5 - 4000
   local X1 = B2 * (B6 * B6 / 4096) / 2048

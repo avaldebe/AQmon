@@ -1,8 +1,8 @@
 #!/bin/bash
 
 (($#))||set wipe bmp180 keys wifi_init dht22 am2321 met application init
-PORT=`ls /dev/ttyUSB? /dev/rfcomm? 2>/dev/null`
 while (($#)); do
+  PORT=`ls /dev/ttyUSB? /dev/rfcomm? 2>/dev/null`
   opt=$1
   case $opt in
   wipe|list)
