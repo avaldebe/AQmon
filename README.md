@@ -35,6 +35,7 @@ DIY Air Quality Monitor
   - test with BMP180 and  AM2320 sensors (newer and cheaper).
   - add PMS3003 sensor to shield
 - lua_modules
+  - read sensor ids and write it as metadata.
   - sleep between measurements
     - note: dsleep is incompatible with user blink of ledD0
   - browser side makrdown with [strapdown.js][]
@@ -54,6 +55,8 @@ DIY Air Quality Monitor
   - i2c.bmpXXX module for BMP085/BMP180 sensors
   - i2c.am2321 module for AM2320/AM2321 sensors
   - pms3003    module for PMS3003 sensor
+  - try [nodemcu-custom-build][]
 
 [strapdown.js]: http://strapdownjs.com
 [luatool.py]: https://github.com/4refr0nt/luatool
+[nodemcu-custom-build]: http://frightanic.com/nodemcu-custom-build
