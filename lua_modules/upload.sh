@@ -1,24 +1,24 @@
 #!/bin/bash
 
-(($#))||set wipe bmp180 i2d am2321 met keys wifi_init application init
+(($#))||set wipe bmp180 i2d am2321 met keys wifi_init metspeack init
 while (($#)); do
   PORT=`ls /dev/ttyUSB? /dev/rfcomm? 2>/dev/null`
   opt=$1
   case $opt in
   wipe)
-    luatool.py -p $PORT    -r  --$opt --list;;
+    luatool.py -p $PORT -rwl;;
   bmp180|dht22|am2321)
-    luatool.py -p $PORT -c -r -f $opt.lua;;
-  keys|my_conf)
-    luatool.py -p $PORT -c    -f my_conf.lua -t keys.lua;;
-  wifi_init|met|application)
-    luatool.py -p $PORT -c    -f $opt.lua;;
-  init)
-    luatool.py -p $PORT    -r -f $opt.lua;;
-  *.lua)
-    luatool.py -p $PORT -c    -f $opt;;
+    luatool.py -p $PORT -rcf $opt.lua;;
+  keys|keys.*|my_conf|my_conf.*)
+    luatool.py -p $PORT -cf my_conf.lua   -t keys.lua;;
+  metspeack|metspeack.*)
+    luatool.py -p $PORT -cf metspeack.lua -t app.lua;;
+  wifi_init|met)
+    luatool.py -p $PORT -cf $opt.lua;;
+  init|init.lua)
+    luatool.py -p $PORT -rf ${opt%.*}.lua;;
   *)
-    luatool.py -p $PORT -c    -f $opt.lua;;
+    luatool.py -p $PORT -cf ${opt%.*}.lua;;
   esac && shift
 done
 

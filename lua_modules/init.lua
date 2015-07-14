@@ -32,10 +32,10 @@ tmr.alarm(0,2e3,0,function() -- 2s from boot
   gpio.mode(3,gpio.INPUT) -- release D3 interrupt
   if console then
     ledD0,console=nil,nil
-    print('Console mode')
+    print('Console/Upload mode')
   else
     ledD0,console=nil,nil
-    print('Run mode')
-    require('application')
+    print('Run/App mode')
+    require('app')
   end
 end)

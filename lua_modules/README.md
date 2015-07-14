@@ -6,6 +6,7 @@ Lua modules for [AQmon][] project.<br/>
 ### Sensor modules
 - `bmp180.lua`: BMP085 / BMP180 sensors.
 - `am2321.lua`: AM2320 / AM2321 sensors.
+- `i2d.lua`: i2c utility library.
 
 #### Upload from command line with [luatool.py][]
 
@@ -17,6 +18,7 @@ luatool.py -p $PORT -w -r
 # upload, compile and restart
 luatool.py -p $PORT -c -r -f bmp180.lua
 luatool.py -p $PORT -c -r -f am2321.lua
+luatool.py -p $PORT -c -r -f i2d.lua
 ```
 
 ### Ussage example
