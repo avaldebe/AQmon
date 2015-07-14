@@ -10,8 +10,9 @@ M.ap.ssid='ESP-'..node.chipid() -- cfg=require('keys').ap
 M.ap.pwd=node.chipid()          -- wifi.ap.config(cfg)
 
 -- Keys for api.thingspeak.com or a simmilar service
+M.api.url='api.thingspeak.com'
 M.api.id='CHANNEL_ID'   -- api=require('keys').api
-M.api.get='Read  Key'   --'https://api.thingspeak.com/channels/'..api.id..'/feed.json?key='..api.get
-M.api.put='Write Key'   --'https://api.thingspeak.com/update?key='..api.put
+M.api.get='Read  Key'   --'https://..api.url../channels/'..api.id..'/feed.json?key='..api.get
+M.api.put='Write Key'   --'https://..api.url../update?key='..api.put
 M.api.freq=1            -- update frequency in minutes
 return M
