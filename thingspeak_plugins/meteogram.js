@@ -45,6 +45,7 @@ function addChart(fields) { // add the base chart
       xDateFormat: '%a, %b %e, %H:%M'
     },
     xAxis: [{ // Bottom X axis
+      title: { text: channel.timezone },
       type: 'datetime',
       tickInterval: 6 * 36e5,   // six hours
       minorTickInterval: 36e5,  // one hour
