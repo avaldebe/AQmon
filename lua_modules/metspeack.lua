@@ -26,7 +26,7 @@ local function speack()
   met,package.loaded.met=nil,nil
   local uptime=tmr.time()
   uptime=('%04d:%02d:%02d'):format(uptime/36e2,uptime%36e2/60,uptime%60)
-  api.stat=('uptime:%s, heap:%d, freq[min]:%d'):format(uptime,node.heap(),api.freq)
+  api.stat=('uptime=%s, heap=%d'):format(uptime,node.heap())
   print('  '..api.stat)
 
   conn=net.createConnection(net.TCP,0)
