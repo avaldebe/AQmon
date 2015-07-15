@@ -21,7 +21,8 @@ local function speack()
     node.restart() -- connection failed
   end
   print("Read sensors")
-  require('met').read(true) -- verbose
+  require('met').init(3,4,true) -- sda,scl,lowHeap
+  met.read(true) -- verbose
   api.f1,api.f2,api.f3=met.t,met.h,met.p
   met,package.loaded.met=nil,nil
   local uptime=tmr.time()
@@ -29,7 +30,7 @@ local function speack()
   api.stat=('uptime=%s, heap=%d'):format(uptime,node.heap())
   print('  '..api.stat)
 
-  conn=net.createConnection(net.TCP,0)
+  local conn=net.createConnection(net.TCP,0)
   conn:on("receive",   function(conn,payload)
     print(payload:find("Status: 200 OK") and "  Posted OK" or "  Recieved: "..payload)
   end)

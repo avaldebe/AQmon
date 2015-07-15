@@ -7,18 +7,33 @@ function M.tostring(tag)
   print(('  %-6s:%5s[C],%5s[%%],%7s[hPa] heap:%d'):format(tag,M.t,M.h,M.p,node.heap()))
 end
 
+local cleanup=false     -- release modules after use
 local persistence=false -- use last values when read fails
-local cleanup=true      -- release modules after use
+local SDA,SCL           -- buffer device address and pinout
+local init=false
+
+function M.init(sda,scl,lowHeap,keepVal)
+  if (sda and sda~=SDA) or (scl and scl~=SCL) then
+    SDA,SCL=sda,scl
+  end
+  if lowHeap ~=nil then cleanup=lowHeap     end
+  if keepVal ~=nil then persistence=keepVal end
+  init=true
+end
+
 function M.read(verbose)
   local p,t,h
-  local sda,scl
   if not persistence then
     M.p,M.t,M.h='null','null','null'
   end
+  if not init then
+    print("Need to call init(...) call before calling read(...).")
+    if verbose then M.tostring('ERROR') end
+    return
+  end
 
-  sda,scl=3,4
-  require('i2d').init(nil,sda,scl)
-  require('bmp180').init()
+  require('i2d').init(nil,SDA,SCL)
+  require('bmp180').init(SDA,SCL)
   bmp180.read(0)   -- 0:low power .. 3:oversample
   p,t = bmp180.pressure,bmp180.temperature
   if cleanup then  -- release memory
@@ -27,13 +42,10 @@ function M.read(verbose)
   end
   M.p = p and ('%.2f'):format(p/100) or M.p
   M.t = p and ('%.1f'):format(t/10)  or M.t
-  if verbose then
-    M.tostring('bmp085')
-  end
+  if verbose then M.tostring('bmp085') end
 
-  sda,scl=2,1
-  require('i2d').init(nil,sda,scl)
-  require('am2321').init()
+  require('i2d').init(nil,SDA,SCL)
+  require('am2321').init(SDA,SCL)
   am2321.read()
   h,t = am2321.humidity,am2321.temperature
   if cleanup then  -- release memory
@@ -42,9 +54,7 @@ function M.read(verbose)
   end
   M.h = h and ('%.1f'):format(h/10) or M.h
   M.t = h and ('%.1f'):format(t/10) or M.t
-  if verbose then
-    M.tostring('am2321')
-  end
+  if verbose then M.tostring('am2321') end
 
   p,t,h = nil,nil,nil -- release memory
 --return M.t,M.h,M.p
