@@ -31,7 +31,6 @@ DIY Air Quality Monitor
 ### ToDo
 - hardware
   - prototype shield
-  - put BMP085 and  AM2321 sensors on the same i2c bus.
   - test with BMP180 and  AM2320 sensors (newer and cheaper).
   - add PMS3003 sensor to shield
 - lua_modules
