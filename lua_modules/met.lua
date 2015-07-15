@@ -13,11 +13,10 @@ local SDA,SCL           -- buffer device address and pinout
 local init=false
 
 function M.init(sda,scl,lowHeap,keepVal)
-  if (sda and sda~=SDA) or (scl and scl~=SCL) then
-    SDA,SCL=sda,scl
-  end
-  if lowHeap ~=nil then cleanup=lowHeap     end
-  if keepVal ~=nil then persistence=keepVal end
+  if type(sda)=="number" then SDA=sda end
+  if type(scl)=="number" then SCL=scl end
+  if type(lowHeap)=="boolean" then cleanup=lowHeap     end
+  if type(keepVal)=="boolean" then persistence=keepVal end
   init=true
 end
 
