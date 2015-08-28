@@ -57,6 +57,9 @@ t=t and ('%.1f'):format(t/10) or 'null'
 print(('h:%s, t:%s, heap:%d'):format(h,t,node.heap()))
 ```
 
+*Note*: Do not use pin `D8` (`gpio15`) for `I2C` as the pull-up resistors will
+interfeere with the bootiung process.
+
 ### Acknowledgements
 After many round of write/rewrite code it becomes hard to keep track of
 sources for code and ideas. Please let me know, if I have missed you.
