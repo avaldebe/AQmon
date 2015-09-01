@@ -19,7 +19,7 @@ tmr.alarm(1,100,1,function()
   gpio.write(0,ledD0)
 end)
 gpio.mode(3,gpio.INT)
-gpio.trig(3,"low",function(state)
+gpio.trig(3,"down",function(state)
   tmr.stop(1)     -- stop blink
   gpio.write(0,0) -- D0 LED on
   console=true

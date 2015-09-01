@@ -28,6 +28,7 @@ local WAIT_PRESSURE    = {[0]= 5e3,[1]= 8e3,[2]=14e3,[3]=26e3}
 -- calibration coefficients
 local AC1, AC2, AC3, AC4, AC5, AC6, B1, B2, MB, MC, MD
 local init = false
+local B5
 
 -- initialize module
 function M.init(...)
