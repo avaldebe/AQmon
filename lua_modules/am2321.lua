@@ -1,3 +1,13 @@
+--[[
+am2321.lua for ESP8266 with nodemcu-firmware
+  Read temperature and relative humidity from AM2320/AM2321 sensors
+
+Written by Álvaro Valdebenito.
+
+MIT license, http://opensource.org/licenses/MIT
+]]
+
+
 local moduleName = ...
 local M = {}
 _G[moduleName] = M
