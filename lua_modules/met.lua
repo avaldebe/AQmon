@@ -2,9 +2,13 @@ local moduleName = ...
 local M = {}
 _G[moduleName] = M
 
-M.p,M.t,M.h='null','null','null'
+M.p,M.t,M.h,M.stat='null','null','null','null'
 function M.tostring(tag)
-  print(('  %-6s:%5s[C],%5s[%%],%7s[hPa] heap:%d'):format(tag,M.t,M.h,M.p,node.heap()))
+  if M.stat~='null' then
+    print(('  %-6s:%5s[C],%5s[%%],%7s[hPa] %s'):format(tag,M.t,M.h,M.p,M.stat))
+  else
+    print(('  %-6s:%5s[C],%5s[%%],%7s[hPa] heap=%d'):format(tag,M.t,M.h,M.p,node.heap()))
+  end
 end
 
 local cleanup=false     -- release modules after use
@@ -17,13 +21,23 @@ function M.init(sda,scl,lowHeap,keepVal)
   if type(scl)=="number" then SCL=scl end
   if type(lowHeap)=="boolean" then cleanup=lowHeap     end
   if type(keepVal)=="boolean" then persistence=keepVal end
+
+  assert(type(SDA)=="number","met.init 1st argument sould be SDA")
+  assert(type(SCL)=="number","met.init 2nd argument sould be SCL")
   init=true
 end
 
-function M.read(verbose)
+function M.read(outStr,verbose,status)
+  assert(type(outStr)=="string" or type(outStr)=="nil",
+    "met.read 1st argument sould be a string")
+  assert(type(verbose)=="boolean" or type(verbose)=="nil",
+    "met.read 2nd argument sould be boolean")
+  assert(type(status)=="boolean" or type(status)=="nil",
+    "met.read 3rd argument sould be boolean")
+
   local p,t,h
   if not persistence then
-    M.p,M.t,M.h='null','null','null'
+    M.p,M.t,M.h,M.stat='null','null','null','null'
   end
   if not init then
     print("Need to call init(...) call before calling read(...).")
@@ -56,7 +70,16 @@ function M.read(verbose)
   if verbose then M.tostring('am2321') end
 
   p,t,h = nil,nil,nil -- release memory
---return M.t,M.h,M.p
+  if status then
+    local uptime=tmr.time()
+    M.stat=('heap=%d,uptime=%04d:%02d:%02d'):format(
+      node.heap(),uptime/36e2,uptime%36e2/60,uptime%60)
+    if verbose then M.tostring('Status') end
+  end
+
+  if outStr then
+    return outStr:gsub("{(.-)}",M)
+  end
 end
 
 return M

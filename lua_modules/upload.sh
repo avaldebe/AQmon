@@ -14,12 +14,12 @@ while (($#)); do
     luatool.py -p $PORT -cf my_conf.lua -t keys.lua;;
   metspeack|metspeack.*)
     luatool.py -p $PORT -rf metspeack.lua -t app.lua;;
-  wifi_init|met)
+  wifi_init) #|met)
     luatool.py -p $PORT -cf $opt.lua;;
   init|init.lua)
     luatool.py -p $PORT -rf ${opt%.*}.lua;;
   *)
-    luatool.py -p $PORT -cf ${opt%.*}.lua;;
+    luatool.py -p $PORT -f ${opt%.*}.lua;;
   esac && shift
   trap - SIGHUP SIGINT SIGTERM
 done

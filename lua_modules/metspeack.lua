@@ -7,12 +7,14 @@ wifi_init,package.loaded.wifi_init=nil,nil
 
 local api=require('keys').api
 gpio.mode(0,gpio.OUTPUT)
-local function sendData(data)
-  if (data==nil) or
-     (api.sent~=nil) then        -- already sending data
+local function sendData(method,url)
+  assert(type(method)=="string" and type(url)=="string",
+    "Use app.sendData(method,url)")
+  if api.sent~=nil then -- already sending data
     return
   end
   api.sent=false
+
   print('Sleep mode: NONE_SLEEP')
   wifi.sleeptype(wifi.NONE_SLEEP)
   if wifi.sta.status()~=5 then
@@ -31,27 +33,22 @@ local function sendData(data)
     end
   end)
   sk:on("connection",function(conn)
-    if not conn then
-      print("WTF?connection")
-      return
-    end
+    assert(conn~=nil,"WTF?connection")
     print("  Connected")
     gpio.write(0,0)
     print("  Send data")
-    local i=0
-    for i=1,#data do
-      conn:send(data[i]:gsub("{(.-)}",api),
-        print(("    #%d: %s"):format(i,sent)))
-    end
+    local payload=table.concat({('%s /%s HTTP/1.1'):format(method,url),
+    'Host: {url}','Connection: close','Accept: */*',''},'\r\n'):gsub("{(.-)}",api)
+  --print(payload)
+    conn:send(payload)
     api.sent=true
   end)
   sk:on("sent",function(conn)
-    if api.sent then
-      print("  Data sent")
-    end
+    print("  Data sent")
+    if conn then conn:close() end
   end)
   sk:on("disconnection",function(conn)
-    if conn then conn:close() end
+  --if conn then conn:close() end
     print("  Disconnected")
     gpio.write(0,1)
     print('Sleep mode: MODEM_SLEEP')
@@ -72,26 +69,18 @@ local function speak()
   local lowHeap=true
   print("Read data")
   require('met').init(5,6,lowHeap) -- sda,scl,lowHeap
-  met.read(true) -- verbose
--- status
-  local uptime=tmr.time()
-  met.stat=('uptime=%04d:%02d:%02d, heap=%d'):format(
-    uptime/36e2,uptime%36e2/60,uptime%60,node.heap())
-  print('  '..met.stat)
--- update string
-  local update=
-    ("GET /update?key={put}&status={stat}&field1={t}&field2={h}&field3={p} HTTP/1.1\r\n"
-  .."Host: {url}\r\nConnection: close\r\nAccept: */*\r\n\r\n"):gsub("{(.-)}",met)
+  local url=met.read("update?key={put}&status={stat}&field1={t}&field2={h}&field3={p}",
+    true,true) -- output format,verbose,status
 -- release memory
   if lowHeap then
     met,package.loaded.met=nil,nil
     collectgarbage()
   end
-  sendData({update})
+  sendData("GET",url)
   api.last=tmr.now()
 end
 
---api.freq=0.50 -- debug
+--api.freq=1 -- debug
 print(('Send data every %s min'):format(api.freq))
 tmr.alarm(0,api.freq*60e3,1,function() speak() end)
 
