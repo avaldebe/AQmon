@@ -13,7 +13,7 @@ while (($#)); do
   keys|keys.*|my_conf|my_conf.*)
     luatool.py -p $PORT -cf my_conf.lua -t keys.lua;;
   metspeack|metspeack.*)
-    luatool.py -p $PORT -rcf metspeack.lua -t app.lua;;
+    luatool.py -p $PORT -rf metspeack.lua -t app.lua;;
   wifi_init|met)
     luatool.py -p $PORT -cf $opt.lua;;
   init|init.lua)
