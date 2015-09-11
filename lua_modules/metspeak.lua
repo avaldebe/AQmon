@@ -6,8 +6,6 @@ wifi.sleeptype(wifi.MODEM_SLEEP)
 -- release memory
 wifi_init,package.loaded.wifi_init=nil,nil
 
-local sk=net.createConnection(net.TCP,0)
-
 local api=require('keys').api
 gpio.mode(0,gpio.OUTPUT)
 local function sendData(method,url)
@@ -24,8 +22,7 @@ local function sendData(method,url)
     wifi.sleeptype(wifi.NONE_SLEEP)
   end
 
---sk=nil
---sk=net.createConnection(net.TCP,0)
+  local sk=net.createConnection(net.TCP,0)
   sk:on('receive',   function(conn,payload)
     assert(conn~=nil and type(payload)=='string','socket:on(receive)')
   --print(('  Recieved: "%s"'):format(payload))
@@ -64,6 +61,7 @@ local function sendData(method,url)
   end)
   print(('Send data to %s.'):format(api.url))
   sk:connect(80,api.url)
+--sk=nil
 end
 
 api.last=tmr.now()
@@ -71,17 +69,13 @@ local function speak()
   if (tmr.now()-api.last<5e6) then -- 5s since last (debounce/long press)
     return
   end
---[[
   local lowHeap=true
   print('Read data')
   require('met').init(5,6,lowHeap) -- sda,scl,lowHeap
   met.read(true)                   -- verbose
   local url=met.format(
---  'update?api_key={put}&status=uptime={upTime},heap={heap}&field1={t}&field2={h}&field3={p}',
---  'update?key={put}&field1={t}&field2={h}&field3={p}',
+   'update?key={put}&status=uptime={upTime},heap={heap}&field1={t}&field2={h}&field3={p}',
     true) -- remove spaces
-]]
-  local url='update?key={put}&status=on-line'
 -- release memory
   if lowHeap then
     met,package.loaded.met=nil,nil
