@@ -37,7 +37,7 @@ local function sendData(method,url)
     print('  Send data')
     local payload=table.concat({('%s /%s HTTP/1.1'):format(method,url),
     'Host: {url}','Connection: close','Accept: */*',
-    'User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; Windows NT 5.1)'
+    'User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; Windows NT 5.1)',
     ''},'\r\n'):gsub('{(.-)}',api)
 print(payload)
     conn:send(payload)--,function(sent) conn:close() end)
