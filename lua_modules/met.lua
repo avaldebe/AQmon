@@ -2,31 +2,39 @@ local moduleName = ...
 local M = {}
 _G[moduleName] = M
 
--- Format module outputs
+-- Output variables
 M.p,M.h,M.t='null','null','null' -- atm.pressure,rel.humidity,teperature
-local function fmt(t,h,p,tag,msg)
+
+-- Format module outputs
+function M.format(message,squeese,t,h,p)
 -- padd initial values for csv/column output
   if M.p=='null' then M.p = ('%7s'):format(M.p) end
   if M.h=='null' then M.h = ('%5s'):format(M.h) end
   if M.t=='null' then M.t = ('%5s'):format(M.t) end
+
 -- formatted output (w/padding) from integer values
-  if type(p)=="number" then
+  if type(p)=='number' then
     M.p = ('%7.2f'):format(p/100)
     M.t = ('%5.1f'):format(t/10)
   end
-  if type(h)=="number" then
+  if type(h)=='number' then
     M.h = ('%5.1f'):format(h/10)
     M.t = ('%5.1f'):format(t/10)
   end
+
 -- process message for csv/column output
-  if msg then
+  if type(message)=='string' then
     local uptime=tmr.time()
-    M.upTime=('%04d:%02d:%02d'):format(uptime/36e2,uptime%36e2/60,uptime%60)
+    M.upTime=('%02d:%02d:%02d:%02d'):format(uptime/864e2, -- days:
+              uptime%864e2/36e2,uptime%36e2/60,uptime%60) -- hh:mm:ss
     M.heap  =('%d'):format(node.heap())
-    M.tag   =('%-6s'):format(tag)
-    local msg=msg:gsub("{(.-)}",M)
+    local payload=message:gsub('{(.-)}',M)
     M.upTime,M.heap,M.tag=nil,nil,nil -- release memory
-    return msg
+
+    if squeese then                   -- remove all spaces (and padding)
+      payload=payload:gsub(' ','')      -- from output
+    end
+    return payload
   end
 end
 
@@ -35,35 +43,29 @@ local persistence=false -- use last values when read fails
 local SDA,SCL           -- buffer device address and pinout
 local init=false
 function M.init(sda,scl,lowHeap,keepVal)
-  if type(sda)=="number" then SDA=sda end
-  if type(scl)=="number" then SCL=scl end
-  if type(lowHeap)=="boolean" then cleanup=lowHeap     end
-  if type(keepVal)=="boolean" then persistence=keepVal end
+  if type(sda)=='number' then SDA=sda end
+  if type(scl)=='number' then SCL=scl end
+  if type(lowHeap)=='boolean' then cleanup=lowHeap     end
+  if type(keepVal)=='boolean' then persistence=keepVal end
 
-  assert(type(SDA)=="number","met.init 1st argument sould be SDA")
-  assert(type(SCL)=="number","met.init 2nd argument sould be SCL")
+  assert(type(SDA)=='number','met.init 1st argument sould be SDA')
+  assert(type(SCL)=='number','met.init 2nd argument sould be SCL')
   init=true
 end
 
-function M.read(outStr,squeese,verbose)
-  assert(type(outStr)=="string" or type(outStr)=="nil",
-    "met.read 1st argument sould be a string")
-  assert(type(squeese)=="boolean" or type(squeese)=="nil",
-    "met.read 2nd argument sould be boolean")
-  assert(type(verbose)=="boolean" or type(verbose)=="nil",
-    "met.read 3rd argument sould be boolean")
+function M.read(verbose)
+  assert(type(verbose)=='boolean' or type(verbose)=='nil',
+    'met.read 1st argument sould be boolean')
   if not init then
-    print("Need to call init(...) call before calling read(...).")
+    print('Need to call init(...) call before calling read(...).')
     return
   end
 
-  local p,t,h,payload
+  local p,t,h
   if not persistence then
     M.p,M.t,M.h='null','null','null'
   end
-  if verbose then
-    payload='{upTime}  {tag}:{t}[C],{h}[%%],{p}[hPa] heap={heap}'
-  end
+  local payload='{upTime}  %-6s:{t}[C],{h}[%%],{p}[hPa]  heap:{heap}'
 
   require('i2d').init(nil,SDA,SCL)
   require('bmp180').init(SDA,SCL)
@@ -73,7 +75,9 @@ function M.read(outStr,squeese,verbose)
     bmp180,package.loaded.bmp180 = nil,nil
     i2d,package.loaded.i2d = nil,nil
   end
-  if verbose then print(fmt(t,h,p,'bmp085',payload)) end
+  if verbose then
+    print(M.format(payload:format('bmp085'),false,t,nil,p))
+  end
 
   require('i2d').init(nil,SDA,SCL)
   require('am2321').init(SDA,SCL)
@@ -83,20 +87,14 @@ function M.read(outStr,squeese,verbose)
     am2321,package.loaded.am2321=nil,nil
     i2d,package.loaded.i2d = nil,nil
   end
-  if verbose then print(fmt(t,h,p,'am2321',payload)) end
-
-  fmt(t,h,p)          -- format module outputs
-  p,t,h = nil,nil,nil -- release memory
   if verbose then
-    print(fmt(t,h,p,'met',payload))
+    print(M.format(payload:format('am2321'),false,t,h,nil))
   end
 
-  if type(outStr)=="string" then
-    payload=fmt(t,h,p,'outStr',outStr)
-    if squeese then
-      payload=payload:gsub(' ','')
-    end
-    return payload
+  if verbose then
+    print(M.format(payload:format('Sensed'),false))
+  else
+    M.format(nil,nil,t,h,p) -- only format module outputs
   end
 end
 
