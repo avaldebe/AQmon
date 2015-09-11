@@ -2,12 +2,31 @@ local moduleName = ...
 local M = {}
 _G[moduleName] = M
 
-M.p,M.t,M.h,M.stat='null','null','null','null'
-function M.tostring(tag)
-  if M.stat~='null' then
-    print(('  %-6s:%5s[C],%5s[%%],%7s[hPa] %s'):format(tag,M.t,M.h,M.p,M.stat))
-  else
-    print(('  %-6s:%5s[C],%5s[%%],%7s[hPa] heap=%d'):format(tag,M.t,M.h,M.p,node.heap()))
+-- Format module outputs
+M.p,M.h,M.t='null','null','null' -- atm.pressure,rel.humidity,teperature
+local function fmt(t,h,p,tag,msg)
+-- padd initial values for csv/column output
+  if M.p=='null' then M.p = ('%7s'):format(M.p) end
+  if M.h=='null' then M.h = ('%5s'):format(M.h) end
+  if M.t=='null' then M.t = ('%5s'):format(M.t) end
+-- formatted output (w/padding) from integer values
+  if type(p)=="number" then
+    M.p = ('%7.2f'):format(p/100)
+    M.t = ('%5.1f'):format(t/10)
+  end
+  if type(h)=="number" then
+    M.h = ('%5.1f'):format(h/10)
+    M.t = ('%5.1f'):format(t/10)
+  end
+-- process message for csv/column output
+  if msg then
+    local uptime=tmr.time()
+    M.upTime=('%04d:%02d:%02d'):format(uptime/36e2,uptime%36e2/60,uptime%60)
+    M.heap  =('%d'):format(node.heap())
+    M.tag   =('%-6s'):format(tag)
+    local msg=msg:gsub("{(.-)}",M)
+    M.upTime,M.heap,M.tag=nil,nil,nil -- release memory
+    return msg
   end
 end
 
@@ -15,7 +34,6 @@ local cleanup=false     -- release modules after use
 local persistence=false -- use last values when read fails
 local SDA,SCL           -- buffer device address and pinout
 local init=false
-
 function M.init(sda,scl,lowHeap,keepVal)
   if type(sda)=="number" then SDA=sda end
   if type(scl)=="number" then SCL=scl end
@@ -27,22 +45,24 @@ function M.init(sda,scl,lowHeap,keepVal)
   init=true
 end
 
-function M.read(outStr,verbose,status)
+function M.read(outStr,squeese,verbose)
   assert(type(outStr)=="string" or type(outStr)=="nil",
     "met.read 1st argument sould be a string")
-  assert(type(verbose)=="boolean" or type(verbose)=="nil",
+  assert(type(squeese)=="boolean" or type(squeese)=="nil",
     "met.read 2nd argument sould be boolean")
-  assert(type(status)=="boolean" or type(status)=="nil",
+  assert(type(verbose)=="boolean" or type(verbose)=="nil",
     "met.read 3rd argument sould be boolean")
-
-  local p,t,h
-  if not persistence then
-    M.p,M.t,M.h,M.stat='null','null','null','null'
-  end
   if not init then
     print("Need to call init(...) call before calling read(...).")
-    if verbose then M.tostring('ERROR') end
     return
+  end
+
+  local p,t,h,payload
+  if not persistence then
+    M.p,M.t,M.h='null','null','null'
+  end
+  if verbose then
+    payload='{upTime}  {tag}:{t}[C],{h}[%%],{p}[hPa] heap={heap}'
   end
 
   require('i2d').init(nil,SDA,SCL)
@@ -53,9 +73,7 @@ function M.read(outStr,verbose,status)
     bmp180,package.loaded.bmp180 = nil,nil
     i2d,package.loaded.i2d = nil,nil
   end
-  M.p = p and ('%.2f'):format(p/100) or M.p
-  M.t = p and ('%.1f'):format(t/10)  or M.t
-  if verbose then M.tostring('bmp085') end
+  if verbose then print(fmt(t,h,p,'bmp085',payload)) end
 
   require('i2d').init(nil,SDA,SCL)
   require('am2321').init(SDA,SCL)
@@ -65,20 +83,20 @@ function M.read(outStr,verbose,status)
     am2321,package.loaded.am2321=nil,nil
     i2d,package.loaded.i2d = nil,nil
   end
-  M.h = h and ('%.1f'):format(h/10) or M.h
-  M.t = h and ('%.1f'):format(t/10) or M.t
-  if verbose then M.tostring('am2321') end
+  if verbose then print(fmt(t,h,p,'am2321',payload)) end
 
+  fmt(t,h,p)          -- format module outputs
   p,t,h = nil,nil,nil -- release memory
-  if status then
-    local uptime=tmr.time()
-    M.stat=('heap=%d,uptime=%04d:%02d:%02d'):format(
-      node.heap(),uptime/36e2,uptime%36e2/60,uptime%60)
-    if verbose then M.tostring('Status') end
+  if verbose then
+    print(fmt(t,h,p,'met',payload))
   end
 
-  if outStr then
-    return outStr:gsub("{(.-)}",M)
+  if type(outStr)=="string" then
+    payload=fmt(t,h,p,'outStr',outStr)
+    if squeese then
+      payload=payload:gsub(' ','')
+    end
+    return payload
   end
 end
 

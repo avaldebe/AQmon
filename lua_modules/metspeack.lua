@@ -33,22 +33,22 @@ local function sendData(method,url)
     end
   end)
   sk:on("connection",function(conn)
-    assert(conn~=nil,"WTF?connection")
+    assert(conn~=nil,"ERROR on:connection")
     print("  Connected")
     gpio.write(0,0)
     print("  Send data")
     local payload=table.concat({('%s /%s HTTP/1.1'):format(method,url),
     'Host: {url}','Connection: close','Accept: */*',''},'\r\n'):gsub("{(.-)}",api)
-  --print(payload)
+print(payload)
     conn:send(payload)
-    api.sent=true
   end)
   sk:on("sent",function(conn)
     print("  Data sent")
-    if conn then conn:close() end
+    api.sent=true
+  --if conn then conn:close() end
   end)
   sk:on("disconnection",function(conn)
-  --if conn then conn:close() end
+    if conn then conn:close() end
     print("  Disconnected")
     gpio.write(0,1)
     print('Sleep mode: MODEM_SLEEP')
@@ -69,8 +69,9 @@ local function speak()
   local lowHeap=true
   print("Read data")
   require('met').init(5,6,lowHeap) -- sda,scl,lowHeap
-  local url=met.read("update?key={put}&status={stat}&field1={t}&field2={h}&field3={p}",
-    true,true) -- output format,verbose,status
+  local url=met.read(
+  "update?key={put}&status=uptime={upTime},heap={heap}&field1={t}&field2={h}&field3={p}",
+    true,true) -- output format,remove spaces,verbose
 -- release memory
   if lowHeap then
     met,package.loaded.met=nil,nil
