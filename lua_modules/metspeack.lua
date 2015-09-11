@@ -21,34 +21,35 @@ local function sendData(method,url)
     print('No WiFi, restart!')
     node.restart() -- connection failed
   end
---local sk
+  local sk
   sk=net.createConnection(net.TCP,0)
   sk:on('receive',   function(conn,payload)
-    assert(conn~=nil,'ERROR socket:on(receive)')
---  print(('  Recieved: '%s''):format(payload))
-    if payload==nil or payload:find('Status: 200 OK') then
+    assert(conn~=nil and type(payload)=='string','socket:on(receive)')
+    print(('  Recieved: '%s''):format(payload))
+    if payload:find('Status: 200 OK') then
       print('  Posted OK')
     end
   end)
   sk:on('connection',function(conn)
-    assert(conn~=nil,'ERROR socket:on(connection)')
+    assert(conn~=nil,'socket:on(connection)')
     print('  Connected')
     gpio.write(0,0)
     print('  Send data')
     local payload=table.concat({('%s /%s HTTP/1.1'):format(method,url),
-    'Host: {url}',--'Connection: close',
-    'Accept: */*',''},'\r\n'):gsub('{(.-)}',api)
+    'Host: {url}','Connection: close','Accept: */*',
+    'User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; Windows NT 5.1)'
+    ''},'\r\n'):gsub('{(.-)}',api)
 print(payload)
     conn:send(payload)--,function(sent) conn:close() end)
   end)
   sk:on('sent',function(conn)
-    assert(conn~=nil,'ERROR socket:on(sent)')
+    assert(conn~=nil,'socket:on(sent)')
     print('  Data sent')
     api.sent=true
-  --if conn then conn:close() end
+    conn:close()
   end)
   sk:on('disconnection',function(conn)
-    assert(conn~=nil,'ERROR socket:on(disconnection)')
+    assert(conn~=nil,'socket:on(disconnection)')
   --if conn then conn:close() end
     print('  Disconnected')
     gpio.write(0,1)
@@ -72,7 +73,7 @@ local function speak()
   require('met').init(5,6,lowHeap) -- sda,scl,lowHeap
   met.read(true)                   -- verbose
   local url=met.format(
-    'update?key={put}&status=uptime={upTime},heap={heap}&field1={t}&field2={h}&field3={p}',
+    'update?api_key={put}&status=uptime={upTime},heap={heap}&field1={t}&field2={h}&field3={p}',
     true) -- remove spaces
 -- release memory
   if lowHeap then

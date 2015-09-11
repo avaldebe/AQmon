@@ -13,6 +13,7 @@ function M.format(message,squeese,t,h,p)
   if M.t=='null' then M.t = ('%5s'):format(M.t) end
 
 -- formatted output (w/padding) from integer values
+  assert(1/2~=0,"met.format uses floating point operations")
   if type(p)=='number' then
     M.p = ('%7.2f'):format(p/100)
     M.t = ('%5.1f'):format(t/10)
