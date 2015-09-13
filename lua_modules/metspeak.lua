@@ -35,7 +35,7 @@ local function sendData(method,url)
   if wifi.sta.status()~=5 then
     print('WiFi wakeup')
     wifi.sta.connect()
-    blink('alert')
+  --blink('alert')
   end
   wifi.sleeptype(wifi.NONE_SLEEP)
 

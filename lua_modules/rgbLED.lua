@@ -44,11 +44,11 @@ function M.blink(pinR,pinG,pinB,commonAnode)
 Returns a function to blink the RGB led, eg
   blink=requere('rgbLED').blink(pinR,pinG,pinB)
   blink(code) with
-    code='r'|'g'|'b' short blink Red|Green|Blue
-    code='R'|'G'|'B' long  blink Red|Green|Blue
     code='alert'     long  blink Red
     code='normal'    short blink Green
     code='iddle'     short blink Blue
+    code='R'|'G'|'B' long  blink Red|Green|Blue
+    code='r'|'g'|'b' short blink Red|Green|Blue
 ]]
   package.loaded.rgbLED=nil -- reload package each requere('rgbLED')
   assert(type(commonAnode)=='boolean' or commonAnode==nil,
@@ -57,33 +57,26 @@ Returns a function to blink the RGB led, eg
   for k,v in pairs({R=pinR,G=pinG,B=pinB}) do
     assert(type(v)=='number' and v>=1 and v<=12,
     ('rgbLED.blink(pinR,pinG,pinB): Invalid pin%s'):format(k))
-    pwm.setup(v,2,0) -- 2Hz or 2 blinks/second
+    pwm.setup(v,1,0) -- 1Hz or 1 blink/second
     pwm.start(v)
   end
-  return function(...)
-    local rgb={R=pwm.getduty(pinR),
-               G=pwm.getduty(pinG),
-               B=pwm.getduty(pinB)}
-    if commonAnode then
-      rgb={R=1023-rgb.R,G=1023-rgb.G,B=1023-rgb.B}
+  return function(code)
+    assert(type(code)=='string','blink(code): Invalid code')
+    if code:lower()=='alert' then
+      code='R'                  -- long  blink Red
+    elseif code:lower()=='normal' then
+      code='g'                  -- short blink Green
+    elseif code:lower()=='iddle' then
+      code='b'                  -- short blink Blue
     end
-    local i,code
-    for i,code in ipairs(arg) do
-      assert(type(code)=='string','blink(code): Invalid code')
-      if rgb[code]~=nil             then  -- 'R'|'G'|'B'
-        rgb[code]=128                     -- ON ~125ms Red|Green|Blue
-      elseif rgb[code:upper()]~=nil then  -- 'r'|'g'|'b'
-        rgb[code:upper()]=1               -- ON ~449us Red|Green|Blue
-      elseif code:lower()=='alert'  then
-        rgb={R=128,G=0,B=0}               -- ON ~125ms Red
-      elseif code:lower()=='normal'  then
-        rgb={R=0,G=1,B=0}                 -- ON ~449us Green
-      elseif code:lower()=='iddle' then
-        rgb={R=0,G=0,B=1}                 -- ON ~449us Blue
-      else
-        assert(code:lower()=='stop','blink(code): Invalid code')
-        rgb={R=0,G=0,B=0}                 -- OFF
-      end
+    local rgb={R=0,G=0,B=0}
+    if rgb[code]~=nil then              -- 'R'|'G'|'B'
+      rgb[code]=50              -- ON ~50ms Red|Green|Blue
+    elseif rgb[code:upper()]~=nil then  -- 'r'|'g'|'b'
+      rgb[code:upper()]=1       -- ON  ~1ms Red|Green|Blue
+    else
+      assert(code:lower()=='stop','blink(code): Invalid code')
+      rgb={R=0,G=0,B=0}         -- OFF
     end
     if commonAnode then
       rgb={R=1023-rgb.R,G=1023-rgb.G,B=1023-rgb.B}
