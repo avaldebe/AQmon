@@ -13,7 +13,7 @@ function M.dimmer(pinR,pinG,pinB,commonAnode)
 --[[
 Returns a function to dimm the RGB led, eg
   dimmer=requere('rgbLED').dimmer(pinR,pinG,pinB)
-  dimmer(r[%],g[%],b[%])
+  dimmer(r,g,b) with r|g|b the intensity in [%] of Red|Green|Blue
 ]]
   package.loaded.rgbLED=nil -- reload package each requere('rgbLED')
   local k,v
@@ -44,9 +44,11 @@ function M.blink(pinR,pinG,pinB,commonAnode)
 Returns a function to blink the RGB led, eg
   blink=requere('rgbLED').blink(pinR,pinG,pinB)
   blink(code) with
-    code='r'|'g'|'b' blinks Red|Green|Glue
-  blink() blinks Blue
-  blink() blinks Green
+    code='r'|'g'|'b' short blink Red|Green|Blue
+    code='R'|'G'|'B' long  blink Red|Green|Blue
+    code='alert'     long  blink Red
+    code='normal'    short blink Green
+    code='iddle'     short blink Blue
 ]]
   package.loaded.rgbLED=nil -- reload package each requere('rgbLED')
   assert(type(commonAnode)=='boolean' or commonAnode==nil,
