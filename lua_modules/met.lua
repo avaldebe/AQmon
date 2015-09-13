@@ -1,3 +1,13 @@
+--[[
+met.lua for ESP8266 with nodemcu-firmware
+  Read atmospheric (ambient) temperature, relative humidity and pressure
+  afrom BMP085/BMP018 and AM2320/AM2321 sensors
+
+Written by Álvaro Valdebenito.
+
+MIT license, http://opensource.org/licenses/MIT
+]]
+
 local moduleName = ...
 local M = {}
 _G[moduleName] = M
@@ -55,7 +65,7 @@ function M.init(sda,scl,lowHeap,keepVal)
 end
 
 function M.read(verbose)
-  assert(type(verbose)=='boolean' or type(verbose)=='nil',
+  assert(type(verbose)=='boolean' or verbose==nil,
     'met.read 1st argument sould be boolean')
   if not init then
     print('Need to call init(...) call before calling read(...).')
