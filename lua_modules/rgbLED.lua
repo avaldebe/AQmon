@@ -39,12 +39,13 @@ Returns a function to dimm the RGB led, eg
   end
 end
 
-function M.blink(pinR,pinG,pinB,commonAnode)
+function M.blinker(pinR,pinG,pinB,commonAnode)
 --[[
 Returns a function to blink the RGB led, eg
-  blink=requere('rgbLED').blink(pinR,pinG,pinB)
-  blink(code) with
+  status=requere('rgbLED').blinker(pinR,pinG,pinB)
+  status(code) with
     code='alert'     long  blink Red
+    code='lowbat'    short blink Red
     code='normal'    short blink Green
     code='iddle'     short blink Blue
     code='R'|'G'|'B' long  blink Red|Green|Blue
@@ -56,7 +57,7 @@ Returns a function to blink the RGB led, eg
   local k,v
   for k,v in pairs({R=pinR,G=pinG,B=pinB}) do
     assert(type(v)=='number' and v>=1 and v<=12,
-    ('rgbLED.blink(pinR,pinG,pinB): Invalid pin%s'):format(k))
+    ('rgbLED.blinker(pinR,pinG,pinB): Invalid pin%s'):format(k))
     pwm.setup(v,1,0) -- 1Hz or 1 blink/second
     pwm.start(v)
   end
@@ -64,6 +65,8 @@ Returns a function to blink the RGB led, eg
     assert(type(code)=='string','blink(code): Invalid code')
     if code:lower()=='alert' then
       code='R'                  -- long  blink Red
+    elseif code:lower()=='lowbat' then
+      code='r'                  -- short blink Red
     elseif code:lower()=='normal' then
       code='g'                  -- short blink Green
     elseif code:lower()=='iddle' then
@@ -75,7 +78,7 @@ Returns a function to blink the RGB led, eg
     elseif rgb[code:upper()]~=nil then  -- 'r'|'g'|'b'
       rgb[code:upper()]=1       -- ON  ~1ms Red|Green|Blue
     else
-      assert(code:lower()=='stop','blink(code): Invalid code')
+      assert(code:lower()=='clear','blink(code): Invalid code')
       rgb={R=0,G=0,B=0}         -- OFF
     end
     if commonAnode then

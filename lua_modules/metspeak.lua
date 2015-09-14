@@ -7,8 +7,8 @@ Written by Álvaro Valdebenito.
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
-blink=require('rgbLED').blink(1,2,4)
-blink('normal')
+status=require('rgbLED').blinker(1,2,4)
+status('normal')
 
 print('Start WiFi')
 require('wifi_init').connect(wifi.STATION)
@@ -17,17 +17,17 @@ wifi.sta.disconnect()
 wifi.sleeptype(wifi.MODEM_SLEEP)
 -- release memory
 wifi_init,package.loaded.wifi_init=nil,nil
-blink('iddle')
+status('iddle')
 
 local api=require('keys').api
 gpio.mode(0,gpio.OUTPUT)
 local function sendData(method,url)
-  blink('alert')
+  status('alert')
   assert(type(method)=='string' and type(url)=='string',
     'Use app.sendData(method,url)')
-  blink('normal')
+  status('normal')
   if api.sent~=nil then -- already sending data
-    blink('iddle')
+    status('iddle')
     return
   end
   api.sent=false
@@ -35,25 +35,25 @@ local function sendData(method,url)
   if wifi.sta.status()~=5 then
     print('WiFi wakeup')
     wifi.sta.connect()
-  --blink('alert')
+  --status('alert')
   end
   wifi.sleeptype(wifi.NONE_SLEEP)
 
   local sk=net.createConnection(net.TCP,0)
   sk:on('receive',   function(conn,payload)
-    blink('alert')
+    status('alert')
     assert(conn~=nil and type(payload)=='string','socket:on(receive)')
-    blink('normal')
+    status('normal')
   --print(('  Recieved: "%s"'):format(payload))
     if payload:find('Status: 200 OK') then
       print('  Posted OK')
     end
-    blink('iddle')
+    status('iddle')
   end)
   sk:on('connection',function(conn)
-    blink('alert')
+    status('alert')
     assert(conn~=nil,'socket:on(connection)')
-    blink('normal')
+    status('normal')
     print('  Connected')
     gpio.write(0,0)
     print('  Send data')
@@ -63,21 +63,21 @@ local function sendData(method,url)
               .."\r\n"):gsub('{(.-)}',api)
   --print(payload)
     conn:send(payload)
-    blink('iddle')
+    status('iddle')
   end)
   sk:on('sent',function(conn)
-    blink('alert')
+    status('alert')
     assert(conn~=nil,'socket:on(sent)')
-    blink('normal')
+    status('normal')
     print('  Data sent')
     api.sent=true
   --conn:close()
-    blink('iddle')
+    status('iddle')
   end)
   sk:on('disconnection',function(conn)
-    blink('alert')
+    status('alert')
     assert(conn~=nil,'socket:on(disconnection)')
-    blink('normal')
+    status('normal')
     conn:close()
     print('  Disconnected')
     gpio.write(0,1)
@@ -86,7 +86,7 @@ local function sendData(method,url)
     wifi.sleeptype(wifi.MODEM_SLEEP)
     api.sent=nil
   --collectgarbage()
-    blink('iddle')
+    status('iddle')
   end)
   print(('Send data to %s.'):format(api.url))
   sk:connect(80,api.url)
