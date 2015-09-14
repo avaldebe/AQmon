@@ -53,7 +53,7 @@ Returns a function to blink the RGB led, eg
 ]]
   package.loaded.rgbLED=nil -- reload package each requere('rgbLED')
   assert(type(commonAnode)=='boolean' or commonAnode==nil,
-    ('rgbLED.dimmer(pinR,pinG,pinB,commonAnode): Invalid commonAnode'))
+    ('rgbLED.blinker(pinR,pinG,pinB,commonAnode): Invalid commonAnode'))
   local k,v
   for k,v in pairs({R=pinR,G=pinG,B=pinB}) do
     assert(type(v)=='number' and v>=1 and v<=12,
