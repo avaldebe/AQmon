@@ -7,7 +7,7 @@ Written by Álvaro Valdebenito.
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
-status=require('rgbLED').blinker(1,2,4)
+local status=require('rgbLED').dimmer(1,2,4)
 status('normal')
 
 print('Start WiFi')

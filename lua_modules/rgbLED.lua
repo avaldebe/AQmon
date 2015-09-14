@@ -14,6 +14,11 @@ function M.dimmer(pinR,pinG,pinB,commonAnode)
 Returns a function to dimm the RGB led, eg
   dimmer=requere('rgbLED').dimmer(pinR,pinG,pinB)
   dimmer(r,g,b) with r|g|b the intensity in [%] of Red|Green|Blue
+  dimmer(code)
+    code='alert'   bright Red
+    code='lowbat'    dimm Red
+    code='normal'    dimm Green
+    code='iddle'     dimm Blue
 ]]
   package.loaded.rgbLED=nil -- reload package each requere('rgbLED')
   local k,v
@@ -27,9 +32,26 @@ Returns a function to dimm the RGB led, eg
     ('rgbLED.dimmer(pinR,pinG,pinB,commonAnode): Invalid commonAnode'))
   package.loaded.rgbLED=nil,nil -- release module from memory
   return function(r,g,b)
-    assert(type(r)=='number' and r>=0 and r<=100,'dimmer(r,g,b): Invalid r[%]')
-    assert(type(g)=='number' and g>=0 and g<=100,'dimmer(r,g,b): Invalid g[%]')
-    assert(type(b)=='number' and b>=0 and b<=100,'dimmer(r,g,b): Invalid b[%]')
+    if g==nil and b==nil then
+      local code=r
+      assert(type(code)=='string','dimmer(code): Invalid code')
+      if code:lower()=='alert' then
+        r,g,b=50,0,0              -- bright Red
+      elseif code:lower()=='lowbat' then
+        r,g,b=1,0,0               -- dimm Red
+      elseif code:lower()=='normal' then
+        r,g,b=0,1,0               -- dimm Green
+      elseif code:lower()=='iddle' then
+        r,g,b=0,0,1               -- dimm Blue
+      else
+        assert(code:lower()=='clear','dimmer(code): Invalid code')
+        r,g,b=0,0,0               -- OFF
+      end
+    else
+      assert(type(r)=='number' and r>=0 and r<=100,'dimmer(r,g,b): Invalid r[%]')
+      assert(type(g)=='number' and g>=0 and g<=100,'dimmer(r,g,b): Invalid g[%]')
+      assert(type(b)=='number' and b>=0 and b<=100,'dimmer(r,g,b): Invalid b[%]')
+    end
     if commonAnode then r,g,b=100-r,100-g,100-b end
     local r,g,b=r*1023/100,g*1023/100,b*1023/100
     pwm.setduty(pinR,r)
@@ -72,7 +94,7 @@ Returns a function to blink the RGB led, eg
     elseif code:lower()=='iddle' then
       code='b'                  -- short blink Blue
     end
-    local rgb={R=0,G=0,B=0}
+    local rgb={R=0,G=0,B=0}     -- OFF
     if rgb[code]~=nil then              -- 'R'|'G'|'B'
       rgb[code]=50              -- ON ~50ms Red|Green|Blue
     elseif rgb[code:upper()]~=nil then  -- 'r'|'g'|'b'
