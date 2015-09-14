@@ -7,7 +7,8 @@ Written by Álvaro Valdebenito.
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
-local status=require('rgbLED').dimmer(1,2,4)
+local status=dofile('rgbLED.lc')(500,1,2,4,
+  {alert='320000',alert='010000',normal='000100',iddle='000001'})
 status('normal')
 
 print('Start WiFi')
