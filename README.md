@@ -16,14 +16,16 @@ DIY Air Quality Monitor
 
 - BMP085/[BMP180][]: pressure and temperature
 - [AM2320][]/[AM2321][]: relative humidity and temperature
-- [BME280][]: pressure, relative humidity and temperature
+- [BME280][]: pressure, relative humidity and temperature (optional)
 - [PMS3003][]: PM1, PM2.5 and PM10
+- [MAX17043][]: LiPo fuel gauge (optional)
 
 [BMP180]:  http://www.aliexpress.com/snapshot/6747685613.html?orderId=67922658930843
 [BME280]:  http://www.aliexpress.com/snapshot/6857975909.html?orderId=68901285360843
 [AM2320]:  http://www.aliexpress.com/snapshot/6399232524.html?orderId=65033515010843
 [AM2321]:  http://www.aliexpress.com/snapshot/6863602671.html?orderId=68897377730843
 [PMS3003]: http://www.aliexpress.com/snapshot/6624872562.html?orderId=66919764160843
+[MAX17043]:http://www.aliexpress.com/snapshot/6857975910.html?orderId=68901285370843
 
 ### Plugins
 
@@ -38,6 +40,7 @@ DIY Air Quality Monitor
   - connect PMS3003 sensor to dev board
 - lua_modules
   - BME280 sensor.
+  - MAX17043 sensor.
   - read sensor ids and write it as metadata.
   - sleep between measurements
     - note: dsleep is incompatible with user blink of ledD0

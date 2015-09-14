@@ -5,3 +5,4 @@ lua_modules/my_conf.lua
 lua_modules/devel.lua
 lua_modules/test.lua
 nodemcu-firmware*/
+*_v*.lua
