@@ -6,8 +6,10 @@ while (($#)); do
   opt=$1
   trap "exit" SIGHUP SIGINT SIGTERM
   case $opt in
+  list)
+    luatool.py -p $PORT -l;;
   wipe)
-    luatool.py -p $PORT -rwl;;
+    luatool.py -p $PORT -rw;;
   bmp180|dht22|am2321)
     luatool.py -p $PORT -rcf $opt.lua;;
   keys|keys.*|my_conf|my_conf.*)
@@ -18,6 +20,8 @@ while (($#)); do
     luatool.py -p $PORT -cf $opt.lua;;
   init|init.lua)
     luatool.py -p $PORT -rf ${opt%.*}.lua;;
+  *_v*.lua)
+    luatool.py -p $PORT -f $opt -t test.lua;;
   *)
     luatool.py -p $PORT -cf ${opt%.*}.lua;;
   esac && shift
