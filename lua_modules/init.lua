@@ -9,10 +9,18 @@ based on ideas from:
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
--- blink D0 (gpio16) LED until setup or D3 (gpio0) KEY is presed
-print('Press KEY_FLASH for console mode')
+
+-- disable serial/uart (console)
+print('Press ENTER to enhable console')
+uart.on('data','\r',function(data)
+  uart.on('data')
+end,0)
+
+print('Press KEY_FLASH for console/upload mode')
 ledD0,console=0,nil
 gpio.mode(0,gpio.OUTPUT)
+
+-- blink D0 (gpio16) LED until setup or D3 (gpio0) KEY is presed
 gpio.write(0,ledD0)
 tmr.alarm(1,100,1,function()
   ledD0=1-ledD0   -- blink D0
@@ -33,6 +41,7 @@ tmr.alarm(0,2e3,0,function() -- 2s from boot
   if console then
     ledD0,console=nil,nil
     print('Console/Upload mode')
+    uart.on('data')
   else
     ledD0,console=nil,nil
     print('Run/App mode')

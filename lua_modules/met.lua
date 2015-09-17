@@ -1,7 +1,7 @@
 --[[
 met.lua for ESP8266 with nodemcu-firmware
   Read atmospheric (ambient) temperature, relative humidity and pressure
-  afrom BMP085/BMP018 and AM2320/AM2321 sensors
+  from BMP085/BMP018 and AM2320/AM2321 sensors
 
 Written by Álvaro Valdebenito.
 
@@ -14,24 +14,26 @@ _G[moduleName] = M
 
 -- Output variables
 M.p,M.h,M.t='null','null','null' -- atm.pressure,rel.humidity,teperature
+M.pm01,M.pm25,M.pm10='null','null','null' -- particulate matter (PM)
 
 -- Format module outputs
-function M.format(message,squeese,t,h,p)
+function M.format(message,squeese,t,h,p,pm01,pm25,pm10)
 -- padd initial values for csv/column output
-  if M.p=='null' then M.p = ('%7s'):format(M.p) end
-  if M.h=='null' then M.h = ('%5s'):format(M.h) end
-  if M.t=='null' then M.t = ('%5s'):format(M.t) end
+  if M.p   =='null' then M.p   =('%7s'):format(M.p) end
+  if M.h   =='null' then M.h   =('%5s'):format(M.h) end
+  if M.t   =='null' then M.t   =('%5s'):format(M.t) end
+  if M.pm01=='null' then M.pm01=('%4s'):format(M.pm01) end
+  if M.pm25=='null' then M.pm25=('%4s'):format(M.pm25) end
+  if M.pm10=='null' then M.pm10=('%4s'):format(M.pm10) end
 
 -- formatted output (w/padding) from integer values
   assert(1/2~=0,"met.format uses floating point operations")
-  if type(p)=='number' then
-    M.p = ('%7.2f'):format(p/100)
-    M.t = ('%5.1f'):format(t/10)
-  end
-  if type(h)=='number' then
-    M.h = ('%5.1f'):format(h/10)
-    M.t = ('%5.1f'):format(t/10)
-  end
+  if type(t)=='number' then M.t=('%5.1f'):format(t/10) end
+  if type(h)=='number' then M.h=('%5.1f'):format(h/10) end
+  if type(p)=='number' then M.p=('%7.2f'):format(p/100) end
+  if type(pm01)=='number' then M.pm01=('%4d'):format(pm01) end
+  if type(pm25)=='number' then M.pm25=('%4d'):format(pm25) end
+  if type(pm10)=='number' then M.pm10=('%4d'):format(pm10) end
 
 -- process message for csv/column output
   if type(message)=='string' then
@@ -72,11 +74,13 @@ function M.read(verbose)
     return
   end
 
-  local p,t,h
+  local p,t,h,pm01,pm25,pm10
+
   if not persistence then
     M.p,M.t,M.h='null','null','null'
+    M.pm01,M.pm25,M.pm10='null','null','null'
   end
-  local payload='{upTime}  %-6s:{t}[C],{h}[%%],{p}[hPa]  heap:{heap}'
+  local payload='{upTime}  %-7s:{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3]  heap:{heap}'
 
   require('i2d').init(nil,SDA,SCL)
   require('bmp180').init(SDA,SCL)
@@ -87,7 +91,8 @@ function M.read(verbose)
     i2d,package.loaded.i2d = nil,nil
   end
   if verbose then
-    print(M.format(payload:format('bmp085'),false,t,nil,p))
+    print(M.format(payload:format('bmp085'),false,t,h,p,pm01,pm25,pm10))
+    p,t = nil,nil -- release variables to avoid re-formatting
   end
 
   require('i2d').init(nil,SDA,SCL)
@@ -99,13 +104,22 @@ function M.read(verbose)
     i2d,package.loaded.i2d = nil,nil
   end
   if verbose then
-    print(M.format(payload:format('am2321'),false,t,h,nil))
+    print(M.format(payload:format('am2321'),false,t,h,p,pm01,pm25,pm10))
+    h,t = nil,nil -- release variables to avoid re-formatting
+  end
+
+  require('pms3003').init()
+  pms3003.read(verbose)
+  pm01,pm25,pm10=pms3003.pm01,pms3003.pm25,pms3003.pm10
+  if verbose then
+    print(M.format(payload:format('pms3003'),false,t,h,p,pm01,pm25,pm10))
+    pm01,pm25,pm10 = nil,nil,nil -- release variables to avoid re-formatting
   end
 
   if verbose then
     print(M.format(payload:format('Sensed'),false))
   else
-    M.format(nil,nil,t,h,p) -- only format module outputs
+    M.format(nil,nil,t,h,p,pm01,pm25,pm10) -- only format module outputs
   end
 end
 
