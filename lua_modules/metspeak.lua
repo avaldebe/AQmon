@@ -7,7 +7,11 @@ Written by Álvaro Valdebenito.
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
-local status=dofile('rgbLED.lc')(500,1,2,4,
+-- HW pin assignments
+local pin={ledR=1,ledG=2,ledB=4,sda=5,scl=6}
+
+-- LED status indicator
+local status=dofile('rgbLED.lc')(500,pin.ledR,pin.ledG,pin.ledB,
   {alert='320000',alert='010000',normal='000100',iddle='000001'})
 status('normal')
 
@@ -22,10 +26,7 @@ status('iddle')
 
 local api=require('keys').api
 gpio.mode(0,gpio.OUTPUT)
-local function sendData(method,url)
-  status('alert')
-  assert(type(method)=='string' and type(url)=='string',
-    'Use app.sendData(method,url)')
+function api.sendData()
   status('normal')
   if api.sent~=nil then -- already sending data
     status('iddle')
@@ -58,10 +59,10 @@ local function sendData(method,url)
     print('  Connected')
     gpio.write(0,0)
     print('  Send data')
-    local payload=(("%s /%s HTTP/1.1\r\n"):format(method,url)
-              .."Host: {url}\r\nConnection: close\r\nAccept: */*\r\n"
-            --.."User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; Windows NT 5.1)\r\n"
-              .."\r\n"):gsub('{(.-)}',api)
+    local payload=('GET /{path} HTTP/1.1\r\n'
+              ..'Host: {url}\r\nConnection: close\r\nAccept: */*\r\n'
+            --..'User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; Windows NT 5.1)\r\n'
+              ..'\r\n'):gsub('{(.-)}',api)
   --print(payload)
     conn:send(payload)
     status('iddle')
@@ -83,15 +84,13 @@ local function sendData(method,url)
     print('  Disconnected')
     gpio.write(0,1)
     print('WiFi sleep')
-    wifi.sta.disconnect()
     wifi.sleeptype(wifi.MODEM_SLEEP)
+    wifi.sta.disconnect()
     api.sent=nil
-  --collectgarbage()
     status('iddle')
   end)
   print(('Send data to %s.'):format(api.url))
   sk:connect(80,api.url)
---sk=nil
 end
 
 api.last=tmr.now()
@@ -101,17 +100,17 @@ local function speak()
   end
   local lowHeap=true
   print('Read data')
-  require('met').init(5,6,lowHeap) -- sda,scl,lowHeap
+  require('met').init(pin.sda,pin.scl,lowHeap) -- sda,scl,lowHeap
   met.read(true)                   -- verbose
-  local url=met.format(
-   'update?key={put}&status=uptime={upTime},heap={heap}&field1={t}&field2={h}&field3={p}',
+  api.path=met.format('update?key={put}&status=uptime={upTime},heap={heap}'
+  ..'&field1={t}&field2={h}&field3={p}&field4={pm01}&field5={pm25}&field3={pm10}',
     true) -- remove spaces
 -- release memory
   if lowHeap then
     met,package.loaded.met=nil,nil
     collectgarbage()
   end
-  sendData('GET',url)
+  api.sendData()
   api.last=tmr.now()
 end
 

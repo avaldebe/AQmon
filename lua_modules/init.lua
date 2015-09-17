@@ -11,12 +11,12 @@ MIT license, http://opensource.org/licenses/MIT
 
 
 -- disable serial/uart (console)
-print('Press ENTER to enhable console')
+print('Press ENTER to enhable the console.')
 uart.on('data','\r',function(data)
   uart.on('data')
 end,0)
 
-print('Press KEY_FLASH for console/upload mode')
+print('Press KEY_FLASH for console/upload mode.')
 ledD0,console=0,nil
 gpio.mode(0,gpio.OUTPUT)
 
