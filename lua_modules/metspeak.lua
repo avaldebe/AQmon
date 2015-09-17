@@ -13,6 +13,7 @@ local pin={ledR=1,ledG=2,ledB=4,sda=5,scl=6}
 -- LED status indicator
 local status=dofile('rgbLED.lc')(500,pin.ledR,pin.ledG,pin.ledB,
   {alert='320000',alert='010000',normal='000100',iddle='000001'})
+--local function status(msg) end
 status('normal')
 
 print('Start WiFi')
@@ -94,6 +95,7 @@ function api.sendData()
 end
 
 api.last=tmr.now()
+require('met').init(pin.sda,pin.scl,false) -- sda,scl,lowHeap
 local function speak()
   if (tmr.now()-api.last<5e6) then -- 5s since last (debounce/long press)
     return
@@ -103,8 +105,8 @@ local function speak()
   require('met').init(pin.sda,pin.scl,lowHeap) -- sda,scl,lowHeap
   met.read(true)                   -- verbose
   api.path=met.format('update?key={put}&status=uptime={upTime},heap={heap}'
-  ..'&field1={t}&field2={h}&field3={p}&field4={pm01}&field5={pm25}&field3={pm10}',
-    true) -- remove spaces
+  ..'&field1={t}&field2={h}&field3={p}&field4={pm01}&field5={pm25}&field6={pm10}',
+    true):gsub('{(.-)}',api) -- remove spaces
 -- release memory
   if lowHeap then
     met,package.loaded.met=nil,nil

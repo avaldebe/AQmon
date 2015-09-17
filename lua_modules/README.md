@@ -7,6 +7,7 @@ Lua modules for [AQmon][] project.<br/>
 - `bmp180.lua`: BMP085 / BMP180 sensors.
 - `am2321.lua`: AM2320 / AM2321 sensors.
 - `i2d.lua`: i2c utility library.
+- `pms3003.lua`: PMS3003 sensor.
 
 #### Upload from command line with [luatool.py][]
 
@@ -60,7 +61,7 @@ print(('h:%s, t:%s, heap:%d'):format(h,t,node.heap()))
 *Note*: Do not use pin `D8` (`gpio15`) for `I2C` as the pull-up resistors will
 interfeere with the bootiung process.
 
-### Acknowledgements
+### References
 After many round of write/rewrite code it becomes hard to keep track of
 sources for code and ideas. Please let me know, if I have missed you.
 

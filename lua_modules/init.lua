@@ -11,9 +11,9 @@ MIT license, http://opensource.org/licenses/MIT
 
 
 -- disable serial/uart (console)
-print('Press ENTER to enhable the console.')
+print('Press ENTER twice to enhable the console.')
 uart.on('data','\r',function(data)
-  uart.on('data')
+  if data=='\r' then uart.on('data') end
 end,0)
 
 print('Press KEY_FLASH for console/upload mode.')

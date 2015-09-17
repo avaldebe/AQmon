@@ -63,6 +63,7 @@ function M.init(sda,scl,lowHeap,keepVal)
 
   assert(type(SDA)=='number','met.init 1st argument sould be SDA')
   assert(type(SCL)=='number','met.init 2nd argument sould be SCL')
+  require('pms3003').init()  -- start acquisition
   init=true
 end
 
@@ -109,8 +110,14 @@ function M.read(verbose)
   end
 
   require('pms3003').init()
-  pms3003.read(verbose)
+  pms3003.read()
   pm01,pm25,pm10=pms3003.pm01,pms3003.pm25,pms3003.pm10
+--[[if cleanup then  -- release memory
+    uart.on('data','\r',function(data)
+      if data=='\r' then uart.on('data') end
+    end,0)
+    pms3003,package.loaded.pms3003=nil,nil
+  end]]
   if verbose then
     print(M.format(payload:format('pms3003'),false,t,h,p,pm01,pm25,pm10))
     pm01,pm25,pm10 = nil,nil,nil -- release variables to avoid re-formatting
