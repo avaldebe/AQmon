@@ -1,7 +1,9 @@
 --[[
-sensors.lua for ESP8266 with nodemcu-firmware
+sensor_hub.lua for ESP8266 with nodemcu-firmware
   Read atmospheric (ambient) temperature, relative humidity and pressure
-  from BMP085/BMP018 and AM2320/AM2321 sensors
+  from BMP085/BMP180 and AM2320/AM2321 sensors, and particulate matter
+  from a PMS3003.
+  More info at  https://github.com/avaldebe/AQmon
 
 Written by Álvaro Valdebenito.
 
