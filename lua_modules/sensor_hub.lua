@@ -1,5 +1,5 @@
 --[[
-met.lua for ESP8266 with nodemcu-firmware
+sensors.lua for ESP8266 with nodemcu-firmware
   Read atmospheric (ambient) temperature, relative humidity and pressure
   from BMP085/BMP018 and AM2320/AM2321 sensors
 
@@ -27,7 +27,7 @@ function M.format(message,squeese,t,h,p,pm01,pm25,pm10)
   if M.pm10=='null' then M.pm10=('%4s'):format(M.pm10) end
 
 -- formatted output (w/padding) from integer values
-  assert(1/2~=0,"met.format uses floating point operations")
+  assert(1/2~=0,"sensors.format uses floating point operations")
   if type(t)=='number' then M.t=('%5.1f'):format(t/10) end
   if type(h)=='number' then M.h=('%5.1f'):format(h/10) end
   if type(p)=='number' then M.p=('%7.2f'):format(p/100) end
@@ -61,15 +61,15 @@ function M.init(sda,scl,lowHeap,keepVal)
   if type(lowHeap)=='boolean' then cleanup=lowHeap     end
   if type(keepVal)=='boolean' then persistence=keepVal end
 
-  assert(type(SDA)=='number','met.init 1st argument sould be SDA')
-  assert(type(SCL)=='number','met.init 2nd argument sould be SCL')
+  assert(type(SDA)=='number','sensors.init 1st argument sould be SDA')
+  assert(type(SCL)=='number','sensors.init 2nd argument sould be SCL')
   require('pms3003').init()  -- start acquisition
   init=true
 end
 
 function M.read(verbose)
   assert(type(verbose)=='boolean' or verbose==nil,
-    'met.read 1st argument sould be boolean')
+    'sensors.read 1st argument sould be boolean')
   if not init then
     print('Need to call init(...) call before calling read(...).')
     return

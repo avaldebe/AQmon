@@ -1,6 +1,6 @@
 --[[
-metspeak.lua for ESP8266 with nodemcu-firmware
-  Read sensors (met.lua) and publish to thingspeak.com
+AQmon.lua for ESP8266 with nodemcu-firmware
+  Read sensors (sensors.lua) and publish to thingspeak.com
 
 Written by Álvaro Valdebenito.
 
@@ -95,21 +95,21 @@ function api.sendData()
 end
 
 api.last=tmr.now()
-require('met').init(pin.sda,pin.scl,false) -- sda,scl,lowHeap
+require('sensors').init(pin.sda,pin.scl,false) -- sda,scl,lowHeap
 local function speak()
   if (tmr.now()-api.last<5e6) then -- 5s since last (debounce/long press)
     return
   end
   local lowHeap=true
   print('Read data')
-  require('met').init(pin.sda,pin.scl,lowHeap) -- sda,scl,lowHeap
-  met.read(true)                   -- verbose
-  api.path=met.format('update?key={put}&status=uptime={upTime},heap={heap}'
+  require('sensors').init(pin.sda,pin.scl,lowHeap) -- sda,scl,lowHeap
+  sensors.read(true)                   -- verbose
+  api.path=sensors.format('update?key={put}&status=uptime={upTime},heap={heap}'
   ..'&field1={t}&field2={h}&field3={p}&field4={pm01}&field5={pm25}&field6={pm10}',
     true):gsub('{(.-)}',api) -- remove spaces
 -- release memory
   if lowHeap then
-    met,package.loaded.met=nil,nil
+    sensors,package.loaded.sensors=nil,nil
     collectgarbage()
   end
   api.sendData()

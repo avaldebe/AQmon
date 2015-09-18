@@ -4,5 +4,7 @@ Documents/GY-65_pinout.jpg
 lua_modules/my_conf.lua
 lua_modules/devel.lua
 lua_modules/test.lua
+lua_modules/app.lua
+lua_modules/hub.lua
 lua_modules/*_v*.lua
 nodemcu-firmware*/
