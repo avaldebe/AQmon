@@ -1,6 +1,7 @@
 --[[
 am2321.lua for ESP8266 with nodemcu-firmware
   Read temperature and relative humidity from AM2320/AM2321 sensors
+  More info at  https://github.com/avaldebe/AQmon
 
 Written by Álvaro Valdebenito.
 

@@ -1,6 +1,7 @@
 --[[
 bmp180.lua for ESP8266 with nodemcu-firmware
   Read temperature and preassure from BMP085/BMP180 sensors
+  More info at  https://github.com/avaldebe/AQmon
 
 Written by Álvaro Valdebenito,
   based on bmp180.lua by Javier Yanez

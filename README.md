@@ -20,7 +20,8 @@ DIY Air Quality Monitor
 - [PMS3003][]: PM1, PM2.5 and PM10
 - [MAX17043][]: LiPo fuel gauge (optional)
 - Other ICs/sensors/modules not relevant for this aplication, but nonetheless interesting:
-  - CD4051: 8-channel analog multiplexer/demultiplexer, to extend the esp8266 ADC
+  - [3.3V Arduino][]: 8-channel 10-bit ADC and programable sensor hub
+  - [CD4051][]:   8-channel analog multiplexer/demultiplexer, to extend the esp8266 ADC
   - [INA219][]:  voltage, current and power
   - PCF8591:      4-channel  8-bit ADC and 1-channel 8-bit DAC, 4 addresses
   - [ADS1115][]:  4-channel 16-bit ADC,  4 addresses
@@ -33,6 +34,9 @@ DIY Air Quality Monitor
 [AM2321]:  http://www.aliexpress.com/snapshot/6863602671.html?orderId=68897377730843
 [PMS3003]: http://www.aliexpress.com/snapshot/6624872562.html?orderId=66919764160843
 [MAX17043]:http://www.aliexpress.com/snapshot/6857975910.html?orderId=68901285370843
+
+[3.3V Arduino]: http://www.aliexpress.com/snapshot/6857975906.html?orderId=68901285330843
+[CD4051]:  http://www.taydaelectronics.com/cd4051-4051-ic-cmos-multiplex-demultiplexer.html
 [INA219]:  http://www.aliexpress.com/snapshot/6817337392.html?orderId=68495646070843
 [ADS1115]: http://www.aliexpress.com/snapshot/6659529844.html?orderId=67204657930843
 [MCP4725]: http://www.aliexpress.com/snapshot/6817337390.html?orderId=68495646090843
@@ -66,7 +70,7 @@ DIY Air Quality Monitor
   - BME280 sensor.
   - MAX17043 sensor.
   - read sensor ids and write it as metadata(?).
-  - sleep between measurements
+  - sleep between measurements(?)
     - note: dsleep is incompatible with user blink of ledD0
   - browser side makrdown with [strapdown.js][]
   - index.md: index page with thingspeak plugins and external widgets

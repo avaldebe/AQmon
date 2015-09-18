@@ -8,6 +8,7 @@ Lua modules for [AQmon][] project.<br/>
 - `am2321.lua`: AM2320 / AM2321 sensors.
 - `i2d.lua`: i2c utility library.
 - `pms3003.lua`: PMS3003 sensor.
+- `sensor_hub.lua`: Read all sensors above.
 
 #### Upload from command line with [luatool.py][]
 

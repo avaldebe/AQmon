@@ -1,6 +1,7 @@
 --[[
 pms3003.lua for ESP8266 with nodemcu-firmware
   Read Particulated Matter (PM) concentrations on air from a PMS3003 sensor
+  More info at  https://github.com/avaldebe/AQmon
 
 Written by Álvaro Valdebenito.
 

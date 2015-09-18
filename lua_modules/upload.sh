@@ -19,7 +19,7 @@ while (($#)); do
     luatool.py -p $PORT -cf my_conf.lua -t keys.lua;;
   app|app.*|AQmon|AQmon.*)
     luatool.py -p $PORT -rf ${opt%.*}.lua -t app.lua;;
-  hub|hub.*|sensor_hub|sensor_hub.*)
+  hub|hub.*|*_hub|*_hub.*)
     luatool.py -p $PORT -rf ${opt%.*}.lua -t sensors.lua;;
   init|init.lua)
     luatool.py -p $PORT -rf ${opt%.*}.lua;;
