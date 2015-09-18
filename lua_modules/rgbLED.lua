@@ -1,6 +1,7 @@
 --[[
 rgbLED.lua for ESP8266 with nodemcu-firmware
   Returns a status function for a RGB LED.
+  More info at  https://github.com/avaldebe/AQmon
 
 Written by Álvaro Valdebenito.
 
