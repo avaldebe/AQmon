@@ -13,7 +13,7 @@ while (($#)); do
     luatool.py -p $PORT -rw;;
   bmp180|dht22|am2321)
     luatool.py -p $PORT -rcf $opt.lua;;
-  wifi_init|rgbLED|pms3003)
+  wifi_init|pms3003|rgbLED) #|hueLED)
     luatool.py -p $PORT -cf $opt.lua;;
   keys|keys.*|my_conf|my_conf.*)
     luatool.py -p $PORT -cf my_conf.lua -t keys.lua;;
@@ -25,8 +25,10 @@ while (($#)); do
     luatool.py -p $PORT -rf ${opt%.*}.lua;;
   *_v*.lua)  # alternative versions
     luatool.py -p $PORT -df $opt -t ${opt/_v*/.lua};;
-  *)
-    luatool.py -p $PORT -f ${opt%.*}.lua;;
+  *_test.lua)# test scripts
+    luatool.py -p $PORT -df $opt -t test.lua;;
+  *.lua)     # other scipts
+    luatool.py -p $PORT -f $opt;;
   esac && shift
   trap - SIGHUP SIGINT SIGTERM
 done

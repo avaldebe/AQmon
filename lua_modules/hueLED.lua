@@ -19,7 +19,7 @@ Ussge:
 
 Options:
 
-  dofile('hueLED.lc')(rangeMin,rangeMax,pinR,pinG,pinB),commonAnode)
+  dofile('hueLED.lc')(rangeMin,rangeMax,pinR,pinG,pinB))
 
   rangeMin|rangeMax:
     minimun|maximum values for the hue scale.
@@ -27,6 +27,10 @@ Options:
   pinR|pinG|pinB:
     Digital pin for Red|Green|Blue LED leg.
 
+Maximum brightness/duty cycle:
+
+  The intentity only goes up to ~50% duty cycle (512/1023).
+  For higher/lower duty cycle, edit pwm.setduty() lines.
 
 Common cathode/anode RGB LED types:
 
@@ -69,9 +73,9 @@ if commonCathode then
         [4]={  h60,0    ,1    },-- 240 to 299: up   none  full
         [5]={1    ,0    ,1-h60} -- 300 to 359: full none  down
         })[hue/60-hue/60%1]     -- math.floor(hue/60)
-      pwm.setduty(pinR,255*rgbWheel[1])
-      pwm.setduty(pinG,255*rgbWheel[2])
-      pwm.setduty(pinB,255*rgbWheel[3])
+      pwm.setduty(pinR,512*rgbWheel[1])
+      pwm.setduty(pinG,512*rgbWheel[2])
+      pwm.setduty(pinB,512*rgbWheel[3])
     end
   end
 else -- common anode: inverted controll logic
@@ -86,17 +90,16 @@ else -- common anode: inverted controll logic
       local hue=(val-valMin)/(valMax-valMin)*360%360
       local h60=hue%60/60
       local rgbWheel=({         -- range[deg]: Red  Gren  Blue
-        [0]={1    ,  h60,0    },--   0 to  59: full up    none
-        [1]={1-h60,1    ,0    },--  60 to 119: down full  none
-        [2]={0    ,1    ,  h60},-- 120 to 179: none full  up
-        [3]={0    ,1-h60,1    },-- 180 to 239: none down  full
-        [4]={  h60,0    ,1    },-- 240 to 299: up   none  full
-        [5]={1    ,0    ,1-h60} -- 300 to 359: full none  down
+        [0]={0    ,1-h60,1    },--   0 to  59: full up    none
+        [1]={  h60,0    ,1    },--  60 to 119: down full  none
+        [2]={1    ,0    ,1-h60},-- 120 to 179: none full  up
+        [3]={1    ,  h60,0    },-- 180 to 239: none down  full
+        [4]={1-h60,1    ,0    },-- 240 to 299: up   none  full
+        [5]={0    ,1    ,  h60} -- 300 to 359: full none  down
         })[math.floor(hue/60)]  -- or hue/60-hue/60%1
-      pwm.setduty(pinR,1023-255*rgbWheel[1])
-      pwm.setduty(pinG,1023-255*rgbWheel[2])
-      pwm.setduty(pinB,1023-255*rgbWheel[3])
+      pwm.setduty(pinR,511*rgbWheel[1])
+      pwm.setduty(pinG,511*rgbWheel[2])
+      pwm.setduty(pinB,511*rgbWheel[3])
     end
-  end
   end
 end
