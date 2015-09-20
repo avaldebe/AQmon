@@ -1,5 +1,5 @@
 <script type="text/javascript">
-var channel={id:37527,timezone:'Europe/Oslo',read_key:''};       // channel variables
+var channel={id:37527,timezone:'Europe/Oslo',read_key:''};    // channel variables
 var days = 2;
 
 var fields=[                              // time series
