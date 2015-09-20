@@ -26,7 +26,7 @@ Ussge:
 Options:
 
   dofile('rgbLED.lc')(frecuency,pinR,pinG,pinB,
-    {mode1='rrggbb',mode2='rrggbb',...},commonAnode)
+    {mode1='rrggbb',mode2='rrggbb',...})
 
   frequency:
     PWM frequency (see clock in pwm.setup() API). A low frequency will
@@ -41,6 +41,9 @@ Options:
     For example, 'FF0000'|'00FF00'|'0000FF' reprecent the maximum intentity
     or the longest blink (~25% duty cycle).
 
+Maximum brightness/duty cycle:
+
+  The intentity/longest blink only goes up to ~25% duty cycle (255/1023).
 
 Common cathode/anode RGB LED types:
 
