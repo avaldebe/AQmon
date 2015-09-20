@@ -35,7 +35,7 @@ function addChart(fields) { // add the base chart
       column: {
         grouping: false,
         shadow: false,
-        borderWidth: 0 s}
+        borderWidth: 0}
     },
     tooltip: {
       shared: true,
