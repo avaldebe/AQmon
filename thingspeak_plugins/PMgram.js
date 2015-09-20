@@ -16,7 +16,7 @@ var my_chart;                             // chart variable
 $(document).on('ready', function() {      // when the document is ready
   addChart(fields);                       // add a blank chart
   for(var i=0; i<fields.length; i++) {    // add time series
-    addSeries(channel,fields[i],days,0);  // common yAxis
+    addSeries(channel,fields[i],days);    // common yAxis
   }
 });
 
@@ -69,7 +69,15 @@ function addChart(fields) { // add the base chart
       tickLength: 20,
       gridLineWidth: 1
     }],
-    yAxis: [ /* fill up later */],
+    yAxis: [{ // common yAxis
+        /*title: {
+        text:fields[i].name+' ['+fields[i].units+']',
+        style:{ color:fields[i].color } }, */
+      title: null,
+      labels: { format: '{value} '+fields[0].units },
+      gridLineWidth:0,
+      opposite:true,
+    }],
     exporting: { enabled: false },
     legend: { enabled: false },
     credits: {
@@ -78,21 +86,13 @@ function addChart(fields) { // add the base chart
       style: { color: '#D62020' }
     }
   };
-  chartOptions.yAxis[0]={ // common yAxis
-  /*title: {
-      text:fields[i].name+' ['+fields[i].units+']',
-      style:{ color:fields[i].color } }, */
-    title: null,
-    labels: { format: '{value} '+fields[0].units} };
-  chartOptions.yAxis[0].gridLineWidth=0;
-  chartOptions.yAxis[0].opposite=true;
 
   // draw the chart
   my_chart = new Highcharts.Chart(chartOptions);
 }
 
 // add a series to the chart
-function addSeries(channel, field, days, yAxis) {
+function addSeries(channel, field, days) {
   var field_name = 'field' + field.number;
 
   // get the data with a webservice call
@@ -117,7 +117,7 @@ function addSeries(channel, field, days, yAxis) {
       data: chart_data,
       name: field.name,
       color: field.color,
-      yAxis: yAxis,
+//    yAxis: yAxis,           // common yAxis
       tooltip: { valueSuffix: ' '+field.units }
     });
   });
