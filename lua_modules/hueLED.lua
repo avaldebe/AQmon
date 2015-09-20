@@ -8,7 +8,6 @@ Written by Álvaro Valdebenito,
   based on HSB_to_RGB.pde by Kasper Kamperman
   http://www.kasperkamperman.com/blog/arduino/arduino-programming-hsb-to-rgb/
 
-
 MIT license, http://opensource.org/licenses/MIT
 
 Ussge:
