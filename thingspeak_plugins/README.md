@@ -1,7 +1,8 @@
 # thingspeak_plugins
 [ThingSpeak][] plugins for [AQmon][] project:
 
-- [channel][]: [location][], [meteogram][] (also at [jsfiddle][])
+- [channel][]: [location][], [meteogram][] (also at [jsfiddle/met][])
+  and [PMgram][] (also at [jsfiddle/PM][])
 - widgets: [yr.no][], [aqicn.org][]
 
 [AQmon]:   https://github.com/avaldebe/AQmon
@@ -9,7 +10,9 @@
 [channel]:   http://thingspeak.com/channels/37527
 [location]:  http://thingspeak.com/channels/37527/maps/channel_show
 [meteogram]: http://thingspeak.com/plugins/15643
-[jsfiddle]:  http://jsfiddle.net/avaldebe/dh2v4r8t
+[PMgram]:    http://thingspeak.com/plugins/24819
+[jsfiddle/met]:http://jsfiddle.net/avaldebe/dh2v4r8t
+[jsfiddle/PM]: http://jsfiddle.net/avaldebe/n6sxghh7
 [yr.no]:     http://www.yr.no/place/Norway/Oslo/Oslo/Marienlyst_skole
 [aqicn.org]: http://aqicn.org/city/norway/norway/oslo/kirkeveien
 
@@ -18,6 +21,9 @@
 </iframe>
 <iframe width="450" height="260" style="border: 1px solid #cccccc;" src="http://thingspeak.com/plugins/15643" >
 #### [channel][] [meteogram][] plugin.
+</iframe>
+<iframe width="450" height="260" style="border: 1px solid #cccccc;" src="http://thingspeak.com/plugins/24819" >
+#### [channel][] [PMgram][] plugin.
 </iframe>
 <script src="http://www.yr.no/place/Norway/Oslo/Oslo/Marienlyst_skole/external_box_hour_by_hour.js"></script>
 <noscript>
