@@ -65,13 +65,13 @@ local init=false
 function M.init(verbose)
   if init then return end
   if verbose==true then
-    print('pms3003: start acquisition. Type ENTER+M+ENTER twice to stop.')
+    print('pms3003: start acquisition. Type stopM+ENTER twice to stop.')
   end
   uart.on('data','M',function(data)
     local msg=data:match('(......................)BM$')
     if msg then
       decode(msg,verbose)
-    elseif data:find('\r') then
+    elseif data:find('stop') then
       if verbose==true then
         print('pms3003: stop acquisition.')
       end
