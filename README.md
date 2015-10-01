@@ -20,7 +20,10 @@ DIY Air Quality Monitor
 - [PMS3003][]: PM1, PM2.5 and PM10
 - [MAX17043][]: LiPo fuel gauge (optional)
 - Other ICs/sensors/modules not relevant for this aplication, but nonetheless interesting:
-  - [3.3V Arduino][]: 8-channel 10-bit ADC and programable sensor hub
+  - [Arduino pro mini][] ([ATMEGA328P][], 8bit AVR, 3.3V 8MHz):
+      8-channel 10-bit ADC, 6-channel 8-bit PWM, and programable sensor hub
+  - [Maple mini][] ([STM32F103CB][], 32-bit ARM Cortex M3, 3.3V 72MHz):
+      9-channel 12-bit ADC, 12-channel 16-bit PWM, and programable sensor hub
   - [CD4051][]:   8-channel analog multiplexer/demultiplexer, to extend the esp8266 ADC
   - [INA219][]:  voltage, current and power
   - PCF8591:      4-channel  8-bit ADC and 1-channel 8-bit DAC, 4 addresses
@@ -35,7 +38,10 @@ DIY Air Quality Monitor
 [PMS3003]: http://www.aliexpress.com/snapshot/6624872562.html?orderId=66919764160843
 [MAX17043]:http://www.aliexpress.com/snapshot/6857975910.html?orderId=68901285370843
 
-[3.3V Arduino]: http://www.aliexpress.com/snapshot/6857975906.html?orderId=68901285330843
+[Arduino pro mini]: http://www.aliexpress.com/snapshot/6857975906.html?orderId=68901285330843
+[ATMEGA328P]: http://www.atmel.com/devices/atmega328p.aspx
+[Maple mini]: http://www.aliexpress.com/item/leaflabs-Leaf-maple-mini-ARM-STM32-compatibility/32229442295.html
+[STM32F103CB]: http://www.st.com/internet/mcu/product/189782.jsp
 [CD4051]:  http://www.taydaelectronics.com/cd4051-4051-ic-cmos-multiplex-demultiplexer.html
 [INA219]:  http://www.aliexpress.com/snapshot/6817337392.html?orderId=68495646070843
 [ADS1115]: http://www.aliexpress.com/snapshot/6659529844.html?orderId=67204657930843
