@@ -1,7 +1,7 @@
 #!/bin/bash
 
 (($#))||set wipe bmp180 am2321 i2d pms3003 hub \
-            keys wifi_init rgbLED app init
+            keys wifi_init rgbLED sendData app init
 while (($#)); do
   PORT=`ls /dev/ttyUSB? /dev/rfcomm? 2>/dev/null`
   opt=$1
@@ -13,7 +13,7 @@ while (($#)); do
     luatool.py -p $PORT -rw;;
   bmp180|dht22|am2321)
     luatool.py -p $PORT -rcf $opt.lua;;
-  wifi_init|pms3003|rgbLED) #|hueLED)
+  wifi_init|pms3003|sendData|rgbLED) #|hueLED)
     luatool.py -p $PORT -cf $opt.lua;;
   keys|keys.*|my_conf|my_conf.*)
     luatool.py -p $PORT -cf my_conf.lua -t keys.lua;;
