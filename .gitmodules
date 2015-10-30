@@ -4,3 +4,9 @@
 [submodule "tools/esptool"]
 	path = tools/esptool
 	url = https://github.com/themadinventor/esptool.git
+[submodule "rpi/tentacle_pi"]
+	path = rpi/tentacle_pi
+	url = https://github.com/lexruee/tentacle_pi.git
+[submodule "rpi/python-yr"]
+	path = rpi/python-yr
+	url = https://github.com/wckd/python-yr.git
