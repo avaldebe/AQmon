@@ -3,9 +3,10 @@ var channel={id:37527,timezone:'Europe/Oslo',read_key:''};    // channel variabl
 var days = 2;
 
 var fields=[                              // time series
-  {name:'PM 10', units:'ug/m3',number:6,color:'#FF3333'}, // pm10
+  {name:'PM 1',  units:'ug/m3',number:4,color:'#FF3333'}, // pm01
   {name:'PM 2.5',units:'ug/m3',number:5,color:'#68CFE8'}, // pm25
-  {name:'PM 1' , units:'ug/m3',number:4,color:'#8BBC21'}];// pm01
+  {name:'PM 10', units:'ug/m3',number:6,color:'#8BBC21'}];// pm10
+fields.reverse(); // plot pm10,pm2.5,pm01
 
 var chart_title = 'Particulate Matter';   // plot titles
 var chart_subtitle = 'AQmon '+channel.id;
@@ -15,9 +16,7 @@ var my_chart;                             // chart variable
 
 $(document).on('ready', function() {      // when the document is ready
   addChart(fields);                       // add a blank chart
-  for(var i=0; i<fields.length; i++) {    // add time series
-    addSeries(channel,fields[i],days);    // common yAxis
-  }
+  addSeries(channel,fields,days,0);       // add time series
 });
 
 function addChart(fields) { // add the base chart
@@ -92,11 +91,13 @@ function addChart(fields) { // add the base chart
 }
 
 // add a series to the chart
-function addSeries(channel, field, days) {
-  var field_name = 'field' + field.number;
+function addSeries(channel, field, days, n) {
+  if( n >= field.length ) return;
+
+  var field_name = 'field' + field[n].number;
 
   // get the data with a webservice call
-  $.getJSON('https://api.thingspeak.com/channels/'+channel.id+'/fields/'+field.number+
+  $.getJSON('https://api.thingspeak.com/channels/'+channel.id+'/fields/'+field[n].number+
             '.json?timezone='+channel.timezone+'&round=2&average=60&days='+days+'&api_key='+channel.read_key,function(data) {
 
     var chart_data = [];      // blank array for holding chart data
@@ -115,11 +116,13 @@ function addSeries(channel, field, days) {
 
     my_chart.addSeries({      // add the chart data
       data: chart_data,
-      name: field.name,
-      color: field.color,
+      name: field[n].name,
+      color: field[n].color,
 //    yAxis: yAxis,           // common yAxis
-      tooltip: { valueSuffix: ' '+field.units }
+      tooltip: { valueSuffix: ' '+field[n].units }
     });
+
+    addSeries(channel,fields,days,n+1); // plot next
   });
 }
 
