@@ -21,29 +21,26 @@ status('normal')
 -- low heap(?) alternative: local status=print
 
 print('Start WiFi')
-require('wifi_init').connect(wifi.STATION)
---print('WiFi sleep')
---wifi.sta.disconnect()
---wifi.sleeptype(wifi.MODEM_SLEEP)
+require('wifi_init').connect(wifi.STATION,wifi.MODEM_SLEEP)
 -- release memory
 wifi_init,package.loaded.wifi_init=nil,nil
 status('iddle')
 
 local api=require('keys').api
 --api:sendData=dofile('sendData.lua')(status)
---local
-function speak()
-  if api.last and (tmr.time()-api.last)<5 then -- 5s since last (debounce/long press)
-    return
-  end
+function speak(verbose)
   if api.last and api.last>tmr.time() then -- tmr.time overflow
+    print(('time overflow: %d>%d'):format(api.last,tmr.time()))
     api.last=tmr.time()
+  end
+  if api.last and (tmr.time()-api.last)<5 then -- 5s since last (debounce/long press)
+    print('wait 5s...')
     return
   end
   local lowHeap=true
   print('Read data')
   require('sensors').init(pin.sda,pin.scl,lowHeap) -- sda,scl,lowHeap
-  sensors.read(true)                   -- verbose
+  sensors.read(verbose)
   api.path=sensors.format('status=uptime={upTime},heap={heap}'
   ..'&field1={t}&field2={h}&field3={p}&field4={pm01}&field5={pm25}&field6={pm10}',
     true) -- remove spaces
@@ -61,15 +58,14 @@ end
 --[[ Run code ]]
 
 -- start PM sensor data collection
-require('sensors').init(pin.sda,pin.scl,false) -- sda,scl,lowHeap
+require('sensors').init(pin.sda,pin.scl) -- sda,scl
 
 --api.freq=1 -- debug
 if api.freq>0 then
   print(('Send data every %s min'):format(api.freq))
-  tmr.alarm(0,api.freq*60000,1,function() speak() end)
+  tmr.alarm(0,api.freq*60000,1,function() speak(false) end)
 else
   print('Press KEY_FLASH to send NOW')
   gpio.mode(3,gpio.INT)
-  gpio.trig(3,'down',function(state) speak() end)
+  gpio.trig(3,'low',function(state) speak(true) end)
 end
-
