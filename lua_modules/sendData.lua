@@ -76,7 +76,7 @@ return function(self,status)
     wifi.sleeptype(wifi.MODEM_SLEEP)
     wifi.sta.disconnect()
     self.sent=nil
-    self.last=tmr.now()
+    self.last=tmr.time()
     status('iddle')
   end)
   print(('Send data to %s.'):format(self.url))
