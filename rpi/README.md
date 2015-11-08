@@ -2,9 +2,9 @@
 Stable plataform for sensor evaluation.
 
 ## Phython libraries
-* [tentacle_pi][]: Collection of drivers for popular I2C devices.
-* [python-yr][]:   Retreieve weather forecasts from [yr.no][].
-* [thingspeak log]: Short tutorial posting data to [thingspeak][] using Python.
+- [tentacle_pi][]: Collection of drivers for popular I2C devices.
+- [python-yr][]:   Retreieve weather forecasts from [yr.no][].
+- [thingspeak log]: Short tutorial posting data to [thingspeak][] using Python.
 
 [tentacle_pi]:    https://github.com/lexruee/tentacle_pi
 [python-yr]:      https://github.com/wckd/python-yr
@@ -19,6 +19,13 @@ ssh-keygen                         # create key on local machine
 ssh-copy-id pi@raspberrypi.local   # copy key to raspberrypi
 ssh pi@raspberrypi.local           # ssh to raspberrypi
 ```
+
+### Sleep & wake
+The command ``sudo halt`` puts the cpu/gpu into a very low power state
+making the system safe to power off.
+To wake up, short ``GPIO3`` & ``GND`` (``P1-05`` & ``P1-06``).
+The reset switch on the [X100][] shorts ``RUN`` & ``GND`` (``P6-01`` & ``P6-02``).
+This will cause a soft reset of the CPU (which can also 'wake' the Pi from halt/shutdown state).
 
 ### Update
 ```bash
@@ -35,27 +42,27 @@ sudo dpkg-reconfigure -plow unattended-upgrades
 sudo dpkg-reconfigure apt-listchanges
 ```
 
-### [X100 shield][]
-[X100 shield]: http://www.suptronics.com/Xseries/x100.html
+### [X100][] shield
+[X100]: http://www.suptronics.com/Xseries/x100.html
 The installation instructions for the RTC on the X100 (NXP PCF2127AT/ PCF2129AT) suggest a custom kernel (3.6.11+).
 Kernel 3.12.20+ includes rtc-pcf2127.ko, so the custom kernel/additional rtc-pcf2127a.ko module is not necessary.
-append to /etc/modules
+append to ``/etc/modules``
 
 ```bash
 i2c-bcm2708
 rtc-pcf2127
 ```
-and add to /etc/rc.local before ‘exit 0’
+and add to ``/etc/rc.local`` before ‘exit 0’
 
 ```bash
 echo pcf2127 0x51 > /sys/class/i2c-adapter/i2c-1/new_device
 [ "$_IP" ] || ( sleep 2; hwclock -s ) &
 ```
 
-### [SoC panel][]
-[SoC panel]:     https://geekytheory.com/panel-de-monitorizacion-para-raspberry-pi-con-node-js/
+### SoC panel
+[article (in Spanish)]: https://geekytheory.com/panel-de-monitorizacion-para-raspberry-pi-con-node-js/
 [web dashboard]: http://raspberrypi.local:8000/
-The article (in Spanish) implements a [web dashboard][]
+The [article (in Spanish)][] implements a [web dashboard][]
 for SoC temperature, CPU load and mmemory ussage.
 
 ```bash
