@@ -50,7 +50,9 @@ local function listap(t)
     end
   end
 end
-function M.connect(mode) -- mode: wifi.STATION|wifi.SOFTAP|wifi.STATIONAP
+function M.connect(mode,sleep)
+-- mode: wifi.STATION|wifi.SOFTAP|wifi.STATIONAP
+-- sleep: wifi.MODEM_SLEEP
   if mode==wifi.SOFTAP or mode==wifi.STATIONAP then
     local cfg=require('keys').ap -- {ssid=ssid,pwd=pass}
     wifi.setmode(mode)
@@ -64,6 +66,11 @@ function M.connect(mode) -- mode: wifi.STATION|wifi.SOFTAP|wifi.STATIONAP
       pass=require('keys').sta -- {ssid1=pass1,...}
       wifi.setmode(mode)
       wifi.sta.getap(listap)
+    end
+    if wifi.sta.status()==5 and sleep==wifi.MODEM_SLEEP then
+      print('WiFi sleep')
+      wifi.sta.disconnect()
+      wifi.sleeptype(sleep)
     end
   end
 end
