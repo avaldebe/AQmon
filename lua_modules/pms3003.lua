@@ -61,7 +61,7 @@ function M.read(verbose,stdATM)
   end
 end
 
-local init=false
+local init=nil
 function M.init(verbose)
   if init then return end
   if verbose==true then
@@ -76,7 +76,7 @@ function M.init(verbose)
         print('pms3003: stop acquisition.')
       end
       uart.on('data')
-      init=false
+      init=nil
     end
   end,0)
 end

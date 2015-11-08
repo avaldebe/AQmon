@@ -3,7 +3,7 @@ DIY Air Quality Monitor
 
 ### Controler
 
-- ESP8266: [nodemcu-devkit][] with [nodemcu-firmware][] ([0.9.6 20150627][]).
+- ESP8266: [nodemcu-devkit][] with [nodemcu-firmware][] ([0.9.6 20150627][], integer).
 - Send met data to [ThingSpeak][].
 
 [nodemcu-devkit]:   https://github.com/nodemcu/nodemcu-devkit
@@ -64,8 +64,10 @@ DIY Air Quality Monitor
 ### Plugins
 
 - [Meteogram][]: use [Highcharts][] to display met data from [channel][].
+- [PMgram][]: use  [Highcharts][] to display PM concentrations from [channel][].
 
 [meteogram]: http://thingspeak.com/plugins/15643
+[pmgram]:    http://thingspeak.com/plugins/24819
 [highcharts]:http://www.highcharts.com
 [channel]:   http://thingspeak.com/channels/37527
 

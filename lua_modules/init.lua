@@ -34,7 +34,7 @@ gpio.trig(3,"down",function(state)
 end)
 
 -- console mode or application
-tmr.alarm(0,2e3,0,function() -- 2s from boot
+tmr.alarm(0,2000,0,function() -- 2s from boot
   tmr.stop(1)     -- stop blink
   gpio.write(0,1) -- D0 LED off
   gpio.mode(3,gpio.INPUT) -- release D3 interrupt

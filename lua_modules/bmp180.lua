@@ -23,8 +23,8 @@ local REG_RESULT  = 0xF6
 
 local COMMAND_TEMPERATURE = 0x2E
 local COMMAND_PRESSURE = {[0]=0x34,[1]=0x74,[2]=0xB4,[3]=0xF4}
-local WAIT_TEMPERATURE = 5e3 -- 5ms
-local WAIT_PRESSURE    = {[0]= 5e3,[1]= 8e3,[2]=14e3,[3]=26e3}
+local WAIT_TEMPERATURE = 5000 -- 5ms
+local WAIT_PRESSURE    = {[0]= 5000,[1]= 8000,[2]=14000,[3]=26000}
 
 -- calibration coefficients
 local AC1, AC2, AC3, AC4, AC5, AC6, B1, B2, MB, MC, MD

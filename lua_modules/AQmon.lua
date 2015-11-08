@@ -22,17 +22,22 @@ status('normal')
 
 print('Start WiFi')
 require('wifi_init').connect(wifi.STATION)
-print('WiFi sleep')
-wifi.sta.disconnect()
-wifi.sleeptype(wifi.MODEM_SLEEP)
+--print('WiFi sleep')
+--wifi.sta.disconnect()
+--wifi.sleeptype(wifi.MODEM_SLEEP)
 -- release memory
 wifi_init,package.loaded.wifi_init=nil,nil
 status('iddle')
 
 local api=require('keys').api
 --api:sendData=dofile('sendData.lua')(status)
-local function speak()
-  if api.last and (tmr.now()-api.last<5e6) then -- 5s since last (debounce/long press)
+--local
+function speak()
+  if api.last and (tmr.time()-api.last)<5 then -- 5s since last (debounce/long press)
+    return
+  end
+  if api.last and api.last>tmr.time() then -- tmr.time overflow
+    api.last=tmr.time()
     return
   end
   local lowHeap=true
@@ -50,7 +55,7 @@ local function speak()
   api.path=('update?key={put}&{path}'):gsub('{(.-)}',api)
 --api:sendData()
   dofile('sendData.lc')(api,status)
-  api.last=tmr.now()
+  api.last=tmr.time()
 end
 
 --[[ Run code ]]
@@ -59,9 +64,12 @@ end
 require('sensors').init(pin.sda,pin.scl,false) -- sda,scl,lowHeap
 
 --api.freq=1 -- debug
-print(('Send data every %s min'):format(api.freq))
-tmr.alarm(0,api.freq*60e3,1,function() speak() end)
+if api.freq>0 then
+  print(('Send data every %s min'):format(api.freq))
+  tmr.alarm(0,api.freq*60000,1,function() speak() end)
+else
+  print('Press KEY_FLASH to send NOW')
+  gpio.mode(3,gpio.INT)
+  gpio.trig(3,'down',function(state) speak() end)
+end
 
-print('Press KEY_FLASH to send NOW')
-gpio.mode(3,gpio.INT)
-gpio.trig(3,'low',function(state) speak() end)

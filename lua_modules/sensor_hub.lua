@@ -29,10 +29,18 @@ function M.format(message,squeese,t,h,p,pm01,pm25,pm10)
   if M.pm10=='null' then M.pm10=('%4s'):format(M.pm10) end
 
 -- formatted output (w/padding) from integer values
-  assert(1/2~=0,"sensors.format uses floating point operations")
-  if type(t)=='number' then M.t=('%5.1f'):format(t/10) end
-  if type(h)=='number' then M.h=('%5.1f'):format(h/10) end
-  if type(p)=='number' then M.p=('%7.2f'):format(p/100) end
+  if type(p)=='number' then
+    M.p=('%6d'):format(p) -- p/100 --> %7.2f
+    M.p=('%4s.%2s'):format(M.p:sub(1,4),M.p:sub(5))
+  end
+  if type(h)=='number' then
+    M.h=('%4d'):format(h) -- h/10  --> %5.1f
+    M.h=('%3s.%1s'):format(M.h:sub(1,3),M.h:sub(4))
+  end
+  if type(t)=='number' then
+    M.t=('%4d'):format(t) -- t/10  --> %5.1f
+    M.t=('%3s.%1s'):format(M.t:sub(1,3),M.t:sub(4))
+  end
   if type(pm01)=='number' then M.pm01=('%4d'):format(pm01) end
   if type(pm25)=='number' then M.pm25=('%4d'):format(pm25) end
   if type(pm10)=='number' then M.pm10=('%4d'):format(pm10) end
@@ -40,8 +48,8 @@ function M.format(message,squeese,t,h,p,pm01,pm25,pm10)
 -- process message for csv/column output
   if type(message)=='string' then
     local uptime=tmr.time()
-    M.upTime=('%02d:%02d:%02d:%02d'):format(uptime/864e2, -- days:
-              uptime%864e2/36e2,uptime%36e2/60,uptime%60) -- hh:mm:ss
+    M.upTime=('%02d:%02d:%02d:%02d'):format(uptime/86400, -- days:
+              uptime%86400/3600,uptime%3600/60,uptime%60) -- hh:mm:ss
     M.heap  =('%d'):format(node.heap())
     local payload=message:gsub('{(.-)}',M)
     M.upTime,M.heap,M.tag=nil,nil,nil -- release memory
