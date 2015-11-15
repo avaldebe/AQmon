@@ -1,7 +1,6 @@
 Documents/AM2302_Aosong.pdf
 Documents/AM2303_Aosong.pdf
 Documents/GY-65_pinout.jpg
-lua_modules/my_conf.lua
 lua_modules/app.lua
 lua_modules/hub.lua
 lua_modules/*test.lua
