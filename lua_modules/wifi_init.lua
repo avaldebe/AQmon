@@ -13,21 +13,23 @@ local moduleName = ...
 local M = {}
 _G[moduleName] = M
 
-local pass={}
-local function listap(t)
+local pass,cfg={},{}
+local function listap(t) -- (SSID:'Authmode, RSSI, BSSID, Channel')
   local stat={[0]='STATION_IDLE',
               [1]='STATION_CONNECTING',
               [2]='STATION_WRONG_PASSWORD',
               [3]='STATION_NO_AP_FOUND',
               [4]='STATION_CONNECT_FAIL',
               [5]='STATION_GOT_IP'}
+  local ssid,v,rssi
   for ssid,v in pairs(t) do
+    rssi=v:match("[^,]+,([^,]+),[^,]+,[^,]+")
     if pass[ssid] and wifi.sta.status()==5 then
-      print(('  STA Logged to: %s'):format(ssid))
+      print(('  STA Logged to: %s (%s dBm)'):format(ssid,rssi))
       print(('    %s %s'):format(stat[5],wifi.sta.getip()))
       return -- stop search
     elseif pass[ssid] then
-      print(('  STA Loggin to: %s'):format(ssid))
+      print(('  STA Loggin to: %s (%s dBm)'):format(ssid,rssi))
       wifi.sta.config(ssid,pass[ssid])
       local n=20
       tmr.alarm(0,10000,1,function()
@@ -52,25 +54,43 @@ local function listap(t)
 end
 function M.connect(mode,sleep)
 -- mode: wifi.STATION|wifi.SOFTAP|wifi.STATIONAP
--- sleep: wifi.MODEM_SLEEP
+-- sleep: nil|false(wifi.NONE_SLEEP)|true(wifi.MODEM_SLEEP)
+
+  if wifi.getmode()~=mode then
+    wifi.setmode(mode)
+  end
+
   if mode==wifi.SOFTAP or mode==wifi.STATIONAP then
-    local cfg=require('keys').ap -- {ssid=ssid,pwd=pass}
+    cfg=require('keys').ap -- {ssid=ssid,pwd=pass}
     wifi.setmode(mode)
     wifi.ap.config(cfg)
     print(('  AP  %s %s'):format(cfg.ssid,wifi.ap.getip()))
   end
+
   if mode==wifi.STATION or mode==wifi.STATIONAP then
+    local ssid,v
+    pass=require('keys').sta -- {ssid1=pass1,...}
     if wifi.sta.status()==5 then
-      print(('  STA %s %s'):format('Connected',wifi.sta.getip()))
+    -- test current SSID
+      ssid=wifi.sta.getconfig()
+      cfg={ssid=ssid,bssid=nil,channel=0,show_hidden=1}
+      wifi.sta.getap(cfg,0,listap)
     else
-      pass=require('keys').sta -- {ssid1=pass1,...}
-      wifi.setmode(mode)
-      wifi.sta.getap(listap)
+    -- loop over knowk SSIDs
+      for ssid,v in pairs(pass) do
+        cfg={ssid=ssid,bssid=nil,channel=0,show_hidden=1}
+        wifi.sta.getap(cfg,0,listap)
+      end
     end
-    if wifi.sta.status()==5 and sleep==wifi.MODEM_SLEEP then
+    -- put WiFi tranciver to sleep
+    if wifi.sta.status()==5 and sleep==true then
       print('WiFi sleep')
       wifi.sta.disconnect()
-      wifi.sleeptype(sleep)
+      wifi.sleeptype(wifi.MODEM_SLEEP)
+    elseif sleep==false then
+      print('WiFi wakeup')
+      wifi.sta.connect()
+      wifi.sleeptype(wifi.NONE_SLEEP)
     end
   end
 end
