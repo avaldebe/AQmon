@@ -21,9 +21,7 @@ status('normal')
 -- low heap(?) alternative: local status=print
 
 print('Start WiFi')
-require('wifi_init').connect(wifi.STATION,wifi.MODEM_SLEEP)
--- release memory
-wifi_init,package.loaded.wifi_init=nil,nil
+dofile('wifi_connect.lc')(wifi.STATION,true) -- mode,sleep
 status('iddle')
 
 local api=require('keys').api

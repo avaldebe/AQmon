@@ -5,7 +5,7 @@
 : ${CHANNEL:=37527}
 
 (($#))||set wipe bmp180 am2321 i2d pms3003 sensor_hub \
-            keys_v$CHANNEL wifi_init rgbLED sendData AQmon init
+            keys_v$CHANNEL wifi_connect rgbLED sendData AQmon init
 
 while (($#)); do
   PORT=`ls /dev/ttyUSB? /dev/rfcomm? 2>/dev/null`
@@ -20,7 +20,7 @@ while (($#)); do
     luatool.py -p $PORT -rw;;
   bmp180|dht22|am2321)
     luatool.py -p $PORT -rcf $opt.lua;;
-  wifi_init|i2d|pms3003|sendData|rgbLED|keys) #|hueLED)
+  wifi_connect|i2d|pms3003|sendData|rgbLED|keys) #|hueLED)
     luatool.py -p $PORT -cf $opt.lua;;
   app|app.*|AQmon|AQmon.*)
     luatool.py -p $PORT -rcf ${opt%.*}.lua -t app.lua;;
