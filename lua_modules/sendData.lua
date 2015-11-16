@@ -16,13 +16,7 @@ return function(self,status)
   end
   self.sent=false
 
-  if wifi.sta.status()~=5 then
-    print('WiFi wakeup')
-    wifi.sta.connect()
-  --status('alert')
-  end
-  wifi.sleeptype(wifi.NONE_SLEEP)
-
+  dofile('wifi_connect.lc')(wifi.STATION,false) -- wifi wake-up
   local sk=net.createConnection(net.TCP,0)
 --[[Expected sequence of events:
     sk:connect(...)
@@ -72,9 +66,7 @@ return function(self,status)
     conn:close()
     print('  Disconnected')
     gpio.write(0,1)
-    print('WiFi sleep')
-    wifi.sleeptype(wifi.MODEM_SLEEP)
-    wifi.sta.disconnect()
+    dofile('wifi_connect.lc')(wifi.STATION,true) -- wifi sleep
     self.sent=nil
     self.last=tmr.time()
     status('iddle')
