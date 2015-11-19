@@ -8,7 +8,6 @@
             keys_v$CHANNEL wifi_connect rgbLED sendData AQmon init
 
 while (($#)); do
-  PORT=`ls /dev/ttyUSB? /dev/rfcomm? 2>/dev/null`
   opt=$1
   trap "exit" SIGHUP SIGINT SIGTERM
   case $opt in
