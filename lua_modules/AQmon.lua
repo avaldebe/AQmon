@@ -55,9 +55,8 @@ end
 
 --[[ Run code ]]
 
--- start PM sensor data collection
-require('sensors').init(pin.sda,pin.scl) -- sda,scl
-
+-- send 1st dataset & start PM sensor data collection
+speak(true)
 --api.freq=1 -- debug
 if api.freq>0 then
   print(('Send data every %s min'):format(api.freq))
