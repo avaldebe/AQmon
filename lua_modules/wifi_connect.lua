@@ -12,7 +12,6 @@ MIT license, http://opensource.org/licenses/MIT
 return function(mode,sleep)
 -- mode: wifi.STATION|wifi.SOFTAP|wifi.STATIONAP
 -- sleep: nil|false(wifi.NONE_SLEEP)|true(wifi.MODEM_SLEEP)
-
   local pass,cfg={},{} -- password,AP search config.
 
 -- callback function for wifi.sta.getap(cfg,0,listAP)
@@ -70,29 +69,25 @@ return function(mode,sleep)
 
 -- STA modes: wifi.STATION|wifi.STATIONAP
   if mode==wifi.STATION or mode==wifi.STATIONAP then
-    local ssid,v
     pass=require('keys').sta -- {ssid1=pass1,...}
     if wifi.sta.status()==5 then
     -- test current SSID
-      ssid=wifi.sta.getconfig()
-      cfg={ssid=ssid,bssid=nil,channel=0,show_hidden=1}
+      cfg={ssid=wifi.sta.getconfig(),bssid=nil,channel=0,show_hidden=1}
       wifi.sta.getap(cfg,0,listAP)
     else
-    -- loop over knowk SSIDs
-      for ssid,v in pairs(pass) do
-        cfg={ssid=ssid,bssid=nil,channel=0,show_hidden=1}
-        wifi.sta.getap(cfg,0,listAP)
-      end
+    -- loop over available APs
+      wifi.sta.getap(listAP)
     end
-    -- put WiFi tranciver to sleep
+    -- WiFi tranciver: sleep/wake-up
     if wifi.sta.status()==5 and sleep==true then
       print('WiFi sleep')
       wifi.sta.disconnect()
       wifi.sleeptype(wifi.MODEM_SLEEP)
     elseif sleep==false then
       print('WiFi wakeup')
-      wifi.sta.connect()
       wifi.sleeptype(wifi.NONE_SLEEP)
+      wifi.sta.connect()
     end
   end
+
 end
