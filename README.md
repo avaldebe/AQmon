@@ -3,13 +3,12 @@ DIY Air Quality Monitor
 
 ### Controler
 
-- ESP8266: [nodemcu-devkit][] with [nodemcu-firmware][] ([0.9.6 20150627][], integer).
+- ESP8266: [nodemcu-devkit][] with [nodemcu-firmware][] ([0.9.6 20150704][], integer).
 - Send met data to [ThingSpeak][].
 
 [nodemcu-devkit]:   https://github.com/nodemcu/nodemcu-devkit
 [nodemcu-firmware]: https://github.com/nodemcu/nodemcu-firmware
 [0.9.6 20150704]:   https://github.com/nodemcu/nodemcu-firmware/releases/tag/0.9.6-dev_20150704
-[0.9.6 20150627]:   https://github.com/nodemcu/nodemcu-firmware/releases/tag/0.9.6-dev_20150627
 [thingspeak]:       https://thingspeak.com
 
 ### Sensors
@@ -48,7 +47,6 @@ DIY Air Quality Monitor
 [MCP4725]: http://www.aliexpress.com/snapshot/6817337390.html?orderId=68495646090843
 [PCA9685]: http://www.aliexpress.com/snapshot/6763611745.html?orderId=68109608820843
 
-
 ### Development HW
 - Status RGB LED
 - [OLED][]: I2C 128X64 display driven by an SSD1306
@@ -75,30 +73,27 @@ DIY Air Quality Monitor
 
 - lua_modules: There is bearly enough RAM for the current modules.
   A [nodemcu-custom-build][] for 0.9.6 could be the way forward.
-  - BME280 sensor.
   - MAX17043 sensor.
-  - read sensor ids and write it as metadata(?).
-  - sleep between measurements(?)
-    - note: dsleep is incompatible with user blink of ledD0
+  - BME280 sensor.
   - browser side makrdown with [strapdown.js][]
   - index.md: index page with thingspeak plugins and external widgets
   - config.md: config page
     - save params to `keys.lua`
     - wifi.SOFTAP only(?)
-  - decode forecast & obervations from [yr.no][] using [highcharts][] pharser:<br/>
-      GET http://www.highcharts.com/samples/data/jsonp.php?url=http://www.yr.no/place/Norway/Oslo/Oslo/Marienlyst_skole/forecast.xml&callback=cjson.decode<br/>
-      ... loadstrng(payload)
 - plugins
   - live update for the last hour datapoint(?)
-  - PM data pluggin
-- nodemcu-firmware (maybe not needed)
-  - i2c.bmpXXX   module for BMP085/BMP180 sensors
-  - i2c.am232X   module for AM2320/AM2321 sensors
-  - pms3003      module for PMS3003 sensor
-  - i2c.bme280   module for BME280 sensor
-  - i2c.max17043 module for MAX17043 sensor
-  - try [nodemcu-custom-build][]
 
 [strapdown.js]: http://strapdownjs.com
 [luatool.py]: https://github.com/4refr0nt/luatool
 [nodemcu-custom-build]: http://frightanic.com/nodemcu-custom-build
+
+### Alternative implementations
+
+- RPi: python powered moniitor.
+  - Fast to prototype new sensors.
+  - Extensive python sensor libraries.
+  - Weekend project.
+- esp-link: espXX + atmega328/168 (w/optiboot).
+  - Divide the problem in wifi/post (esp) and sensor-read (atmega).
+  - Extensive arduino sensor libraries.
+  - Re-program the atmega OTA.
