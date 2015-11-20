@@ -11,8 +11,9 @@ MIT license, http://opensource.org/licenses/MIT
 return function(self,status)
   status('normal')
   if self.sent~=nil then -- already sending data
-    status('iddle')
-    return
+    status('alert')
+    print('  Warning: last message not yet sent')
+  --return
   end
   self.sent=false
 
@@ -30,7 +31,6 @@ return function(self,status)
     assert(conn~=nil,'socket:on(connection) stale socket')
     status('normal')
     print('  Connected')
-    gpio.write(0,0)
     print('  Send data')
     local payload=('GET /{path} HTTP/1.1\r\n'
               ..'Host: {url}\r\nConnection: close\r\nAccept: */*\r\n'
@@ -65,13 +65,11 @@ return function(self,status)
     status('normal')
     conn:close()
     print('  Disconnected')
-    gpio.write(0,1)
     dofile('wifi_connect.lc')(wifi.STATION,true) -- wifi sleep
     self.sent=nil
     self.last=tmr.time()
     status('iddle')
   end)
   print(('Send data to %s.'):format(self.url))
-  gpio.mode(0,gpio.OUTPUT)
   sk:connect(80,self.url)
 end
