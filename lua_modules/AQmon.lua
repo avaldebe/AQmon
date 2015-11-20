@@ -20,10 +20,6 @@ local status=dofile('rgbLED.lc')(500,pin.ledR,pin.ledG,pin.ledB,
 status('normal')
 -- low heap(?) alternative: local status=print
 
-print('Start WiFi')
-dofile('wifi_connect.lc')(wifi.STATION,true) -- mode,sleep
-status('iddle')
-
 local api=require('keys').api
 --api:sendData=dofile('sendData.lua')(status)
 function speak(verbose)
@@ -54,15 +50,19 @@ function speak(verbose)
 end
 
 --[[ Run code ]]
+print('Start WiFi')
+dofile('wifi_connect.lc')(wifi.STATION,true) -- mode,sleep
+status('iddle')
 
--- send 1st dataset & start PM sensor data collection
-speak(true)
 --api.freq=1 -- debug
-if api.freq>0 then
-  print(('Send data every %s min'):format(api.freq))
-  tmr.alarm(0,api.freq*60000,1,function() speak(false) end)
-else
-  print('Press KEY_FLASH to send NOW')
-  gpio.mode(3,gpio.INT)
-  gpio.trig(3,'low',function(state) speak(true) end)
-end
+tmr.alarm(0,10000,0,function() -- 10s after start
+  if api.freq>0 then
+    print(('Send data every %s min'):format(api.freq))
+    speak(false) -- send 1st dataset & start PM sensor data collection
+    tmr.alarm(0,api.freq*60000,1,function() speak(false) end)
+  else
+    print('Press KEY_FLASH to send NOW')
+    gpio.mode(3,gpio.INT)
+    gpio.trig(3,'low',function(state) speak(true) end)
+  end
+end)
