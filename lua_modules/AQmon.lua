@@ -10,13 +10,13 @@ MIT license, http://opensource.org/licenses/MIT
 
 --[[ HW pin assignment ]]
 
-local pin={ledR=1,ledG=2,ledB=4,sda=5,scl=6}
+local pin=require('keys').pin
 
 --[[ Local functions ]]
 
 -- LED status indicator
 local status=dofile('rgbLED.lc')(500,pin.ledR,pin.ledG,pin.ledB,
-  {alert='320000',alert='010000',normal='000100',iddle='000001'})
+  {warning='320000',alert='010000',normal='000100',iddle='000001'})
 status('normal')
 -- low heap(?) alternative: local status=print
 
@@ -33,7 +33,7 @@ function speak(verbose)
   end
   local lowHeap=true
   print('Read data')
-  require('sensors').init(pin.sda,pin.scl,lowHeap) -- sda,scl,lowHeap
+  require('sensors').init(pin.sda,pin.scl,pin.PMset,lowHeap) -- sda,scl,lowHeap
   sensors.read(verbose)
   api.path=sensors.format('status=uptime={upTime},heap={heap}'
   ..'&field1={t}&field2={h}&field3={p}&field4={pm01}&field5={pm25}&field6={pm10}',

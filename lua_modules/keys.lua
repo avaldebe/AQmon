@@ -15,4 +15,9 @@ M.api.id='CHANNEL_ID'   -- api=require('keys').api
 M.api.get='Read  Key'   --'https://..api.url../channels/'..api.id..'/feed.json?key='..api.get
 M.api.put='Write Key'   --'https://..api.url../update?key='..api.put
 M.api.freq=1            -- update frequency in minutes
+
+-- HW pin assignment
+M.pin={ledR=1,ledG=2,ledB=4,  -- RGB led
+       sda=5,scl=6,           -- I2C bus
+       PMset=7}               -- PMS3003
 return M
