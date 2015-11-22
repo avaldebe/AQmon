@@ -1,11 +1,17 @@
 --[[
 pms3003.lua for ESP8266 with nodemcu-firmware
-  Read Particulated Matter (PM) concentrations on air from a PMS3003 sensor
+  Read Particulated Matter (PM) concentrations on air from a PMS3003 sensor.
   More info at  https://github.com/avaldebe/AQmon
 
 Written by Álvaro Valdebenito.
 
 MIT license, http://opensource.org/licenses/MIT
+
+Sampling:
+- 1 shot/on demand.
+- ~650 ms sample & decoding.
+- pin3 (SET) of the PMS3003 controles operation mode.
+  SET=H continious sampling, SET=L standby.
 
 Data format:
   The PMS3003 write UART (3.3V TTL) messages 4+20 bytes long.
@@ -19,7 +25,8 @@ Body:  20 bytes, 10 pairs of bytes (MSB,LSB)
   bytes 11, 12: MSB,LSB of PM 1.0 [ug/m3] (std. atmosphere)
   bytes 13, 14: MSB,LSB of PM 2.5 [ug/m3] (std. atmosphere)
   bytes 15, 16: MSB,LSB of PM 10. [ug/m3] (std. atmosphere)
-  bytes 17..24: no idea what they are.
+  bytes 17..22: no idea what they are.
+  bytes 23..24: cksum=byte01+..+byte22.
 ]]
 
 local moduleName = ...
@@ -27,58 +34,71 @@ local M = {}
 _G[moduleName] = M
 
 local pms={}
-local function decode(data,verbose)
-  local i,n,msb,lsb
+local function decode(data,verbose,stdATM)
+  local i,n,msb,lsb,cksum
+  cksum=0
   for i=1,#data,2 do
     n=(i-1)/2 -- index of byte pair (msb,lsb): 0..10
-    msb,lsb=data:byte(i,i+1)                          -- 2*char-->2*byte
-    pms[n]=tonumber(('%02X%02X'):format(msb,lsb),16)  -- 2*byte-->hex-->dec
-    if verbose==true then
-      print(('  data#%2d byte:%3d..%03d hex:%2X%02X dec:%6d'):format(n,
-        msb,lsb,msb,lsb,pms[n]))
-    end
+    msb,lsb=data:byte(i,i+1)  -- 2*char-->2*byte
+    pms[n]=msb*256+lsb        -- 2*byte-->dec
+    cksum=cksum+(i<#data-1 and msb+lsb or 0)
+  --print(('  data#%2d byte:%3d,%3d dec:%6d cksum:%6d'):format(n,msb,lsb,pms[n],cksum))
   end
 --[[
-We use the byte pair 'BM' (dec 16973) as end message
-instead of Begin Mesage. The 1st byte pair (pms[0]) after 'BM'
-should be dec20, folowed by 10 byte pairs (20 bytes).
+Message beggins with the byte pair 'BM' (dec 16973).
+The next byte pair (pms[1]) should be dec20, folowed by 10 byte pairs (20 bytes).
 ]]
---assert(pms[0]==20 and #pms==10,'pms3003: wrongly phrased data.')
-  if pms[0]~=20 or #pms~=10 then pms={} end
-end
-
-M.pm01,M.pm25,M.pm10=nil,nil,nil
-function M.read(verbose,stdATM)
-  if #pms~=10 then
+--assert(pms[0]==16973 and pms[1]==20 and #pms==11,'pms3003: wrongly phrased data.')
+  if cksum~=pms[#pms] then
     M.pm01,M.pm25,M.pm10='null','null','null'
   elseif stdATM==true then
-    M.pm01,M.pm25,M.pm10=pms[4],pms[5],pms[5]
+    M.pm01,M.pm25,M.pm10=pms[5],pms[6],pms[7]
   else -- TSI standard
-    M.pm01,M.pm25,M.pm10=pms[1],pms[2],pms[3]
+    M.pm01,M.pm25,M.pm10=pms[2],pms[3],pms[4]
   end
   if verbose==true then
     print(('pms3003: %4s[ug/m3],%4s[ug/m3],%4s[ug/m3]'):format(M.pm01,M.pm25,M.pm10))
   end
 end
 
-local init=nil
-function M.init(verbose)
-  if init then return end
-  if verbose==true then
-    print('pms3003: start acquisition. Type stopM+ENTER twice to stop.')
+local pinSET=nil
+function M.init(pin_set,verbose,finished)
+  if type(pin_set)=='number' then
+    pinSET=pin_set
+    gpio.mode(pinSET,gpio.OUTPUT)
   end
-  uart.on('data','M',function(data)
-    local msg=data:match('(......................)BM$')
-    if msg then
-      decode(msg,verbose)
-    elseif data:find('stop') then
-      if verbose==true then
-        print('pms3003: stop acquisition.')
-      end
-      uart.on('data')
-      init=nil
+  if finished==true and tmrus then
+    print('pms3003: data acquisition finished.\n  Console enhabled.')
+  elseif verbose==true then
+    print('pms3003: data acquisition paused.\n  Console enhabled.')
+  end
+  gpio.write(pinSET,gpio.LOW)  -- low-power standby mode
+  uart.on('data')
+end
+
+M.pm01,M.pm25,M.pm10='null','null','null'
+function M.read(verbose,stdATM)
+  local tmrus=nil
+  if verbose==true then
+    print('pms3003: data acquisition started.\n  Console dishabled.')
+  end
+  M.pm01,M.pm25,M.pm10='null','null','null'
+  uart.on('data',24,function(data)
+    tmr.stop(3)                 -- stop fail timer
+    if verbose==true then
+      print(('pms3003: data acquired (%07dus).'):format(tmr.now()-tmrus))
     end
+    decode(data,verbose,stdATM)
+    M.init(nil,verbose,tmrus)
   end,0)
+  gpio.write(pinSET,gpio.HIGH)  -- continuous sampling mode
+  tmr.alarm(3,1200,0,function() -- 1.2s after sampling started
+    if verbose==true then
+      print(('pms3003: data acquisition failed (%07dus).'):format(tmr.now()-tmrus))
+    end
+    M.pm01,M.pm25,M.pm10='null','null','null'
+    M.init(nil,verbose)
+  end)
 end
 
 return M
