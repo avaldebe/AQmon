@@ -63,17 +63,18 @@ end
 
 local cleanup=false     -- release modules after use
 local persistence=false -- use last values when read fails
-local SDA,SCL           -- buffer device address and pinout
+local SDA,SCL,PMset      -- buffer device address and pinout
 local init=false
-function M.init(sda,scl,lowHeap,keepVal)
+function M.init(sda,scl,pm_set,lowHeap,keepVal)
   if type(sda)=='number' then SDA=sda end
   if type(scl)=='number' then SCL=scl end
+  if type(pm_set)=='number' then PMset=pm_set end
   if type(lowHeap)=='boolean' then cleanup=lowHeap     end
   if type(keepVal)=='boolean' then persistence=keepVal end
 
   assert(type(SDA)=='number','sensors.init 1st argument sould be SDA')
   assert(type(SCL)=='number','sensors.init 2nd argument sould be SCL')
-  require('pms3003').init()  -- start acquisition
+  assert(type(PMset)=='number','sensors.init 3rd argument sould be PMset')
   init=true
 end
 
@@ -119,25 +120,23 @@ function M.read(verbose)
     h,t = nil,nil -- release variables to avoid re-formatting
   end
 
-  require('pms3003').init()
+  require('pms3003').init(PMset)
   pms3003.read()
-  pm01,pm25,pm10=pms3003.pm01,pms3003.pm25,pms3003.pm10
---[[if cleanup then  -- release memory
-    uart.on('data','\r',function(data)
-      if data=='\r' then uart.on('data') end
-    end,0)
-    pms3003,package.loaded.pms3003=nil,nil
-  end]]
-  if verbose then
-    print(M.format(payload:format('pms3003'),false,t,h,p,pm01,pm25,pm10))
-    pm01,pm25,pm10 = nil,nil,nil -- release variables to avoid re-formatting
-  end
-
-  if verbose then
-    print(M.format(payload:format('Sensed'),false))
-  else
-    M.format(nil,nil,t,h,p,pm01,pm25,pm10) -- only format module outputs
-  end
+  tmr.alarm(3,650,0,function() -- 650 ms after read
+    pm01,pm25,pm10=pms3003.pm01,pms3003.pm25,pms3003.pm10
+    if cleanup then  -- release memory
+      pms3003,package.loaded.pms3003=nil,nil
+    end
+    if verbose then
+      print(M.format(payload:format('pms3003'),false,t,h,p,pm01,pm25,pm10))
+      pm01,pm25,pm10 = nil,nil,nil -- release variables to avoid re-formatting
+    end
+    if verbose then
+      print(M.format(payload:format('Sensed'),false))
+    else
+      M.format(nil,nil,t,h,p,pm01,pm25,pm10) -- only format module outputs
+    end
+  end)
 end
 
 return M
