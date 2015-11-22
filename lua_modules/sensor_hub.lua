@@ -122,7 +122,7 @@ function M.read(verbose)
 
   require('pms3003').init(PMset)
   pms3003.read()
-  tmr.alarm(3,650,0,function() -- 650 ms after read
+  tmr.alarm(2,650,0,function() -- 650 ms after read
     pm01,pm25,pm10=pms3003.pm01,pms3003.pm25,pms3003.pm10
     if cleanup then  -- release memory
       pms3003,package.loaded.pms3003=nil,nil
