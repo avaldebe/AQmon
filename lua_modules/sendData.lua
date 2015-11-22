@@ -11,7 +11,7 @@ MIT license, http://opensource.org/licenses/MIT
 return function(self,status)
   status('normal')
   if self.sent~=nil then -- already sending data
-    status('alert')
+    status('warning')
     print('  Warning: last message not yet sent')
   --return
   end
