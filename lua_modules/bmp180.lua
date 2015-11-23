@@ -64,7 +64,7 @@ function M.read(oss)
     print('Need to call bmp180.init(...) call before calling bmp180.read(...).')
     return
   end
-  local REG_COMMAND,WAIT,c,UT,UP,X1,X2,X3,B3,B4,B5,B6,B7,p
+  local REG_COMMAND,WAIT,c,UT,UP,X1,X2,X3,B3,B4,B5,B6,B7,t,p
 -- read temperature from BMP
   REG_COMMAND = 0x2E
   WAIT = 5000 -- 5ms
@@ -89,7 +89,7 @@ function M.read(oss)
   X1 = (UT - cal.AC6) * cal.AC5 / 32768
   X2 = cal.MC * 2048 / (X1 + cal.MD)
   B5 = X1 + X2
-  M.temperature= (B5 + 8) / 16  -- integer value of temp[C]*10
+  t = (B5 + 8) / 16
 
 -- read pressure from BMP
   if type(oss)~="number" or oss<0 or oss>3 then oss=0 end
@@ -128,7 +128,11 @@ function M.read(oss)
   X1 = (p / 256) * (p / 256)
   X1 = (X1 * 3038) / 65536
   X2 = (-7357 * p) / 65536
-  M.pressure = p +(X1 + X2 + 3791) / 16
+  p = p +(X1 + X2 + 3791) / 16
+
+-- expose results
+  M.temperature = t -- integer value of temp[C]*10
+  M.pressure    = p -- integer value of pres[hPa]*100
 end
 
 return M
