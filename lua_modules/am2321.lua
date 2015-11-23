@@ -13,8 +13,6 @@ local moduleName = ...
 local M = {}
 _G[moduleName] = M
 
-local ADDR=bit.rshift(0xB8,1) -- use 7bit address
-
 local function crc_check(c)
   local len=c:len()
   local crc=0xFFFF
@@ -36,10 +34,7 @@ end
 -- initialize i2c
 local id=0
 local SDA,SCL -- buffer device address and pinout
-function M.init(addr,sda,scl)
-  if (addr and addr~=ADDR) then
-    ADDR=addr
-  end
+function M.init(sda,scl)
   if (sda and sda~=SDA) or (scl and scl~=SCL) then
     SDA,SCL=sda,scl
     i2c.setup(id,SDA,SCL,i2c.SLOW)
@@ -47,6 +42,7 @@ function M.init(addr,sda,scl)
 end
 
 function M.read()
+  local ADDR=bit.rshift(0xB8,1) -- use 7bit address
 -- wakeup
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
