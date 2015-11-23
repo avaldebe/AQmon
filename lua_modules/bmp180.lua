@@ -15,9 +15,6 @@ local M = {}
 _G[moduleName] = M
 
 local ADDR = 0x77 -- BMP085/BMP180 address
-local REG_CALIBRATION = 0xAA
-local REG_CONTROL = 0xF4
-local REG_RESULT  = 0xF6
 
 -- calibration coefficients
 local AC1, AC2, AC3, AC4, AC5, AC6, B1, B2, MB, MC, MD
@@ -35,7 +32,7 @@ function M.init(sda,scl)
 -- request CALIBRATION
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
-  i2c.write(id,REG_CALIBRATION)
+  i2c.write(id,0xAA) -- REG_CALIBRATION
   i2c.stop(id)
 -- read CALIBRATION
   i2c.start(id)
@@ -65,13 +62,13 @@ local function readTemperature()
 -- request TEMPERATURE
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
-  i2c.write(id,REG_CONTROL,REG_COMMAND)
+  i2c.write(id,0xF4,REG_COMMAND) -- REG_CONTROL,REG_COMMAND
   i2c.stop(id)
   tmr.delay(WAIT)
 -- request RESULT
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
-  i2c.write(id,REG_RESULT)
+  i2c.write(id,0xF6) -- REG_RESULT
   i2c.stop(id)
 -- read RESULT
   i2c.start(id)
@@ -95,13 +92,13 @@ local function readPressure(oss)
 -- request PRESSURE
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
-  i2c.write(id,REG_CONTROL,REG_COMMAND)
+  i2c.write(id,0xF4,REG_COMMAND) -- REG_CONTROL,REG_COMMAND
   i2c.stop(id)
   tmr.delay(WAIT)
 -- request RESULT
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
-  i2c.write(id,REG_RESULT)
+  i2c.write(id,0xF6) -- REG_RESULT
   i2c.stop(id)
 -- read RESULT
   i2c.start(id)
