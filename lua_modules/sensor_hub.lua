@@ -89,13 +89,11 @@ function M.read(verbose)
   local vars={}
   local payload='%-12s,{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
 
-  require('i2d').init(nil,SDA,SCL)
   require('bmp180').init(SDA,SCL)
   bmp180.read(0)   -- 0:low power .. 3:oversample
   vars={p=bmp180.pressure,t=bmp180.temperature}
   if cleanup then  -- release memory
     bmp180,package.loaded.bmp180 = nil,nil
-    i2d,package.loaded.i2d = nil,nil
   end
   if verbose then
     vars.time=tmr.time();vars.heap=node.heap()

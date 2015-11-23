@@ -14,17 +14,10 @@ local moduleName = ...
 local M = {}
 _G[moduleName] = M
 
-require('i2d') -- i2c utility library
-
 local ADDR = 0x77 -- BMP085/BMP180 address
 local REG_CALIBRATION = 0xAA
 local REG_CONTROL = 0xF4
 local REG_RESULT  = 0xF6
-
-local COMMAND_TEMPERATURE = 0x2E
-local COMMAND_PRESSURE = {[0]=0x34,[1]=0x74,[2]=0xB4,[3]=0xF4}
-local WAIT_TEMPERATURE = 5000 -- 5ms
-local WAIT_PRESSURE    = {[0]= 5000,[1]= 8000,[2]=14000,[3]=26000}
 
 -- calibration coefficients
 local AC1, AC2, AC3, AC4, AC5, AC6, B1, B2, MB, MC, MD
@@ -32,41 +25,61 @@ local init = false
 local B5
 
 -- initialize module
-function M.init(...)
-  i2d.init(ADDR,...)
-  if not init then
--- request CALIBRATION
-    i2d.write(REG_CALIBRATION)
--- read CALIBRATION
-    local c=i2d.read(22,REG_CALIBRATION)
--- unpack CALIBRATION
-    AC1=i2d.b2i(c:byte( 1),c:byte( 2),true)
-    AC2=i2d.b2i(c:byte( 3),c:byte( 4),true)
-    AC3=i2d.b2i(c:byte( 5),c:byte( 6),true)
-    AC4=i2d.b2i(c:byte( 7),c:byte( 8))
-    AC5=i2d.b2i(c:byte( 9),c:byte(10))
-    AC6=i2d.b2i(c:byte(11),c:byte(12))
-    B1 =i2d.b2i(c:byte(13),c:byte(14),true)
-    B2 =i2d.b2i(c:byte(15),c:byte(16),true)
-    MB =i2d.b2i(c:byte(17),c:byte(18),true)
-    MC =i2d.b2i(c:byte(19),c:byte(20),true)
-    MD =i2d.b2i(c:byte(21),c:byte(22),true)
--- initialization completed
-    init = true
+function M.init(sda,scl)
+  if (sda and sda~=SDA) or (scl and scl~=SCL) then
+    SDA,SCL=sda,scl
+    i2c.setup(id,SDA,SCL,i2c.SLOW)
   end
+
+  if init then return end
+-- request CALIBRATION
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.TRANSMITTER)
+  i2c.write(id,REG_CALIBRATION)
+  i2c.stop(id)
+-- read CALIBRATION
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.RECEIVER)
+  local c = i2c.read(id,22)
+  i2c.stop(id)
+-- unpack CALIBRATION
+  AC1=c:byte( 1)*256+c:byte( 2)+(AC1>32767 and -65536 or 0)
+  AC2=c:byte( 3)*256+c:byte( 4)+(AC2>32767 and -65536 or 0)
+  AC3=c:byte( 5)*256+c:byte( 6)+(AC3>32767 and -65536 or 0)
+  AC4=c:byte( 7)*256+c:byte( 8)
+  AC5=c:byte( 9)*256+c:byte(10)
+  AC6=c:byte(11)*256+c:byte(12)
+  B1 =c:byte(13)*256+c:byte(14)+(B1 >32767 and -65536 or 0)
+  B2 =c:byte(15)*256+c:byte(16)+(B2 >32767 and -65536 or 0)
+  MB =c:byte(17)*256+c:byte(18)+(MB >32767 and -65536 or 0)
+  MC =c:byte(19)*256+c:byte(20)+(MC >32767 and -65536 or 0)
+  MD =c:byte(21)*256+c:byte(22)+(MD >32767 and -65536 or 0)
+-- initialization completed
+  init = true
 end
 
 -- read temperature from BMP
 local function readTemperature()
+  local REG_COMMAND = 0x2E
+  local WAIT = 5000 -- 5ms
 -- request TEMPERATURE
-  i2d.write(REG_CONTROL,COMMAND_TEMPERATURE)
-  tmr.delay(WAIT_TEMPERATURE)
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.TRANSMITTER)
+  i2c.write(id,REG_CONTROL,REG_COMMAND)
+  i2c.stop(id)
+  tmr.delay(WAIT)
 -- request RESULT
-  i2d.write(REG_RESULT)
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.TRANSMITTER)
+  i2c.write(id,REG_RESULT)
+  i2c.stop(id)
 -- read RESULT
-  local c = i2d.read(2)
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.RECEIVER)
+  local c = i2c.read(id,2)
+  i2c.stop(id)
 -- unpack TEMPERATURE
-  local UT = i2d.b2i(c:byte(1,2))
+  local UT = c:byte(1)*265+c:byte(2)
   local X1 = (UT - AC6) * AC5 / 32768
   local X2 = MC * 2048 / (X1 + MD)
   B5 = X1 + X2
@@ -77,15 +90,26 @@ end
 -- read pressure from BMP
 -- must be read after read temperature
 local function readPressure(oss)
+  local REG_COMMAND = ({[0]=0x34,[1]=0x74,[2]=0xB4, [3]=0xF4 })[oss]
+  local WAIT        = ({[0]=5000,[1]=8000,[2]=14000,[3]=26000})[oss]
 -- request PRESSURE
-  i2d.write(REG_CONTROL,COMMAND_PRESSURE[oss])
-  tmr.delay(WAIT_PRESSURE[oss])
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.TRANSMITTER)
+  i2c.write(id,REG_CONTROL,REG_COMMAND)
+  i2c.stop(id)
+  tmr.delay(WAIT)
 -- request RESULT
-  i2d.write(REG_RESULT)
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.TRANSMITTER)
+  i2c.write(id,REG_RESULT)
+  i2c.stop(id)
 -- read RESULT
-  local c = i2d.read(3)
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.RECEIVER)
+  local c = i2c.read(id,3)
+  i2c.stop(id)
 -- unpack PRESSURE
-  local UP = i2d.b3i(c:byte(1,3))
+  local UP = c:byte(1)*65536+c:byte(2)*256+c:byte(3)
   UP = UP / 2 ^ (8 - oss)
   local B6 = B5 - 4000
   local X1 = B2 * (B6 * B6 / 4096) / 2048
@@ -108,17 +132,13 @@ end
 -- read temperature and pressure from BMP
 -- oss: oversampling setting. 0-3
 function M.read(oss)
-  if type(oss)~="number" or oss<0 or oss>3 then
-    oss=0
-  end
   if not init then
-    print("Need to call init(...) call before calling read(...).")
-    M.temperature=nil
-    M.pressure   =nil
-  else
-    M.temperature=readTemperature()
-    M.pressure   =readPressure(oss)
+    print('Need to call bmp180.init(...) call before calling bmp180.read(...).')
+    return
   end
+  if type(oss)~="number" or oss<0 or oss>3 then oss=0 end
+  M.temperature=readTemperature()
+  M.pressure   =readPressure(oss)
 end
 
 return M
