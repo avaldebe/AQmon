@@ -23,35 +23,35 @@ function M.format(tab,message,squeese)
       if k=='pm01' or k=='pm25' or k=='pm10' then
         M[k]=('%4d'):format(v)
       elseif k=='t' or k=='h' then
-        v=('%4d'):format(v) -- t/10|h/10 --> %5.1f
+        v=('%4d'):format(v)           -- t/10|h/10 --> %5.1f
         M[k]=('%3s.%1s'):format(v:sub(1,3),v:sub(4))
       elseif k=='p' then
-        v=('%6d'):format(v) -- p/100 --> %7.2f
+        v=('%6d'):format(v)           -- p/100 --> %7.2f
         M[k]=('%4s.%2s'):format(v:sub(1,4),v:sub(5))
+      elseif k=='upTime' then
+        M[k]=('%02d:%02d:%02d:%02d')  -- days:hh:mm:ss
+            :format(v/86400,v%86400/3600,v%3600/60,v%60)
+      else -- heap|time
+        M[k]=('%d'):format(v)
       end
 -- formatted output (w/padding) default values ('null')
     elseif type(v)~='nil' or type(v)~='string' then
       if k=='pm01' or k=='pm25' or k=='pm10' then
         M[k]=('%4s'):format(v and v or 'null')
       elseif k=='t' or k=='h' then
-        M[k]=('%5s'):format('null')
+        M[k]=('%5s'):format(v and v or 'null')
       elseif k=='p' then
-        M[k]=('%7s'):format('null')
+        M[k]=('%7s'):format(v and v or 'null')
       end
     end
   end
 
 -- process message for csv/column output
   if type(message)=='string' and message~='' then
-    local uptime=tmr.time()
-    M.upTime=('%02d:%02d:%02d:%02d'):format(uptime/86400, -- days:
-              uptime%86400/3600,uptime%3600/60,uptime%60) -- hh:mm:ss
-    M.heap  =('%d'):format(node.heap())
     local payload=message:gsub('{(.-)}',M)
-    M.upTime,M.heap,M.tag=nil,nil,nil -- release memory
-
-    if squeese then                   -- remove all spaces (and padding)
-      payload=payload:gsub(' ','')      -- from output
+    M.upTime,M.time,M.heap=nil,nil,nil  -- release memory
+    if squeese then                     -- remove all spaces (and padding)
+      payload=payload:gsub(' ','')      --   from output
     end
     return payload
   end
@@ -89,7 +89,7 @@ function M.read(verbose)
     M.format({p=nil,h=nil,t=nil,pm01=nil,pm25=nil,pm10=nil})
   end
   local vars={}
-  local payload='{upTime}  %-7s:{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3]  heap:{heap}'
+  local payload='%-7s:{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
 
   require('i2d').init(nil,SDA,SCL)
   require('bmp180').init(SDA,SCL)
@@ -100,7 +100,8 @@ function M.read(verbose)
     i2d,package.loaded.i2d = nil,nil
   end
   if verbose then
-    print(M.format(vars,payload:format('am2321'),false))
+    vars.time=tmr.time();vars.heap=node.heap()
+    print(M.format(vars,payload:format('am2321')))
   else
     M.format(vars)
   end
@@ -114,7 +115,8 @@ function M.read(verbose)
     i2d,package.loaded.i2d = nil,nil
   end
   if verbose then
-    print(M.format(vars,payload:format('bmp085'),false))
+    vars.time=tmr.time();vars.heap=node.heap()
+    print(M.format(vars,payload:format('bmp085')))
   else
     M.format(vars}
   end
