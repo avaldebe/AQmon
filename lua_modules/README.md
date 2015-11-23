@@ -51,7 +51,6 @@ h,t = am2321.humidity,am2321.temperature
 
 -- release memory
 am2321,package.loaded.am2321 = nil,nil
-i2d,package.loaded.i2d = nil,nil
 
 -- format and print the results
 h=h and ('%.1f'):format(h/10) or 'null'

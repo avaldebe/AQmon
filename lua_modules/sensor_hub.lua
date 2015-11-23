@@ -104,13 +104,11 @@ function M.read(verbose)
     M.format(vars)
   end
 
-  require('i2d').init(nil,SDA,SCL)
   require('am2321').init(SDA,SCL)
   am2321.read()
   vars={h=am2321.humidity,t=am2321.temperature}
   if cleanup then  -- release memory
     am2321,package.loaded.am2321=nil,nil
-    i2d,package.loaded.i2d = nil,nil
   end
   if verbose then
     vars.time=tmr.time();vars.heap=node.heap()
