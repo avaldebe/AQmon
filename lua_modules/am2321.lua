@@ -13,6 +13,8 @@ local moduleName = ...
 local M = {}
 _G[moduleName] = M
 
+local ADDR=bit.rshift(0xB8,1) -- use 7bit address
+
 local function crc_check(c)
   local len=c:len()
   local crc=0xFFFF
@@ -42,7 +44,6 @@ function M.init(sda,scl)
 end
 
 function M.read()
-  local ADDR=bit.rshift(0xB8,1) -- use 7bit address
 -- wakeup
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
