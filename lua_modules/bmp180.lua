@@ -67,7 +67,7 @@ function M.read(oss)
   local REG_COMMAND,WAIT,c,UT,UP,X1,X2,X3,B3,B4,B5,B6,B7,t,p
 -- read temperature from BMP
   REG_COMMAND = 0x2E
-  WAIT = 5000 -- 5ms
+  WAIT        = 5000 -- 5 ms
 -- request TEMPERATURE
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
@@ -93,8 +93,8 @@ function M.read(oss)
 
 -- read pressure from BMP
   if type(oss)~="number" or oss<0 or oss>3 then oss=0 end
-  REG_COMMAND = ({[0]=0x34,[1]=0x74,[2]=0xB4, [3]=0xF4 })[oss]
-  WAIT        = ({[0]=5000,[1]=8000,[2]=14000,[3]=26000})[oss]
+  REG_COMMAND = ({[0]=0x34,[1]=0x74,[2]=0xB4, [3]=0xF4 })[oss] -- 0x34+64*oss
+  WAIT        = ({[0]=5000,[1]=8000,[2]=14000,[3]=26000})[oss] -- 5,..,26 ms
 -- request PRESSURE
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
