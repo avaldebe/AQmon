@@ -14,8 +14,6 @@ local M = {}
 _G[moduleName] = M
 
 local ADDR=bit.rshift(0xB8,1) -- use 7bit address
-local id=0
-local SDA,SCL -- buffer device address and pinout
 
 local function crc_check(c)
   local len=c:len()
@@ -36,6 +34,8 @@ local function crc_check(c)
 end
 
 -- initialize i2c
+local id=0
+local SDA,SCL -- buffer device address and pinout
 function M.init(addr,sda,scl)
   if (addr and addr~=ADDR) then
     ADDR=addr
