@@ -18,7 +18,6 @@ local ADDR = 0x77 -- BMP085/BMP180 address
 
 -- calibration coefficients
 local cal={} -- AC1, AC2, AC3, AC4, AC5, AC6, B1, B2, MB, MC, MD
-local B5
 
 -- initialize module
 function M.init(sda,scl)
@@ -54,10 +53,21 @@ function M.init(sda,scl)
   end
 end
 
+-- must be read after read temperature
+local function readPressure(oss)
+end
+
+-- read temperature and pressure from BMP
+-- oss: oversampling setting. 0-3
+function M.read(oss)
+  if not init then
+    print('Need to call bmp180.init(...) call before calling bmp180.read(...).')
+    return
+  end
+  local REG_COMMAND,WAIT,c,UT,UP,X1,X2,X3,B3,B4,B5,B6,B7,p
 -- read temperature from BMP
-local function readTemperature()
-  local REG_COMMAND = 0x2E
-  local WAIT = 5000 -- 5ms
+  REG_COMMAND = 0x2E
+  WAIT = 5000 -- 5ms
 -- request TEMPERATURE
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
@@ -72,22 +82,19 @@ local function readTemperature()
 -- read RESULT
   i2c.start(id)
   i2c.address(id,ADDR,i2c.RECEIVER)
-  local c = i2c.read(id,2)
+  c = i2c.read(id,2)
   i2c.stop(id)
 -- unpack TEMPERATURE
-  local UT = c:byte(1)*265+c:byte(2)
-  local X1 = (UT - cal.AC6) * cal.AC5 / 32768
-  local X2 = cal.MC * 2048 / (X1 + cal.MD)
+  UT = c:byte(1)*265+c:byte(2)
+  X1 = (UT - cal.AC6) * cal.AC5 / 32768
+  X2 = cal.MC * 2048 / (X1 + cal.MD)
   B5 = X1 + X2
-  local t = (B5 + 8) / 16
-  return t
-end
+  M.temperature= (B5 + 8) / 16  -- integer value of temp[C]*10
 
 -- read pressure from BMP
--- must be read after read temperature
-local function readPressure(oss)
-  local REG_COMMAND = ({[0]=0x34,[1]=0x74,[2]=0xB4, [3]=0xF4 })[oss]
-  local WAIT        = ({[0]=5000,[1]=8000,[2]=14000,[3]=26000})[oss]
+  if type(oss)~="number" or oss<0 or oss>3 then oss=0 end
+  REG_COMMAND = ({[0]=0x34,[1]=0x74,[2]=0xB4, [3]=0xF4 })[oss]
+  WAIT        = ({[0]=5000,[1]=8000,[2]=14000,[3]=26000})[oss]
 -- request PRESSURE
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
@@ -102,39 +109,26 @@ local function readPressure(oss)
 -- read RESULT
   i2c.start(id)
   i2c.address(id,ADDR,i2c.RECEIVER)
-  local c = i2c.read(id,3)
+  c = i2c.read(id,3)
   i2c.stop(id)
 -- unpack PRESSURE
-  local UP = c:byte(1)*65536+c:byte(2)*256+c:byte(3)
-  UP = UP / 2 ^ (8 - oss)
-  local B6 = B5 - 4000
-  local X1 = cal.B2 * (B6 * B6 / 4096) / 2048
-  local X2 = cal.AC2 * B6 / 2048
-  local X3 = X1 + X2
-  local B3 = ((cal.AC1 * 4 + X3) * 2 ^ oss + 2) / 4
+  UP = c:byte(1)*65536+c:byte(2)*256+c:byte(3)
+  UP = UP / 2^(8-oss)
+  B6 = B5 - 4000
+  X1 = cal.B2 * (B6 * B6 / 4096) / 2048
+  X2 = cal.AC2 * B6 / 2048
+  X3 = X1 + X2
+  B3 = ((cal.AC1 * 4 + X3) * 2^oss + 2) / 4
   X1 = cal.AC3 * B6 / 8192
   X2 = (cal.B1 * (B6 * B6 / 4096)) / 65536
   X3 = (X1 + X2 + 2) / 4
-  local B4 = cal.AC4 * (X3 + 32768) / 32768
-  local B7 = (UP - B3) * (50000/2 ^ oss)
-  local p = (B7 / B4) * 2
+  B4 = cal.AC4 * (X3 + 32768) / 32768
+  B7 = (UP - B3) * (50000/2^oss)
+  p = (B7 / B4) * 2
   X1 = (p / 256) * (p / 256)
   X1 = (X1 * 3038) / 65536
   X2 = (-7357 * p) / 65536
-  p = p +(X1 + X2 + 3791) / 16
-  return p
-end
-
--- read temperature and pressure from BMP
--- oss: oversampling setting. 0-3
-function M.read(oss)
-  if not init then
-    print('Need to call bmp180.init(...) call before calling bmp180.read(...).')
-    return
-  end
-  if type(oss)~="number" or oss<0 or oss>3 then oss=0 end
-  M.temperature=readTemperature()
-  M.pressure   =readPressure(oss)
+  M.pressure = p +(X1 + X2 + 3791) / 16
 end
 
 return M
