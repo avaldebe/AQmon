@@ -57,14 +57,15 @@ function M.format(tab,message,squeese)
   end
 end
 
--- Output variables (padded for csv/column output)
-M.format({p=nil,h=nil,t=nil,pm01=nil,pm25=nil,pm10=nil})
-
 local cleanup=false     -- release modules after use
 local persistence=false -- use last values when read fails
 local SDA,SCL           -- buffer device address and pinout
 local init=false
 function M.init(sda,scl,lowHeap,keepVal)
+-- Output variables (padded for csv/column output)
+  M.format({p=nil,h=nil,t=nil,pm01=nil,pm25=nil,pm10=nil})
+  if init then return end
+
   if type(sda)=='number' then SDA=sda end
   if type(scl)=='number' then SCL=scl end
   if type(lowHeap)=='boolean' then cleanup=lowHeap     end
@@ -80,16 +81,13 @@ function M.read(verbose)
   assert(type(verbose)=='boolean' or verbose==nil,
     'sensors.read 1st argument sould be boolean')
   if not init then
-    print('Need to call init(...) call before calling read(...).')
+    print('Need to call sensors.init(...) call before calling sensors.read(...).')
     return
   end
+  if not persistence then M.init() end -- reset output
 
-  if not persistence then
-    -- Output variables (padded for csv/column output)
-    M.format({p=nil,h=nil,t=nil,pm01=nil,pm25=nil,pm10=nil})
-  end
   local vars={}
-  local payload='%-7s:{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
+  local payload='%-12s,{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
 
   require('i2d').init(nil,SDA,SCL)
   require('bmp180').init(SDA,SCL)
