@@ -22,26 +22,26 @@ function M.format(vars,message,squeese)
     if type(v)~='number' then
       if k=='pm01' or k=='pm25' or k=='pm10' then
         M[k]=('%4d'):format(v)
-      elseif k=='t' or k=='h' then
-        v=('%4d'):format(v)           -- t/10|h/10 --> %5.1f
+      elseif k=='t' or k=='h' then  -- t/10|h/10 --> %5.1f
+        v=('%4d'):format(v)
         M[k]=('%3s.%1s'):format(v:sub(1,3),v:sub(4))
-      elseif k=='p' then
-        v=('%6d'):format(v)           -- p/100 --> %7.2f
+      elseif k=='p' then            -- p/100 --> %7.2f
+        v=('%6d'):format(v)
         M[k]=('%4s.%2s'):format(v:sub(1,4),v:sub(5))
-      elseif k=='upTime' then
-        M[k]=('%02d:%02d:%02d:%02d')  -- days:hh:mm:ss
+      elseif k=='upTime' then       -- days:hh:mm:ss
+        M[k]=('%02d:%02d:%02d:%02d')
             :format(v/86400,v%86400/3600,v%3600/60,v%60)
-      else -- heap|time
+      else                          -- heap|time
         M[k]=('%d'):format(v)
       end
 -- formatted output (w/padding) default values ('null')
     elseif type(v)~='nil' or type(v)~='string' then
       if k=='pm01' or k=='pm25' or k=='pm10' then
-        M[k]=('%4s'):format(v and v or 'null')
+        M[k]=('%4s'):format(v or 'null')
       elseif k=='t' or k=='h' then
-        M[k]=('%5s'):format(v and v or 'null')
+        M[k]=('%5s'):format(v or 'null')
       elseif k=='p' then
-        M[k]=('%7s'):format(v and v or 'null')
+        M[k]=('%7s'):format(v or 'null')
       end
     end
   end
