@@ -52,6 +52,9 @@ function M.init(sda,scl)
     w=c:byte(19)*256+c:byte(20);cal.MC =w+(w>32767 and -65536 or 0)
     w=c:byte(21)*256+c:byte(22);cal.MD =w+(w>32767 and -65536 or 0)
   end
+
+-- M.init suceeded if calibration coeff. table is not empty
+  return (next(cal)~=nil)
 end
 
 -- must be read after read temperature

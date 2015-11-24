@@ -89,31 +89,39 @@ function M.read(verbose)
   local vars={}
   local payload='%-12s,{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
 
-  require('bmp180').init(SDA,SCL)
-  bmp180.read(0)   -- 0:low power .. 3:oversample
-  vars={p=bmp180.pressure,t=bmp180.temperature}
+  if require('bmp180').init(SDA,SCL) then
+    bmp180.read(0)   -- 0:low power .. 3:oversample
+    vars={p=bmp180.pressure,t=bmp180.temperature}
+  elseif verbose then
+    print(('Sensor %s not found'):format('bmp180'))
+  end
   if cleanup then  -- release memory
     bmp180,package.loaded.bmp180 = nil,nil
   end
   if verbose then
     vars.time=tmr.time();vars.heap=node.heap()
-    print(M.format(vars,payload:format('am2321')))
+    print(M.format(vars,payload:format('bmp180')))
   else
     M.format(vars)
   end
+  vars={} -- release memory
 
-  require('am2321').init(SDA,SCL)
-  am2321.read()
-  vars={h=am2321.humidity,t=am2321.temperature}
+  if require('am2321').init(SDA,SCL) then
+    am2321.read()
+    vars={h=am2321.humidity,t=am2321.temperature}
+  elseif verbose then
+    print(('Sensor %s not found'):format('am2321'))
+  end
   if cleanup then  -- release memory
     am2321,package.loaded.am2321=nil,nil
   end
   if verbose then
     vars.time=tmr.time();vars.heap=node.heap()
-    print(M.format(vars,payload:format('bmp085')))
+    print(M.format(vars,payload:format('am2321')))
   else
     M.format(vars}
   end
+  vars={} -- release memory
 
   require('pms3003').init()
   pms3003.read()

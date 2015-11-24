@@ -27,9 +27,11 @@ luatool.py -p $PORT -c -r -f pms3003.lua
 ```lua
 -- module setup
 sda,scl=3,4
-require('bmp180').init(sda,scl)
-bmp180.read(0)   -- 0:low power .. 3:oversample
-p,t = bmp180.pressure,bmp180.temperature
+found=require('bmp180').init(sda,scl)
+if found then
+  bmp180.read(0)   -- 0:low power .. 3:oversample
+  p,t = bmp180.pressure,bmp180.temperature
+end
 
 -- release memory
 bmp180,package.loaded.bmp180 = nil,nil
@@ -43,9 +45,11 @@ print(('p:%s, t:%s, heap:%d'):format(p,t,node.heap()))
 ```lua
 -- module setup
 sda,scl=2,1
-require('am2321').init(sda, scl)
-am2321.read()
-h,t = am2321.humidity,am2321.temperature
+found=require('am2321').init(sda, scl)
+if found then
+  am2321.read()
+  h,t = am2321.humidity,am2321.temperature
+end
 
 -- release memory
 am2321,package.loaded.am2321 = nil,nil

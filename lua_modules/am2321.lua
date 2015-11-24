@@ -41,6 +41,12 @@ function M.init(sda,scl)
     SDA,SCL=sda,scl
     i2c.setup(id,SDA,SCL,i2c.SLOW)
   end
+
+-- M.init suceeded if ADDR is found on SDA,SCL
+  i2c.start(id)
+  local c=i2c.address(id,ADDR,i2c.TRANSMITTER)
+  i2c.stop(id)
+  return c
 end
 
 function M.read()
