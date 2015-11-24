@@ -94,7 +94,7 @@ function M.read(verbose)
   if require('bmp180').init(SDA,SCL) then
     bmp180.read(0)   -- 0:low power .. 3:oversample
     if verbose then
-      bmp180.time=tmr.time();bmp180.heap=node.heap()
+      bmp180.heap,bmp180.time=node.heap(),tmr.time()
       print(M.format(bmp180,payload:format('bmp180')))
     else
       M.format(bmp180)
@@ -109,7 +109,7 @@ function M.read(verbose)
   if require('am2321').init(SDA,SCL) then
     am2321.read()
     if verbose then
-      am2321.time=tmr.time();am2321.heap=node.heap()
+      am2321.heap,am2321.time=node.heap(),tmr.time()
       print(M.format(am2321,payload:format('am2321')))
     else
       M.format(am2321)
