@@ -39,17 +39,18 @@ function M.init(sda,scl)
     local c = i2c.read(id,22)
     i2c.stop(id)
 -- unpack CALIBRATION
-    cal.AC1=c:byte( 1)*256+c:byte( 2)+(cal.AC1>32767 and -65536 or 0)
-    cal.AC2=c:byte( 3)*256+c:byte( 4)+(cal.AC2>32767 and -65536 or 0)
-    cal.AC3=c:byte( 5)*256+c:byte( 6)+(cal.AC3>32767 and -65536 or 0)
-    cal.AC4=c:byte( 7)*256+c:byte( 8)
-    cal.AC5=c:byte( 9)*256+c:byte(10)
-    cal.AC6=c:byte(11)*256+c:byte(12)
-    cal.B1 =c:byte(13)*256+c:byte(14)+(cal.B1 >32767 and -65536 or 0)
-    cal.B2 =c:byte(15)*256+c:byte(16)+(cal.B2 >32767 and -65536 or 0)
-    cal.MB =c:byte(17)*256+c:byte(18)+(cal.MB >32767 and -65536 or 0)
-    cal.MC =c:byte(19)*256+c:byte(20)+(cal.MC >32767 and -65536 or 0)
-    cal.MD =c:byte(21)*256+c:byte(22)+(cal.MD >32767 and -65536 or 0)
+    local w
+    w=c:byte( 1)*256+c:byte( 2);cal.AC1=w+(w>32767 and -65536 or 0)
+    w=c:byte( 3)*256+c:byte( 4);cal.AC2=w+(w>32767 and -65536 or 0)
+    w=c:byte( 5)*256+c:byte( 6);cal.AC3=w+(w>32767 and -65536 or 0)
+    w=c:byte( 7)*256+c:byte( 8);cal.AC4=w
+    w=c:byte( 9)*256+c:byte(10);cal.AC5=w
+    w=c:byte(11)*256+c:byte(12);cal.AC6=w
+    w=c:byte(13)*256+c:byte(14);cal.B1 =w+(w>32767 and -65536 or 0)
+    w=c:byte(15)*256+c:byte(16);cal.B2 =w+(w>32767 and -65536 or 0)
+    w=c:byte(17)*256+c:byte(18);cal.MB =w+(w>32767 and -65536 or 0)
+    w=c:byte(19)*256+c:byte(20);cal.MC =w+(w>32767 and -65536 or 0)
+    w=c:byte(21)*256+c:byte(22);cal.MD =w+(w>32767 and -65536 or 0)
   end
 end
 
