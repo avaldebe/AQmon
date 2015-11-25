@@ -50,14 +50,15 @@ The next byte pair (pms[1]) should be dec20, folowed by 10 byte pairs (20 bytes)
 ]]
 --assert(pms[0]==16973 and pms[1]==20 and #pms==11,'pms3003: wrongly phrased data.')
   if cksum~=pms[#pms] then
-    M.pm01,M.pm25,M.pm10='null','null','null'
+    M.pm01,M.pm25,M.pm10=nil,nil,nil
   elseif stdATM==true then
     M.pm01,M.pm25,M.pm10=pms[5],pms[6],pms[7]
   else -- TSI standard
     M.pm01,M.pm25,M.pm10=pms[2],pms[3],pms[4]
   end
   if verbose==true then
-    print(('pms3003: %4s[ug/m3],%4s[ug/m3],%4s[ug/m3]'):format(M.pm01,M.pm25,M.pm10))
+    print(('pms3003: %4s[ug/m3],%4s[ug/m3],%4s[ug/m3]')
+      :format(M.pm01 or 'null',M.pm25 or 'null',M.pm10 or 'null'))
   end
 end
 
@@ -73,15 +74,16 @@ function M.init(pin_set,verbose,status)
   end
   gpio.write(pinSET,gpio.LOW)  -- low-power standby mode
   uart.on('data')
+
+-- M.init suceeded if pinSET is LOW
+  return type(pinSET)=='number'
 end
 
-M.pm01,M.pm25,M.pm10='null','null','null'
 function M.read(verbose,stdATM,callBack)
-  local tmrus=nil
   if verbose==true then
     print('pms3003: data acquisition started.\n  Console dishabled.')
   end
-  M.pm01,M.pm25,M.pm10='null','null','null'
+  M.pm01,M.pm25,M.pm10=nil,nil,nil
   uart.on('data',24,function(data)
     tmr.stop(4)                 -- stop fail timer
     decode(data,verbose,stdATM)
