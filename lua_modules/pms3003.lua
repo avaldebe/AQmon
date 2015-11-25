@@ -62,42 +62,36 @@ The next byte pair (pms[1]) should be dec20, folowed by 10 byte pairs (20 bytes)
 end
 
 local pinSET=nil
-function M.init(pin_set,verbose,finished)
+function M.init(pin_set,verbose,status)
   if type(pin_set)=='number' then
     pinSET=pin_set
     gpio.mode(pinSET,gpio.OUTPUT)
   end
-  if finished==true and tmrus then
-    print('pms3003: data acquisition finished.\n  Console enhabled.')
-  elseif verbose==true then
-    print('pms3003: data acquisition paused.\n  Console enhabled.')
+  if verbose==true then
+    print(('pms3003: data acquisition %s.\n  Console enhabled.')
+      :format(type(status)=='string' and status or 'paused'))
   end
   gpio.write(pinSET,gpio.LOW)  -- low-power standby mode
   uart.on('data')
 end
 
 M.pm01,M.pm25,M.pm10='null','null','null'
-function M.read(verbose,stdATM)
+function M.read(verbose,stdATM,callBack)
   local tmrus=nil
   if verbose==true then
     print('pms3003: data acquisition started.\n  Console dishabled.')
   end
   M.pm01,M.pm25,M.pm10='null','null','null'
   uart.on('data',24,function(data)
-    tmr.stop(3)                 -- stop fail timer
-    if verbose==true then
-      print(('pms3003: data acquired (%07dus).'):format(tmr.now()-tmrus))
-    end
+    tmr.stop(4)                 -- stop fail timer
     decode(data,verbose,stdATM)
-    M.init(nil,verbose,tmrus)
+    M.init(nil,verbose,'finished')
+    if type(callBack)=='function' then callBack() end
   end,0)
   gpio.write(pinSET,gpio.HIGH)  -- continuous sampling mode
-  tmr.alarm(3,1200,0,function() -- 1.2s after sampling started
-    if verbose==true then
-      print(('pms3003: data acquisition failed (%07dus).'):format(tmr.now()-tmrus))
-    end
-    M.pm01,M.pm25,M.pm10='null','null','null'
-    M.init(nil,verbose)
+  tmr.alarm(4,1000,0,function() -- 1s after sampling started
+    M.init(nil,verbose,'failed')
+    if type(callBack)=='function' then callBack() end
   end)
 end
 

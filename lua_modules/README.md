@@ -24,7 +24,10 @@ luatool.py -p $PORT -c -r -f i2d.lua
 ```
 
 ### Ussage example
+*Note*: Do not use pin `D8` (`gpio15`) for `I2C` as the pull-up resistors will
+interfeere with the bootiung process.
 
+#### BMP085, BMP180
 ```lua
 -- module setup
 sda,scl=3,4
@@ -42,6 +45,7 @@ t = p and ('%.1f'):format(t/10)  or 'null'
 print(('p:%s, t:%s, heap:%d'):format(p,t,node.heap()))
 ```
 
+#### AM2320, AM2321
 ```lua
 -- module setup
 sda,scl=2,1
@@ -59,8 +63,25 @@ t=t and ('%.1f'):format(t/10) or 'null'
 print(('h:%s, t:%s, heap:%d'):format(h,t,node.heap()))
 ```
 
-*Note*: Do not use pin `D8` (`gpio15`) for `I2C` as the pull-up resistors will
-interfeere with the bootiung process.
+#### PMS3003
+```lua
+-- module setup
+pinSET=4
+require('pms0330').init(pinSET)
+pms3003.read()
+tmr.alarm(0,650,0,function() -- 650 ms after read
+  pm01,pm25,pm10=pms3003.pm01,pms3003.pm25,pms3003.pm10
+
+-- release memory
+  pms0330,package.loaded.pms0330 = nil,nil
+
+-- format and print the results
+  pm01=pm01 and ('%4d'):format(pm01) or 'null'
+  pm25=pm25 and ('%4d'):format(pm25) or 'null'
+  pm10=pm10 and ('%4d'):format(pm10) or 'null'
+  print(('pm1:%s, pm2.5:%s, pm10:%s, heap:%d'):format(pm01,0,25,pm10,node.heap()))
+end)
+```
 
 ### References
 After many round of write/rewrite code it becomes hard to keep track of
