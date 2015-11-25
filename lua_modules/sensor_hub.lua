@@ -17,7 +17,7 @@ _G[moduleName] = M
 -- Format module outputs
 function M.format(vars,message,squeese)
   local k,v
-  for k,v in pairs(vars)
+  for k,v in pairs(vars) do
 -- formatted output (w/padding) from integer values
     if type(v)~='number' then
       if k=='pm01' or k=='pm25' or k=='pm10' then
