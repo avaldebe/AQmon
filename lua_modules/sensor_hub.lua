@@ -122,23 +122,21 @@ function M.read(verbose)
     am2321,package.loaded.am2321=nil,nil
   end
 
-  require('pms3003').init(PMset)
-  pms3003.read()
-  tmr.alarm(2,650,0,function() -- 650 ms after read
-    pm01,pm25,pm10=pms3003.pm01,pms3003.pm25,pms3003.pm10
-    if cleanup then  -- release memory
-      pms3003,package.loaded.pms3003=nil,nil
-    end
-    if verbose then
-      print(M.format(payload:format('pms3003'),false,t,h,p,pm01,pm25,pm10))
-      pm01,pm25,pm10 = nil,nil,nil -- release variables to avoid re-formatting
-    end
-    if verbose then
-      print(M.format(payload:format('Sensed'),false))
-    else
-      M.format(nil,nil,t,h,p,pm01,pm25,pm10) -- only format module outputs
-    end
-  end)
+  if require('pms3003').init(PMset) then
+    pms3003.read(false,false,function()
+      if verbose then
+        pms3003.heap,pms3003.time=node.heap(),tmr.time()
+        print(M.format(pms3003,payload:format('pms3003')))
+      else
+        M.format(pms3003)
+      end
+    end)
+  elseif verbose then
+    print(('Sensor "%s" not found!'):format('pms3003'))
+  end
+  if cleanup then  -- release memory
+    pms3003,package.loaded.pms3003=nil,nil
+  end
 end
 
 return M
