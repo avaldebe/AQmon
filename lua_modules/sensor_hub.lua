@@ -81,7 +81,7 @@ function M.init(sda,scl,pm_set,lowHeap,keepVal)
   init=true
 end
 
-function M.read(verbose)
+function M.read(verbose,callBack)
   assert(type(verbose)=='boolean' or verbose==nil,
     'sensors.read 1st argument sould be boolean')
   if not init then
@@ -130,6 +130,7 @@ function M.read(verbose)
       else
         M.format(pms3003)
       end
+      if type(callBack)=='function' then callBack() end
     end)
   elseif verbose then
     print(('Sensor "%s" not found!'):format('pms3003'))
