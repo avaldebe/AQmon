@@ -6,7 +6,6 @@ Lua modules for [AQmon][] project.<br/>
 ### Sensor modules
 - `bmp180.lua`: BMP085 / BMP180 sensors.
 - `am2321.lua`: AM2320 / AM2321 sensors.
-- `i2d.lua`: i2c utility library.
 - `pms3003.lua`: PMS3003 sensor.
 - `sensor_hub.lua`: Read all sensors above.
 
@@ -20,7 +19,7 @@ luatool.py -p $PORT -w -r
 # upload, compile and restart
 luatool.py -p $PORT -c -r -f bmp180.lua
 luatool.py -p $PORT -c -r -f am2321.lua
-luatool.py -p $PORT -c -r -f i2d.lua
+luatool.py -p $PORT -c -r -f pms3003.lua
 ```
 
 ### Ussage example
@@ -31,13 +30,14 @@ interfeere with the bootiung process.
 ```lua
 -- module setup
 sda,scl=3,4
-require('bmp180').init(sda,scl)
-bmp180.read(0)   -- 0:low power .. 3:oversample
-p,t = bmp180.pressure,bmp180.temperature
+found=require('bmp180').init(sda,scl)
+if found then
+  bmp180.read(0)   -- 0:low power .. 3:oversample
+  p,t = bmp180.pressure,bmp180.temperature
+end
 
 -- release memory
 bmp180,package.loaded.bmp180 = nil,nil
-i2d,package.loaded.i2d = nil,nil
 
 -- format and print the results
 p = p and ('%.2f'):format(p/100) or 'null'
@@ -49,13 +49,14 @@ print(('p:%s, t:%s, heap:%d'):format(p,t,node.heap()))
 ```lua
 -- module setup
 sda,scl=2,1
-require('am2321').init(sda, scl)
-am2321.read()
-h,t = am2321.humidity,am2321.temperature
+found=require('am2321').init(sda, scl)
+if found then
+  am2321.read()
+  h,t = am2321.humidity,am2321.temperature
+end
 
 -- release memory
 am2321,package.loaded.am2321 = nil,nil
-i2d,package.loaded.i2d = nil,nil
 
 -- format and print the results
 h=h and ('%.1f'):format(h/10) or 'null'
