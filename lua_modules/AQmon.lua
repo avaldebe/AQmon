@@ -51,7 +51,7 @@ end
 
 --[[ Run code ]]
 print('Start WiFi')
-dofile('wifi_connect.lc')(wifi.STATION,true) -- mode,sleep
+require('wifi_connect')(wifi.STATION,true) -- mode,sleep
 status('iddle')
 
 --api.freq=1 -- debug

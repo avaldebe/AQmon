@@ -17,7 +17,7 @@ return function(self,status)
   end
   self.sent=false
 
-  dofile('wifi_connect.lc')(wifi.STATION,false) -- wifi wake-up
+  require('wifi_connect')(wifi.STATION,false) -- wifi wake-up
   local sk=net.createConnection(net.TCP,0)
 --[[Expected sequence of events:
     sk:connect(...)
@@ -65,7 +65,7 @@ return function(self,status)
     status('normal')
     conn:close()
     print('  Disconnected')
-    dofile('wifi_connect.lc')(wifi.STATION,true) -- wifi sleep
+    require('wifi_connect')(wifi.STATION,true) -- wifi sleep
     self.sent=nil
     self.last=tmr.time()
     status('iddle')
