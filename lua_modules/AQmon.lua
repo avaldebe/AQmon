@@ -21,7 +21,7 @@ status('normal')
 -- low heap(?) alternative: local status=print
 
 local api=require('keys').api
---api:sendData=dofile('sendData.lua')(status)
+--api:sendData=require('sendData')(status)
 function speak(verbose)
   if api.last and api.last>tmr.time() then -- tmr.time overflow
     print(('time overflow: %d>%d'):format(api.last,tmr.time()))
@@ -34,19 +34,20 @@ function speak(verbose)
   local lowHeap=true
   print('Read data')
   require('sensors').init(pin.sda,pin.scl,pin.PMset,lowHeap) -- sda,scl,lowHeap
-  sensors.read(verbose)
-  api.path=sensors.format('status=uptime={upTime},heap={heap}'
-  ..'&field1={t}&field2={h}&field3={p}&field4={pm01}&field5={pm25}&field6={pm10}',
-    true) -- remove spaces
+  sensors.read(verbose,function()
+    api.path=sensors.format('status=uptime={upTime},heap={heap}'
+    ..'&field1={t}&field2={h}&field3={p}&field4={pm01}&field5={pm25}&field6={pm10}',
+      true) -- remove spaces
 -- release memory
-  if lowHeap then
-    sensors,package.loaded.sensors=nil,nil
-    collectgarbage()
-  end
-  api.path=('update?key={put}&{path}'):gsub('{(.-)}',api)
---api:sendData()
-  dofile('sendData.lc')(api,status)
-  api.last=tmr.time()
+    if lowHeap then
+      sensors,package.loaded.sensors=nil,nil
+      collectgarbage()
+    end
+    api.path=('update?key={put}&{path}'):gsub('{(.-)}',api)
+  --api:sendData()
+    require('sendData')(api,status)
+    api.last=tmr.time()
+  end)
 end
 
 --[[ Run code ]]
