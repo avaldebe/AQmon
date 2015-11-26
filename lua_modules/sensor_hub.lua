@@ -145,14 +145,17 @@ function M.read(verbose,callBack)
       else
         M.format(sensor)
       end
+      if cleanup then  -- release memory
+        _G[sensor.name],package.loaded[sensor.name],sensor=nil,nil,nil
+      end
       if type(callBack)=='function' then callBack() end
     end)
   elseif verbose then
     print(('--Sensor "%s" not found!'):format(sensor.name))
+    if cleanup then  -- release memory
+      _G[sensor.name],package.loaded[sensor.name],sensor=nil,nil,nil
+    end
     if type(callBack)=='function' then callBack() end
-  end
-  if cleanup then  -- release memory
-    _G[sensor.name],package.loaded[sensor.name],sensor=nil,nil,nil
   end
 end
 

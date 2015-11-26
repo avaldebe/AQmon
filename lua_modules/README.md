@@ -105,10 +105,10 @@ sensor_hub.read(true) -- verbose mode
 -- module setup and read: all sensors
 sda,scl,pinSET=5,6,7
 require('sensors').init(sda,scl,pinSET,true) -- lowHeap mode
-sensors.read(true,function()
+sensors.read(false,function() -- quiet mode
   print(sensors.format({heap=node.heap(),time=tmr.time()},
     'sensors:{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'))
-end) -- verbose mode
+end)
 
 -- release memory
 sensors,package.loaded.sensors = nil,nil
