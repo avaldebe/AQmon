@@ -8,7 +8,11 @@ Written by Álvaro Valdebenito.
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
+local M={name=...}
+
 return function(self,status)
+  package.loaded[M.name]=nil -- volatile module 
+
   status('normal')
   if self.sent~=nil then -- already sending data
     status('warning')
