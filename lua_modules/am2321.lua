@@ -9,9 +9,8 @@ MIT license, http://opensource.org/licenses/MIT
 ]]
 
 
-local moduleName = ...
-local M = {}
-_G[moduleName] = M
+local M = {name=...}
+_G[M.name] = M
 
 local ADDR=bit.rshift(0xB8,1) -- use 7bit address
 
@@ -36,6 +35,7 @@ end
 -- initialize i2c
 local id=0
 local SDA,SCL -- buffer device address and pinout
+local init=false
 function M.init(sda,scl)
   if (sda and sda~=SDA) or (scl and scl~=SCL) then
     SDA,SCL=sda,scl
@@ -44,12 +44,14 @@ function M.init(sda,scl)
 
 -- M.init suceeded if ADDR is found on SDA,SCL
   i2c.start(id)
-  local c=i2c.address(id,ADDR,i2c.TRANSMITTER)
+  init=i2c.address(id,ADDR,i2c.TRANSMITTER)
   i2c.stop(id)
-  return c
+  return init
 end
 
 function M.read()
+-- ensure module is initialized
+  assert(init,('Need %s.init(...) before %s.read(...)'):format(M.name,M.name))
 -- wakeup
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)

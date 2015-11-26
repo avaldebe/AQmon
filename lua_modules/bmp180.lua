@@ -10,9 +10,8 @@ Written by Álvaro Valdebenito,
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
-local moduleName = ...
-local M = {}
-_G[moduleName] = M
+local M = {name=...}
+_G[M.name] = M
 
 local ADDR = 0x77 -- BMP085/BMP180 address
 
@@ -20,6 +19,7 @@ local ADDR = 0x77 -- BMP085/BMP180 address
 local cal={} -- AC1, AC2, AC3, AC4, AC5, AC6, B1, B2, MB, MC, MD
 
 -- initialize module
+local init=false
 function M.init(sda,scl)
   if (sda and sda~=SDA) or (scl and scl~=SCL) then
     SDA,SCL=sda,scl
@@ -54,20 +54,19 @@ function M.init(sda,scl)
   end
 
 -- M.init suceeded if calibration coeff. table is not empty
-  return (next(cal)~=nil)
-end
-
--- must be read after read temperature
-local function readPressure(oss)
+  init=(next(cal)~=nil)
+  return init
 end
 
 -- read temperature and pressure from BMP
 -- oss: oversampling setting. 0-3
 function M.read(oss)
-  if not init then
-    print('Need to call bmp180.init(...) call before calling bmp180.read(...).')
-    return
-  end
+-- ensure module is initialized
+  assert(init,('Need %s.init(...) before %s.read(...)'):format(M.name,M.name))
+-- check input varables
+  assert(type(oss)=='boolean' or oss==nil,
+    ('%s.init %s argument should be %s'):format(M.name,'1st','boolean')
+
   local REG_COMMAND,WAIT,c,UT,UP,X1,X2,X3,B3,B4,B5,B6,B7,t,p
 -- read temperature from BMP
   REG_COMMAND = 0x2E

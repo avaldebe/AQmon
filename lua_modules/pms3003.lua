@@ -29,14 +29,12 @@ Body:  20 bytes, 10 pairs of bytes (MSB,LSB)
   bytes 23..24: cksum=byte01+..+byte22.
 ]]
 
-local moduleName = ...
-local M = {}
-_G[moduleName] = M
+local M = {name=...}
+_G[M.name] = M
 
-local pms={}
 local function decode(data,verbose,stdATM)
-  local i,n,msb,lsb,cksum
-  cksum=0
+  local pms,cksum={},0
+  local i,n,msb,lsb
   for i=1,#data,2 do
     n=(i-1)/2 -- index of byte pair (msb,lsb): 0..10
     msb,lsb=data:byte(i,i+1)  -- 2*char-->2*byte
@@ -44,11 +42,12 @@ local function decode(data,verbose,stdATM)
     cksum=cksum+(i<#data-1 and msb+lsb or 0)
   --print(('  data#%2d byte:%3d,%3d dec:%6d cksum:%6d'):format(n,msb,lsb,pms[n],cksum))
   end
---[[
-Message beggins with the byte pair 'BM' (dec 16973).
-The next byte pair (pms[1]) should be dec20, folowed by 10 byte pairs (20 bytes).
-]]
---assert(pms[0]==16973 and pms[1]==20 and #pms==11,'pms3003: wrongly phrased data.')
+
+--Message beggins with the byte pair 'BM' (dec 16973).
+--The next byte pair (pms[1]) should be dec20, folowed by 10 byte pairs (20 bytes).
+--assert(pms[0]==16973 and pms[1]==20 and #pms==11,
+--  ('%s: wrongly phrased data.'):format(M.name))
+
   if cksum~=pms[#pms] then
     M.pm01,M.pm25,M.pm10=nil,nil,nil
   elseif stdATM==true then
@@ -57,8 +56,8 @@ The next byte pair (pms[1]) should be dec20, folowed by 10 byte pairs (20 bytes)
     M.pm01,M.pm25,M.pm10=pms[2],pms[3],pms[4]
   end
   if verbose==true then
-    print(('pms3003: %4s[ug/m3],%4s[ug/m3],%4s[ug/m3]')
-      :format(M.pm01 or 'null',M.pm25 or 'null',M.pm10 or 'null'))
+    print(('%s: %4s[ug/m3],%4s[ug/m3],%4s[ug/m3]')
+      :format(M.name,M.pm01 or 'null',M.pm25 or 'null',M.pm10 or 'null'))
   end
 end
 
@@ -69,8 +68,8 @@ function M.init(pin_set,verbose,status)
     gpio.mode(pinSET,gpio.OUTPUT)
   end
   if verbose==true then
-    print(('pms3003: data acquisition %s.\n  Console enhabled.')
-      :format(type(status)=='string' and status or 'paused'))
+    print(('%s: data acquisition %s.\n  Console enhabled.')
+      :format(M.name,type(status)=='string' and status or 'paused'))
   end
   gpio.write(pinSET,gpio.LOW)  -- low-power standby mode
   uart.on('data')
@@ -80,8 +79,18 @@ function M.init(pin_set,verbose,status)
 end
 
 function M.read(verbose,stdATM,callBack)
+-- ensure module is initialized
+  assert(init,('Need %s.init(...) before %s.read(...)'):format(M.name,M.name))
+-- check input varables
+  assert(type(verbose)=='boolean' or verbose==nil,
+    ('%s.init %s argument should be %s'):format(M.name,'1st','boolean')
+  assert(type(stdATM)=='boolean' or stdATM==nil,
+    ('%s.init %s argument should be %s'):format(M.name,'2ns','boolean')
+  assert(type(callBack)=='function' or callBack==nil,
+    ('%s.init %s argument should be %s'):format(M.name,'3rd','function')
+
   if verbose==true then
-    print('pms3003: data acquisition started.\n  Console dishabled.')
+    print(('%s: data acquisition started.\n  Console dishabled.'):format(M.name))
   end
   uart.on('data',24,function(data)
     tmr.stop(4)                 -- stop fail timer

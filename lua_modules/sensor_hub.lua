@@ -10,9 +10,8 @@ Written by Álvaro Valdebenito.
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
-local moduleName = ...
-local M = {}
-_G[moduleName] = M
+local M = {name=...}
+_G[M.name] = M
 
 -- Format module outputs
 function M.format(vars,message,squeese)
@@ -60,9 +59,9 @@ function M.format(vars,message,squeese)
   end
 end
 
+local SDA,SCL,PMset     -- buffer pinout
 local cleanup=false     -- release modules after use
 local persistence=false -- use last values when read fails
-local SDA,SCL,PMset      -- buffer device address and pinout
 local init=false
 function M.init(sda,scl,pm_set,lowHeap,keepVal)
 -- Output variables (padded for csv/column output)
@@ -75,68 +74,79 @@ function M.init(sda,scl,pm_set,lowHeap,keepVal)
   if type(lowHeap)=='boolean' then cleanup=lowHeap     end
   if type(keepVal)=='boolean' then persistence=keepVal end
 
-  assert(type(SDA)=='number','sensors.init 1st argument sould be SDA')
-  assert(type(SCL)=='number','sensors.init 2nd argument sould be SCL')
-  assert(type(PMset)=='number','sensors.init 3rd argument sould be PMset')
+  assert(type(SDA)=='number',
+    ('%s.init %s argument sould be %s'):format(M.name,'1st','SDA')
+  assert(type(SCL)=='number',
+    ('%s.init %s argument sould be %s'):format(M.name,'2nd','SCL')
+  assert(type(PMset)=='number',
+    ('%s.init %s argument sould be %s'):format(M.name,'3rd','PMset')
   init=true
 end
 
 function M.read(verbose,callBack)
+-- ensure module is initialized
+  assert(init,('Need %s.init(...) before %s.read(...)'):format(M.name,M.name))
+-- check input varables
   assert(type(verbose)=='boolean' or verbose==nil,
-    'sensors.read 1st argument sould be boolean')
-  if not init then
-    print('Need to call sensors.init(...) call before calling sensors.read(...).')
-    return
-  end
-  if not persistence then M.init() end -- reset output
+    ('%s.init %s argument should be %s'):format(M.name,'1st','boolean')
+  assert(type(callBack)=='function' or callBack==nil,
+    ('%s.init %s argument should be %s'):format(M.name,'2nd','function')
 
+-- reset output
+  if not persistence then M.init() end
+-- verbose print: csv/column output
   local payload='%-12s,{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
+  local sensor -- local "name" for sensor module
 
-  if require('bmp180').init(SDA,SCL) then
-    bmp180.read(0)   -- 0:low power .. 3:oversample
+  sensor=require('bmp180')
+  if sensor.init(SDA,SCL) then
+    sensor.read(0)   -- 0:low power .. 3:oversample
     if verbose then
-      bmp180.heap,bmp180.time=node.heap(),tmr.time()
-      print(M.format(bmp180,payload:format('bmp180')))
+      sensor.heap,sensor.time=node.heap(),tmr.time()
+      print(M.format(sensor,payload:format(sensor.name)))
     else
-      M.format(bmp180)
+      M.format(sensor)
     end
   elseif verbose then
-    print(('Sensor "%s" not found!'):format('bmp180'))
+    print(('Sensor "%s" not found!'):format(sensor.name))
   end
   if cleanup then  -- release memory
-    bmp180,package.loaded.bmp180 = nil,nil
+    _G[sensor.name],package.loaded[sensor.name],sensor=nil,nil,nil
   end
 
-  if require('am2321').init(SDA,SCL) then
-    am2321.read()
+  sensor=require('am2321')
+  if sensor.init(SDA,SCL) then
+    sensor.read()
     if verbose then
-      am2321.heap,am2321.time=node.heap(),tmr.time()
-      print(M.format(am2321,payload:format('am2321')))
+      sensor.heap,sensor.time=node.heap(),tmr.time()
+      print(M.format(sensor,payload:format(sensor.name)))
     else
-      M.format(am2321)
+      M.format(sensor)
     end
   elseif verbose then
-    print(('Sensor "%s" not found!'):format('am2321'))
+    print(('Sensor "%s" not found!'):format(sensor.name))
   end
   if cleanup then  -- release memory
-    am2321,package.loaded.am2321=nil,nil
+    _G[sensor.name],package.loaded[sensor.name],sensor=nil,nil,nil
   end
 
-  if require('pms3003').init(PMset) then
-    pms3003.read(false,false,function()
+  sensor=require('pms3003')
+  if sensor.init(PMset) then
+    sensor.read(false,false,function()
       if verbose then
-        pms3003.heap,pms3003.time=node.heap(),tmr.time()
-        print(M.format(pms3003,payload:format('pms3003')))
+        sensor.heap,sensor.time=node.heap(),tmr.time()
+        print(M.format(sensor,payload:format(sensor.name)))
       else
-        M.format(pms3003)
+        M.format(sensor)
       end
       if type(callBack)=='function' then callBack() end
     end)
   elseif verbose then
-    print(('Sensor "%s" not found!'):format('pms3003'))
+    print(('Sensor "%s" not found!'):format(sensor.name))
+    if type(callBack)=='function' then callBack() end
   end
   if cleanup then  -- release memory
-    pms3003,package.loaded.pms3003=nil,nil
+    _G[sensor.name],package.loaded[sensor.name],sensor=nil,nil,nil
   end
 end
 
