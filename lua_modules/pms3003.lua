@@ -83,7 +83,6 @@ function M.read(verbose,stdATM,callBack)
   if verbose==true then
     print('pms3003: data acquisition started.\n  Console dishabled.')
   end
-  M.pm01,M.pm25,M.pm10=nil,nil,nil
   uart.on('data',24,function(data)
     tmr.stop(4)                 -- stop fail timer
     decode(data,verbose,stdATM)
@@ -92,6 +91,7 @@ function M.read(verbose,stdATM,callBack)
   end,0)
   gpio.write(pinSET,gpio.HIGH)  -- continuous sampling mode
   tmr.alarm(4,1000,0,function() -- 1s after sampling started
+    M.pm01,M.pm25,M.pm10=nil,nil,nil
     M.init(nil,verbose,'failed')
     if type(callBack)=='function' then callBack() end
   end)
