@@ -129,7 +129,8 @@ function M.read(oss)
   X3 = (X1 + X2 + 2) / 4
   B4 = cal.AC4 * (X3 + 32768) / 32768
   B7 = (UP - B3) * (50000/2^oss)
-  p = (B7<0x80000000) and (B7*2)/B4 or (B7/B4)*2  -- retain preccision, avoid oveflow
+--p = (B7<0x80000000) and (B7*2)/B4 or (B7/B4)*2  -- retain preccision, avoid oveflow -- node.compile() fails
+  p = (B7 / B4) * 2
   X1 = (p / 256) * (p / 256)
   X1 = (X1 * 3038) / 65536
   X2 = (-7357 * p) / 65536

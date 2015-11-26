@@ -17,8 +17,9 @@ PORT=`ls /dev/ttyUSB? /dev/rfcomm? 2>/dev/null`
 # remove all *.lua and *.lc files
 luatool.py -p $PORT -w -r
 # upload, compile and restart
-luatool.py -p $PORT -c -r -f bmp180.lua
-luatool.py -p $PORT -c -r -f am2321.lua pms3003.lua sensor_hub.lua
+luatool.py -p $PORT -c -r -f bmp180.lua am2321.lua pms3003.lua
+# upload, rename, compile and restart
+luatool.py -p $PORT -c -r -f sensor_hub.lua -t sensors.lua
 ```
 
 ### Ussage example
@@ -103,10 +104,10 @@ sensor_hub.read(true) -- verbose mode
 
 -- module setup and read: all sensors
 sda,scl,pinSET=5,6,7
-require('sensors').init(sda,scl,PMset,true) -- lowHeap mode
+require('sensors').init(sda,scl,pinSET,true) -- lowHeap mode
 sensors.read(true,function()
-  print(sensor.format({heap=node.heap(),time=tmr.time()},
-    '{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'))
+  print(sensors.format({heap=node.heap(),time=tmr.time()},
+    'sensors:{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'))
 end) -- verbose mode
 
 -- release memory

@@ -81,6 +81,11 @@ function M.init(sda,scl,pm_set,lowHeap,keepVal)
     ('%s.init %s argument sould be %s'):format(M.name,'2nd','SCL'))
   assert(type(PMset)=='number' or PMset==nil,
     ('%s.init %s argument sould be %s'):format(M.name,'3rd','PMset'))
+
+  require('pms3003').init(PMset)
+  if cleanup then  -- release memory
+    pms3003,package.loaded.pms3003=nil,nil
+  end
   init=true
 end
 
@@ -96,7 +101,7 @@ function M.read(verbose,callBack)
 -- reset output
   if not persistence then M.init() end
 -- verbose print: csv/column output
-  local payload='%s,{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
+  local payload='%s:{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
   local sensor -- local "name" for sensor module
 
   sensor=require('bmp180')
