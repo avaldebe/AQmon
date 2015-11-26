@@ -4,7 +4,7 @@
 : ${VERSION:=0.9.6-dev_20150704}
 : ${CHANNEL:=37527}
 
-(($#))||set wipe bmp180 am2321 i2d pms3003 sensor_hub \
+(($#))||set wipe bmp180 am2321 pms3003 sensor_hub \
             keys_v$CHANNEL wifi_connect rgbLED sendData AQmon init
 
 while (($#)); do
@@ -17,17 +17,17 @@ while (($#)); do
 # list) luatool.py -p $PORT -l;;
   wipe)
     luatool.py -p $PORT -rw;;
-  bmp180|dht22|am2321)
-    luatool.py -p $PORT -rcf $opt.lua;;
-  wifi_connect|i2d|pms3003|sendData|rgbLED|keys) #|hueLED)
+  bmp180|am2321|pms3003)        # sensor modules
+    luatool.py -p $PORT -f $opt.lua;;
+  hub|hub.*|*_hub|*_hub.*)      # sensor hub module
+    luatool.py -p $PORT -rf ${opt%.*}.lua -t sensors.lua;;
+  keys|wifi_connect|sendData|rgbLED|hueLED)
     luatool.py -p $PORT -cf $opt.lua;;
   app|app.*|AQmon|AQmon.*)
     luatool.py -p $PORT -rcf ${opt%.*}.lua -t app.lua;;
-  hub|hub.*|*_hub|*_hub.*)
-    luatool.py -p $PORT -rcf ${opt%.*}.lua -t sensors.lua;;
   init|init.lua)
     luatool.py -p $PORT -rf ${opt%.*}.lua;;
-  *_v*|*_v*.lua)  # alternative versions, ej keys_v37527
+  *_v*|*_v*.lua)  # alternative versions, eg keys_v37527
     luatool.py -p $PORT -cf ${opt%.*}.lua -t ${opt/_v*/.lua};;
   *_test.lua)# test scripts
     luatool.py -p $PORT -df $opt -t test.lua;;

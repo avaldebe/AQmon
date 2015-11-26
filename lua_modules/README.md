@@ -18,8 +18,7 @@ PORT=`ls /dev/ttyUSB? /dev/rfcomm? 2>/dev/null`
 luatool.py -p $PORT -w -r
 # upload, compile and restart
 luatool.py -p $PORT -c -r -f bmp180.lua
-luatool.py -p $PORT -c -r -f am2321.lua
-luatool.py -p $PORT -c -r -f pms3003.lua
+luatool.py -p $PORT -c -r -f am2321.lua pms3003.lua sensor_hub.lua
 ```
 
 ### Ussage example
@@ -28,60 +27,90 @@ interfeere with the bootiung process.
 
 #### BMP085, BMP180
 ```lua
--- module setup
-sda,scl=3,4
+-- module setup and read
+sda,scl=3,4 -- GPIO0,GPIO2
 found=require('bmp180').init(sda,scl)
 if found then
   bmp180.read(0)   -- 0:low power .. 3:oversample
-  p,t = bmp180.pressure,bmp180.temperature
+  p = bmp180.pressure or 'null'
+  t = bmp180.temperature or 'null'
 end
 
 -- release memory
 bmp180,package.loaded.bmp180 = nil,nil
 
 -- format and print the results
-p = p and ('%.2f'):format(p/100) or 'null'
-t = p and ('%.1f'):format(t/10)  or 'null'
-print(('p:%s, t:%s, heap:%d'):format(p,t,node.heap()))
+if type(p)=='number' then
+  p=('%5d'):format(p)
+  p=('%4s.%2s'):format(p:sub(1,4),p:sub(5))
+end
+if type(t)=='number' then
+  t=('%4d'):format(t)
+  t=('%3s.%1s'):format(t:sub(1,3),t:sub(4))
+end
+print(('p:%s hPa, t:%s C, heap:%d'):format(p,t,node.heap()))
 ```
 
 #### AM2320, AM2321
 ```lua
--- module setup
-sda,scl=2,1
+-- module setup and read
+sda,scl=3,4 -- GPIO0,GPIO2
 found=require('am2321').init(sda, scl)
 if found then
   am2321.read()
-  h,t = am2321.humidity,am2321.temperature
+  h = am2321.humidity or 'null'
+  t = am2321.temperature or 'null'
 end
 
 -- release memory
 am2321,package.loaded.am2321 = nil,nil
 
 -- format and print the results
-h=h and ('%.1f'):format(h/10) or 'null'
-t=t and ('%.1f'):format(t/10) or 'null'
-print(('h:%s, t:%s, heap:%d'):format(h,t,node.heap()))
+if type(h)=='number' then
+  h=('%4d'):format(h)
+  h=('%3s.%1s'):format(h:sub(1,3),h:sub(4))
+end
+if type(t)=='number' then
+  t=('%4d'):format(t)
+  t=('%3s.%1s'):format(t:sub(1,3),t:sub(4))
+end
+print(('h:%s %%, t:%s C, heap:%d'):format(h,t,node.heap()))
 ```
 
 #### PMS3003
 ```lua
--- module setup
-pinSET=4
-require('pms0330').init(pinSET)
-pms3003.read()
-tmr.alarm(0,650,0,function() -- 650 ms after read
-  pm01,pm25,pm10=pms3003.pm01,pms3003.pm25,pms3003.pm10
+-- module setup and read
+pinSET=7
+require('pms3003').init(pinSET)
+pms3003.read(true,false,function() -- verbose mode,TSI output
+  pm01 = pms3003.pm01 or 'null'
+  pm25 = pms3003.pm25 or 'null'
+  pm10 = pms3003.pm10 or 'null'
 
 -- release memory
   pms0330,package.loaded.pms0330 = nil,nil
 
--- format and print the results
-  pm01=pm01 and ('%4d'):format(pm01) or 'null'
-  pm25=pm25 and ('%4d'):format(pm25) or 'null'
-  pm10=pm10 and ('%4d'):format(pm10) or 'null'
-  print(('pm1:%s, pm2.5:%s, pm10:%s, heap:%d'):format(pm01,0,25,pm10,node.heap()))
+-- print the results
+  print(('pm1:%s, pm2.5:%s, pm10:%s [ug/m3], heap:%d'):format(pm01,pm25,pm10,node.heap()))
 end)
+```
+#### Sensor Hub
+```lua
+-- module setup and read: no PMS3003
+sda,scl,pinSET=5,6,nil -- no PMS3003
+require('sensor_hub').init(sda,scl,PMset,true) -- lowHeap mode
+sensor_hub.read(true) -- verbose mode
+
+-- module setup and read: all sensors
+sda,scl,pinSET=5,6,7
+require('sensors').init(sda,scl,PMset,true) -- lowHeap mode
+sensors.read(true,function()
+  print(sensor.format({heap=node.heap(),time=tmr.time()},
+    '{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'))
+end) -- verbose mode
+
+-- release memory
+sensors,package.loaded.sensors = nil,nil
 ```
 
 ### References

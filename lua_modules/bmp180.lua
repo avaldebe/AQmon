@@ -19,6 +19,8 @@ local ADDR = 0x77 -- BMP085/BMP180 address
 local cal={} -- AC1, AC2, AC3, AC4, AC5, AC6, B1, B2, MB, MC, MD
 
 -- initialize module
+local id=0
+local SDA,SCL -- buffer device pinout
 local init=false
 function M.init(sda,scl)
   if (sda and sda~=SDA) or (scl and scl~=SCL) then
@@ -64,8 +66,8 @@ function M.read(oss)
 -- ensure module is initialized
   assert(init,('Need %s.init(...) before %s.read(...)'):format(M.name,M.name))
 -- check input varables
-  assert(type(oss)=='boolean' or oss==nil,
-    ('%s.init %s argument should be %s'):format(M.name,'1st','boolean')
+  assert(type(oss)=='number' or oss==nil,
+    ('%s.init %s argument should be %s'):format(M.name,'1st','number'))
 
   local REG_COMMAND,WAIT,c,UT,UP,X1,X2,X3,B3,B4,B5,B6,B7,t,p
 -- read temperature from BMP

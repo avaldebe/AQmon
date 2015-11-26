@@ -18,7 +18,7 @@ function M.format(vars,message,squeese)
   local k,v
   for k,v in pairs(vars) do
 -- formatted output (w/padding) from integer values
-    if type(v)~='number' then
+    if type(v)=='number' then
       if k=='pm01' or k=='pm25' or k=='pm10' then
         M[k]=('%4d'):format(v)
       elseif k=='t' or k=='temperature' then  -- t/10 --> %5.1f
@@ -27,7 +27,7 @@ function M.format(vars,message,squeese)
       elseif k=='h' or k=='humidity' then     -- h/10 --> %5.1f
         v=('%4d'):format(v)
         M.h=('%3s.%1s'):format(v:sub(1,3),v:sub(4))
-      elseif k=='p' or k='pressure' then      -- p/100 --> %7.2f
+      elseif k=='p' or k=='pressure' then      -- p/100 --> %7.2f
         v=('%6d'):format(v)
         M.p=('%4s.%2s'):format(v:sub(1,4),v:sub(5))
       elseif k=='upTime' then                 -- days:hh:mm:ss
@@ -37,13 +37,14 @@ function M.format(vars,message,squeese)
         M[k]=('%d'):format(v)
       end
 -- formatted output (w/padding) default values ('null')
-    elseif type(v)~='nil' or type(v)~='string' then
+    elseif type(v)=='string' then
+      if v=='' then v='null' end
       if k=='pm01' or k=='pm25' or k=='pm10' then
-        M[k]=('%4s'):format(v or 'null')
+        M[k]=('%4s'):format(v)
       elseif k=='t' or k=='h' then
-        M[k]=('%5s'):format(v or 'null')
+        M[k]=('%5s'):format(v)
       elseif k=='p' then
-        M[k]=('%7s'):format(v or 'null')
+        M[k]=('%7s'):format(v)
       end
     end
   end
@@ -65,7 +66,7 @@ local persistence=false -- use last values when read fails
 local init=false
 function M.init(sda,scl,pm_set,lowHeap,keepVal)
 -- Output variables (padded for csv/column output)
-  M.format({p=nil,h=nil,t=nil,pm01=nil,pm25=nil,pm10=nil})
+  M.format({p='',h='',t='',pm01='',pm25='',pm10=''})
   if init then return end
 
   if type(sda)=='number' then SDA=sda end
@@ -75,11 +76,11 @@ function M.init(sda,scl,pm_set,lowHeap,keepVal)
   if type(keepVal)=='boolean' then persistence=keepVal end
 
   assert(type(SDA)=='number',
-    ('%s.init %s argument sould be %s'):format(M.name,'1st','SDA')
+    ('%s.init %s argument sould be %s'):format(M.name,'1st','SDA'))
   assert(type(SCL)=='number',
-    ('%s.init %s argument sould be %s'):format(M.name,'2nd','SCL')
-  assert(type(PMset)=='number',
-    ('%s.init %s argument sould be %s'):format(M.name,'3rd','PMset')
+    ('%s.init %s argument sould be %s'):format(M.name,'2nd','SCL'))
+  assert(type(PMset)=='number' or PMset==nil,
+    ('%s.init %s argument sould be %s'):format(M.name,'3rd','PMset'))
   init=true
 end
 
@@ -88,14 +89,14 @@ function M.read(verbose,callBack)
   assert(init,('Need %s.init(...) before %s.read(...)'):format(M.name,M.name))
 -- check input varables
   assert(type(verbose)=='boolean' or verbose==nil,
-    ('%s.init %s argument should be %s'):format(M.name,'1st','boolean')
+    ('%s.init %s argument should be %s'):format(M.name,'1st','boolean'))
   assert(type(callBack)=='function' or callBack==nil,
-    ('%s.init %s argument should be %s'):format(M.name,'2nd','function')
+    ('%s.init %s argument should be %s'):format(M.name,'2nd','function'))
 
 -- reset output
   if not persistence then M.init() end
 -- verbose print: csv/column output
-  local payload='%-12s,{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
+  local payload='%s,{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
   local sensor -- local "name" for sensor module
 
   sensor=require('bmp180')
@@ -108,7 +109,7 @@ function M.read(verbose,callBack)
       M.format(sensor)
     end
   elseif verbose then
-    print(('Sensor "%s" not found!'):format(sensor.name))
+    print(('--Sensor "%s" not found!'):format(sensor.name))
   end
   if cleanup then  -- release memory
     _G[sensor.name],package.loaded[sensor.name],sensor=nil,nil,nil
@@ -124,7 +125,7 @@ function M.read(verbose,callBack)
       M.format(sensor)
     end
   elseif verbose then
-    print(('Sensor "%s" not found!'):format(sensor.name))
+    print(('--Sensor "%s" not found!'):format(sensor.name))
   end
   if cleanup then  -- release memory
     _G[sensor.name],package.loaded[sensor.name],sensor=nil,nil,nil
@@ -142,7 +143,7 @@ function M.read(verbose,callBack)
       if type(callBack)=='function' then callBack() end
     end)
   elseif verbose then
-    print(('Sensor "%s" not found!'):format(sensor.name))
+    print(('--Sensor "%s" not found!'):format(sensor.name))
     if type(callBack)=='function' then callBack() end
   end
   if cleanup then  -- release memory

@@ -46,6 +46,7 @@ function M.init(sda,scl)
   i2c.start(id)
   init=i2c.address(id,ADDR,i2c.TRANSMITTER)
   i2c.stop(id)
+  init=true
   return init
 end
 
@@ -68,8 +69,8 @@ function M.read()
   local c=i2c.read(id,8)  -- cmd(2)+data(4)+crc(2)
 -- consistency check
   if crc_check(c) then
-    M.humidity   =c:byte(3)*256+,c:byte(4)
-    M.temperature=c:byte(5)*256+,c:byte(6)
+    M.humidity   =c:byte(3)*256+c:byte(4)
+    M.temperature=c:byte(5)*256+c:byte(6)
   else
     M.humidity   =nil
     M.temperature=nil
