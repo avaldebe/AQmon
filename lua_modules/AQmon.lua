@@ -15,7 +15,7 @@ local pin=require('keys').pin
 --[[ Local functions ]]
 
 -- LED status indicator
-local status=dofile('rgbLED.lc')(500,pin.ledR,pin.ledG,pin.ledB,
+local status=require('rgbLED')(500,pin.ledR,pin.ledG,pin.ledB,
   {warning='320000',alert='010000',normal='000100',iddle='000001'})
 status('normal')
 -- low heap(?) alternative: local status=print
