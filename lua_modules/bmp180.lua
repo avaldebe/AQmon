@@ -10,8 +10,9 @@ Written by Álvaro Valdebenito,
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
-local M = {name=...}
+local M = {name=...,oss=1}
 _G[M.name] = M
+-- M.oss: default pressure oversamplig setting, 0:low power .. 3:oversample
 
 local ADDR = 0x77 -- BMP085/BMP180 address
 
@@ -23,9 +24,12 @@ local id=0
 local SDA,SCL -- buffer device pinout
 local init=false
 function M.init(sda,scl,volatile)
-  if volatile==true then
-    _G[M.name],package.loaded[M.name]=nil,nil -- volatile module 
+-- volatile module 
+   if volatile==true then
+    _G[M.name],package.loaded[M.name]=nil,nil
   end
+
+-- buffer pin set-up
   if (sda and sda~=SDA) or (scl and scl~=SCL) then
     SDA,SCL=sda,scl
     i2c.setup(id,SDA,SCL,i2c.SLOW)
@@ -61,6 +65,7 @@ function M.init(sda,scl,volatile)
     init=true
   end
 
+-- M.init suceeded after/when read calibration coeff.
   return init
 end
 
@@ -101,7 +106,7 @@ function M.read(oss)
   t = (B5 + 8) / 16
 
 -- read pressure from BMP
-  if type(oss)~="number" or oss<0 or oss>3 then oss=0 end
+  if type(oss)~="number" or oss<0 or oss>3 then oss=M.oss end
   REG_COMMAND = ({[0]=0x34,[1]=0x74,[2]=0xB4, [3]=0xF4 })[oss] -- 0x34+64*oss
   WAIT        = ({[0]=5000,[1]=8000,[2]=14000,[3]=26000})[oss] -- 5,..,26 ms
 -- request PRESSURE
