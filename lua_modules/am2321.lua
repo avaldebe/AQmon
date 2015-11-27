@@ -14,24 +14,6 @@ _G[M.name] = M
 
 local ADDR=bit.rshift(0xB8,1) -- use 7bit address
 
-local function crc_check(c)
-  local len=c:len()
-  local crc=0xFFFF
-  local l,i
-  for l=1,len-2 do
-    crc=bit.bxor(crc,c:byte(l))
-    for i=1,8 do
-      if bit.band(crc,1) ~= 0 then
-        crc=bit.rshift(crc,1)
-        crc=bit.bxor(crc,0xA001)
-      else
-        crc=bit.rshift(crc,1)
-      end
-    end
-  end
-  return (crc==c:byte(len)*256+c:byte(len-1))
-end
-
 -- initialize i2c
 local id=0
 local SDA,SCL -- buffer device address and pinout
@@ -68,7 +50,22 @@ function M.read()
   i2c.address(id,ADDR,i2c.RECEIVER)
   local c=i2c.read(id,8)  -- cmd(2)+data(4)+crc(2)
 -- consistency check
-  if crc_check(c) then
+  local len=c:len()
+  local crc=0xFFFF
+  local l,i
+  for l=1,len-2 do
+    crc=bit.bxor(crc,c:byte(l))
+    for i=1,8 do
+      if bit.band(crc,1) ~= 0 then
+        crc=bit.rshift(crc,1)
+        crc=bit.bxor(crc,0xA001)
+      else
+        crc=bit.rshift(crc,1)
+      end
+    end
+  end
+-- expose results
+  if crc==c:byte(len)*256+c:byte(len-1) then
     M.humidity   =c:byte(3)*256+c:byte(4)
     M.temperature=c:byte(5)*256+c:byte(6)
   else
