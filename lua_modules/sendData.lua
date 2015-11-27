@@ -22,7 +22,8 @@ return function(self,status)
   self.sent=false
 
   require('wifi_connect')(wifi.STATION,false) -- wifi wake-up
-  local sk=net.createConnection(net.TCP,0)
+  sk=nil
+  sk=net.createConnection(net.TCP,0)
 --[[Expected sequence of events:
     sk:connect(...)
     sk:on('connection')

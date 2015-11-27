@@ -33,6 +33,7 @@ function speak(verbose)
   end
   print('Read data')
   require('sensors').init(pin.sda,pin.scl,pin.PMset)
+  sensors.verbose=verbose
   sensors.read(function()
     sensor.heap,sensor.upTime=node.heap(),tmr.time()
     api.path=sensors.format('status=uptime={upTime},heap={heap}'
