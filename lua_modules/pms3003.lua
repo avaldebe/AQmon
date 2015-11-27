@@ -37,7 +37,10 @@ end
 
 local pinSET=nil
 local init=false
-function M.init(pin_set,status)
+function M.init(pin_set,volatile,status)
+  if volatile==true then
+    _G[M.name],package.loaded[M.name]=nil,nil -- volatile module 
+  end
   if type(pin_set)=='number' then
     pinSET=pin_set
     gpio.mode(pinSET,gpio.OUTPUT)
@@ -63,15 +66,14 @@ function M.read(callBack)
   assert(type(callBack)=='function' or callBack==nil,
     ('%s.init %s argument should be %s'):format(M.name,'1st','function'))
 
-  if M.verbose==true then
-    print(('%s: data acquisition %s.\n  Console %s.')
-      :format(M.name,'started','dishabled'))
-  end
+-- capture and decode message
   uart.on('data',M.message_len,function(data)
-    tmr.stop(4)                 -- stop fail timer
--- decode message:
--- data beggins with the byte pair 'BM' (dec 16973).
--- The next byte pair (pms[1]) should be dec20, folowed by 10 byte pairs (20 bytes).
+  -- stop sampling time-out timer
+    tmr.stop(4)
+  -- decode message
+    -- Beggins with the byte pair 'BM' (dec 16973).
+    -- The next byte pair (pms[1]) should be dec20,
+    -- folowed by 10 byte pairs (20 bytes).
     local pms,cksum={},0
     local i,n,msb,lsb
     for i=1,#data,2 do
@@ -94,14 +96,23 @@ function M.read(callBack)
       print(('%s: %4s[ug/m3],%4s[ug/m3],%4s[ug/m3]')
         :format(M.name,M.pm01 or 'null',M.pm25 or 'null',M.pm10 or 'null'))
     end
--- restore UART
-    M.init(nil,'finished')
+   -- restore UART & callBack
+    M.init(nil,nil,'finished')
     if type(callBack)=='function' then callBack() end
   end,0)
-  gpio.write(pinSET,gpio.HIGH)  -- continuous sampling mode
-  tmr.alarm(4,1000,0,function() -- 1s after sampling started
+
+-- start sampling: continuous sampling mode
+  if M.verbose==true then
+    print(('%s: data acquisition %s.\n  Console %s.')
+      :format(M.name,'started','dishabled'))
+  end
+  gpio.write(pinSET,gpio.HIGH)
+
+-- sampling time-out: 1s after sampling started
+  tmr.alarm(4,1000,0,function()
     M.pm01,M.pm25,M.pm10=nil,nil,nil
-    M.init(nil,'failed')
+   -- restore UART & callBack
+    M.init(nil,nil,'failed')
     if type(callBack)=='function' then callBack() end
   end)
 end

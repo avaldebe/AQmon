@@ -22,25 +22,28 @@ local cal={} -- AC1, AC2, AC3, AC4, AC5, AC6, B1, B2, MB, MC, MD
 local id=0
 local SDA,SCL -- buffer device pinout
 local init=false
-function M.init(sda,scl)
+function M.init(sda,scl,volatile)
+  if volatile==true then
+    _G[M.name],package.loaded[M.name]=nil,nil -- volatile module 
+  end
   if (sda and sda~=SDA) or (scl and scl~=SCL) then
     SDA,SCL=sda,scl
     i2c.setup(id,SDA,SCL,i2c.SLOW)
   end
 
--- read calibration coeff., if cal table is empty
-  if next(cal)==nil then
--- request CALIBRATION
+-- read calibration coeff.
+  if .not.init then
+  -- request CALIBRATION
     i2c.start(id)
     i2c.address(id,ADDR,i2c.TRANSMITTER)
     i2c.write(id,0xAA) -- REG_CALIBRATION
     i2c.stop(id)
--- read CALIBRATION
+  -- read CALIBRATION
     i2c.start(id)
     i2c.address(id,ADDR,i2c.RECEIVER)
     local c = i2c.read(id,22)
     i2c.stop(id)
--- unpack CALIBRATION
+  -- unpack CALIBRATION
     local w
     w=c:byte( 1)*256+c:byte( 2);cal.AC1=w+(w>32767 and -65536 or 0)
     w=c:byte( 3)*256+c:byte( 4);cal.AC2=w+(w>32767 and -65536 or 0)
@@ -53,10 +56,11 @@ function M.init(sda,scl)
     w=c:byte(17)*256+c:byte(18);cal.MB =w+(w>32767 and -65536 or 0)
     w=c:byte(19)*256+c:byte(20);cal.MC =w+(w>32767 and -65536 or 0)
     w=c:byte(21)*256+c:byte(22);cal.MD =w+(w>32767 and -65536 or 0)
+
+  -- M.init suceeded
+    init=true
   end
 
--- M.init suceeded if calibration coeff. table is not empty
-  init=(next(cal)~=nil)
   return init
 end
 

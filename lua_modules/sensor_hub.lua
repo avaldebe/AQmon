@@ -105,7 +105,7 @@ function M.read(verbose,callBack)
   local sensor -- local "name" for sensor module
 
   sensor=require('bmp180')
-  if sensor.init(SDA,SCL) then
+  if sensor.init(SDA,SCL,true) then -- volatile module
     sensor.read(0)   -- 0:low power .. 3:oversample
     if verbose then
       sensor.heap,sensor.time=node.heap(),tmr.time()
@@ -116,12 +116,10 @@ function M.read(verbose,callBack)
   elseif verbose then
     print(('--Sensor "%s" not found!'):format(sensor.name))
   end
-  if cleanup then  -- release memory
-    _G[sensor.name],package.loaded[sensor.name],sensor=nil,nil,nil
-  end
+  sensor=nil -- release sensor module
 
   sensor=require('am2321')
-  if sensor.init(SDA,SCL) then
+  if sensor.init(SDA,SCL,true) then -- volatile module 
     sensor.read()
     if verbose then
       sensor.heap,sensor.time=node.heap(),tmr.time()
@@ -132,29 +130,23 @@ function M.read(verbose,callBack)
   elseif verbose then
     print(('--Sensor "%s" not found!'):format(sensor.name))
   end
-  if cleanup then  -- release memory
-    _G[sensor.name],package.loaded[sensor.name],sensor=nil,nil,nil
-  end
+  sensor=nil -- release sensor module
 
   sensor=require('pms3003')
-  if sensor.init(PMset) then
-    sensor.read(false,false,function()
+  if sensor.init(PMset,true) then -- volatile module 
+    sensor.read(false,function()
       if verbose then
         sensor.heap,sensor.time=node.heap(),tmr.time()
         print(M.format(sensor,payload:format(sensor.name)))
       else
         M.format(sensor)
       end
-      if cleanup then  -- release memory
-        _G[sensor.name],package.loaded[sensor.name],sensor=nil,nil,nil
-      end
+      sensor=nil -- release sensor module
       if type(callBack)=='function' then callBack() end
     end)
   elseif verbose then
     print(('--Sensor "%s" not found!'):format(sensor.name))
-    if cleanup then  -- release memory
-      _G[sensor.name],package.loaded[sensor.name],sensor=nil,nil,nil
-    end
+    sensor=nil -- release sensor module
     if type(callBack)=='function' then callBack() end
   end
 end

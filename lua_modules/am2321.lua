@@ -18,7 +18,10 @@ local ADDR=bit.rshift(0xB8,1) -- use 7bit address
 local id=0
 local SDA,SCL -- buffer device address and pinout
 local init=false
-function M.init(sda,scl)
+function M.init(sda,scl,volatile)
+  if volatile==true then
+    _G[M.name],package.loaded[M.name]=nil,nil -- volatile module 
+  end
   if (sda and sda~=SDA) or (scl and scl~=SCL) then
     SDA,SCL=sda,scl
     i2c.setup(id,SDA,SCL,i2c.SLOW)
