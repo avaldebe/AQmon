@@ -33,32 +33,6 @@ local M = {name=...,message_len=24,stdATM=false,verbose=false}
 _G[M.name] = M
 
 local function decode(data)
-  local pms,cksum={},0
-  local i,n,msb,lsb
-  for i=1,#data,2 do
-    n=(i-1)/2 -- index of byte pair (msb,lsb): 0..10
-    msb,lsb=data:byte(i,i+1)  -- 2*char-->2*byte
-    pms[n]=msb*256+lsb        -- 2*byte-->dec
-    cksum=cksum+(i<#data-1 and msb+lsb or 0)
-  --print(('  data#%2d byte:%3d,%3d dec:%6d cksum:%6d'):format(n,msb,lsb,pms[n],cksum))
-  end
-
---Message beggins with the byte pair 'BM' (dec 16973).
---The next byte pair (pms[1]) should be dec20, folowed by 10 byte pairs (20 bytes).
---assert(pms[0]==16973 and pms[1]==20 and #pms==11,
---  ('%s: wrongly phrased data.'):format(M.name))
-
-  if cksum~=pms[#pms] then
-    M.pm01,M.pm25,M.pm10=nil,nil,nil
-  elseif M.stdATM==true then
-    M.pm01,M.pm25,M.pm10=pms[5],pms[6],pms[7]
-  else -- TSI standard
-    M.pm01,M.pm25,M.pm10=pms[2],pms[3],pms[4]
-  end
-  if M.verbose==true then
-    print(('%s: %4s[ug/m3],%4s[ug/m3],%4s[ug/m3]')
-      :format(M.name,M.pm01 or 'null',M.pm25 or 'null',M.pm10 or 'null'))
-  end
 end
 
 local pinSET=nil
@@ -95,7 +69,32 @@ function M.read(callBack)
   end
   uart.on('data',M.message_len,function(data)
     tmr.stop(4)                 -- stop fail timer
-    decode(data)
+-- decode message:
+-- data beggins with the byte pair 'BM' (dec 16973).
+-- The next byte pair (pms[1]) should be dec20, folowed by 10 byte pairs (20 bytes).
+    local pms,cksum={},0
+    local i,n,msb,lsb
+    for i=1,#data,2 do
+      n=(i-1)/2 -- index of byte pair (msb,lsb): 0..11
+      msb,lsb=data:byte(i,i+1)  -- 2*char-->2*byte
+      pms[n]=msb*256+lsb        -- 2*byte-->dec
+      cksum=cksum+(i<#data-1 and msb+lsb or 0)
+    --print(('  data#%2d byte:%3d,%3d dec:%6d cksum:%6d'):format(n,msb,lsb,pms[n],cksum))
+    end
+    --assert(pms[0]==16973 and pms[1]==20 and #pms==M.message_len/2,
+    --  ('%s: wrongly phrased data.'):format(M.name))
+    if cksum~=pms[#pms] then
+      M.pm01,M.pm25,M.pm10=nil,nil,nil
+    elseif M.stdATM==true then
+      M.pm01,M.pm25,M.pm10=pms[5],pms[6],pms[7]
+    else -- TSI standard
+      M.pm01,M.pm25,M.pm10=pms[2],pms[3],pms[4]
+    end
+    if M.verbose==true then
+      print(('%s: %4s[ug/m3],%4s[ug/m3],%4s[ug/m3]')
+        :format(M.name,M.pm01 or 'null',M.pm25 or 'null',M.pm10 or 'null'))
+    end
+-- restore UART
     M.init(nil,'finished')
     if type(callBack)=='function' then callBack() end
   end,0)
