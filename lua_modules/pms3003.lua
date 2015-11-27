@@ -29,10 +29,10 @@ Body:  20 bytes, 10 pairs of bytes (MSB,LSB)
   bytes 23..24: cksum=byte01+..+byte22.
 ]]
 
-local M = {name=...}
+local M = {name=...,message_len=24,stdATM=false,verbose=false}
 _G[M.name] = M
 
-local function decode(data,verbose,stdATM)
+local function decode(data)
   local pms,cksum={},0
   local i,n,msb,lsb
   for i=1,#data,2 do
@@ -50,12 +50,12 @@ local function decode(data,verbose,stdATM)
 
   if cksum~=pms[#pms] then
     M.pm01,M.pm25,M.pm10=nil,nil,nil
-  elseif stdATM==true then
+  elseif M.stdATM==true then
     M.pm01,M.pm25,M.pm10=pms[5],pms[6],pms[7]
   else -- TSI standard
     M.pm01,M.pm25,M.pm10=pms[2],pms[3],pms[4]
   end
-  if verbose==true then
+  if M.verbose==true then
     print(('%s: %4s[ug/m3],%4s[ug/m3],%4s[ug/m3]')
       :format(M.name,M.pm01 or 'null',M.pm25 or 'null',M.pm10 or 'null'))
   end
@@ -63,50 +63,46 @@ end
 
 local pinSET=nil
 local init=false
-function M.init(pin_set,verbose,status)
+function M.init(pin_set,status)
   if type(pin_set)=='number' then
     pinSET=pin_set
     gpio.mode(pinSET,gpio.OUTPUT)
   end
   if type(pinSET)=='number' then
-    if verbose==true then
+    if M.verbose==true then
       print(('%s: data acquisition %s.\n  Console %s.')
         :format(M.name,type(status)=='string' and status or 'paused','enhabled'))
     end
-    gpio.write(pinSET,gpio.LOW)  -- low-power standby mode
+    gpio.write(pinSET,gpio.LOW)   -- low-power standby mode
     uart.on('data')
   end
 
 -- M.init suceeded if pinSET is LOW
-  init=type(pinSET)=='number'
+  init=(type(pinSET)=='number')
   return init
 end
 
-function M.read(verbose,stdATM,callBack)
+function M.read(callBack)
 -- ensure module is initialized
   assert(init,('Need %s.init(...) before %s.read(...)'):format(M.name,M.name))
 -- check input varables
-  assert(type(verbose)=='boolean' or verbose==nil,
-    ('%s.init %s argument should be %s'):format(M.name,'1st','boolean'))
-  assert(type(stdATM)=='boolean' or stdATM==nil,
-    ('%s.init %s argument should be %s'):format(M.name,'2ns','boolean'))
   assert(type(callBack)=='function' or callBack==nil,
-    ('%s.init %s argument should be %s'):format(M.name,'3rd','function'))
+    ('%s.init %s argument should be %s'):format(M.name,'1st','function'))
 
-  if verbose==true then
+  if M.verbose==true then
     print(('%s: data acquisition %s.\n  Console %s.')
       :format(M.name,'started','dishabled'))
   end
-  uart.on('data',24,function(data)
+  uart.on('data',M.message_len,function(data)
     tmr.stop(4)                 -- stop fail timer
-    decode(data,verbose,stdATM)
-    M.init(nil,verbose,'finished')
+    decode(data)
+    M.init(nil,'finished')
     if type(callBack)=='function' then callBack() end
   end,0)
   gpio.write(pinSET,gpio.HIGH)  -- continuous sampling mode
   tmr.alarm(4,1000,0,function() -- 1s after sampling started
     M.pm01,M.pm25,M.pm10=nil,nil,nil
-    M.init(nil,verbose,'failed')
+    M.init(nil,'failed')
     if type(callBack)=='function' then callBack() end
   end)
 end
