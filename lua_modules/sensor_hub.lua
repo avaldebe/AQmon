@@ -10,8 +10,10 @@ Written by Álvaro Valdebenito.
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
-local M = {name=...}
+-- persistence: use last values when read fails
+local M = {name=...,persistence=false,verbose=false}
 _G[M.name] = M
+-- M.verbose: verbose output
 
 -- Format module outputs
 function M.format(vars,message,squeese)
@@ -61,45 +63,44 @@ function M.format(vars,message,squeese)
 end
 
 local SDA,SCL,PMset     -- buffer pinout
-local cleanup=false     -- release modules after use
-local persistence=false -- use last values when read fails
 local init=false
-function M.init(sda,scl,pm_set,lowHeap,keepVal)
+function M.init(sda,scl,pm_set,volatile)
+-- volatile module 
+  if volatile==true then
+    _G[M.name],package.loaded[M.name]=nil,nil
+  end
+
 -- Output variables (padded for csv/column output)
   M.format({p='',h='',t='',pm01='',pm25='',pm10=''})
-  if init then return end
 
+-- buffer pin set-up
   if type(sda)=='number' then SDA=sda end
   if type(scl)=='number' then SCL=scl end
   if type(pm_set)=='number' then PMset=pm_set end
-  if type(lowHeap)=='boolean' then cleanup=lowHeap     end
-  if type(keepVal)=='boolean' then persistence=keepVal end
 
+-- initialization
   assert(type(SDA)=='number',
     ('%s.init %s argument sould be %s'):format(M.name,'1st','SDA'))
   assert(type(SCL)=='number',
     ('%s.init %s argument sould be %s'):format(M.name,'2nd','SCL'))
   assert(type(PMset)=='number' or PMset==nil,
     ('%s.init %s argument sould be %s'):format(M.name,'3rd','PMset'))
+  require('pms3003').init(PMset,true) -- volatile module 
 
-  require('pms3003').init(PMset)
-  if cleanup then  -- release memory
-    pms3003,package.loaded.pms3003=nil,nil
-  end
+-- M.init suceeded
   init=true
+  return init
 end
 
-function M.read(verbose,callBack)
+function M.read(callBack)
 -- ensure module is initialized
   assert(init,('Need %s.init(...) before %s.read(...)'):format(M.name,M.name))
 -- check input varables
-  assert(type(verbose)=='boolean' or verbose==nil,
-    ('%s.init %s argument should be %s'):format(M.name,'1st','boolean'))
   assert(type(callBack)=='function' or callBack==nil,
-    ('%s.init %s argument should be %s'):format(M.name,'2nd','function'))
+    ('%s.init %s argument should be %s'):format(M.name,'1st','function'))
 
 -- reset output
-  if not persistence then M.init() end
+  if not M.persistence then M.init() end
 -- verbose print: csv/column output
   local payload='%s:{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
   local sensor -- local "name" for sensor module
@@ -107,13 +108,13 @@ function M.read(verbose,callBack)
   sensor=require('bmp180')
   if sensor.init(SDA,SCL,true) then -- volatile module
     sensor.read(0)   -- 0:low power .. 3:oversample
-    if verbose then
+    if M.verbose then
       sensor.heap,sensor.time=node.heap(),tmr.time()
       print(M.format(sensor,payload:format(sensor.name)))
     else
       M.format(sensor)
     end
-  elseif verbose then
+  elseif M.verbose then
     print(('--Sensor "%s" not found!'):format(sensor.name))
   end
   sensor=nil -- release sensor module
@@ -121,13 +122,13 @@ function M.read(verbose,callBack)
   sensor=require('am2321')
   if sensor.init(SDA,SCL,true) then -- volatile module 
     sensor.read()
-    if verbose then
+    if M.verbose then
       sensor.heap,sensor.time=node.heap(),tmr.time()
       print(M.format(sensor,payload:format(sensor.name)))
     else
       M.format(sensor)
     end
-  elseif verbose then
+  elseif M.verbose then
     print(('--Sensor "%s" not found!'):format(sensor.name))
   end
   sensor=nil -- release sensor module
@@ -135,7 +136,7 @@ function M.read(verbose,callBack)
   sensor=require('pms3003')
   if sensor.init(PMset,true) then -- volatile module 
     sensor.read(false,function()
-      if verbose then
+      if M.verbose then
         sensor.heap,sensor.time=node.heap(),tmr.time()
         print(M.format(sensor,payload:format(sensor.name)))
       else
@@ -144,7 +145,7 @@ function M.read(verbose,callBack)
       sensor=nil -- release sensor module
       if type(callBack)=='function' then callBack() end
     end)
-  elseif verbose then
+  elseif M.verbose then
     print(('--Sensor "%s" not found!'):format(sensor.name))
     sensor=nil -- release sensor module
     if type(callBack)=='function' then callBack() end

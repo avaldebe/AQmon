@@ -31,18 +31,16 @@ function speak(verbose)
     print('wait 5s...')
     return
   end
-  local lowHeap=true
   print('Read data')
-  require('sensors').init(pin.sda,pin.scl,pin.PMset,lowHeap) -- sda,scl,lowHeap
-  sensors.read(verbose,function()
+  require('sensors').init(pin.sda,pin.scl,pin.PMset)
+  sensors.read(function()
+    sensor.heap,sensor.upTime=node.heap(),tmr.time()
     api.path=sensors.format('status=uptime={upTime},heap={heap}'
     ..'&field1={t}&field2={h}&field3={p}&field4={pm01}&field5={pm25}&field6={pm10}',
       true) -- remove spaces
--- release memory
-    if lowHeap then
-      sensors,package.loaded.sensors=nil,nil
-      collectgarbage()
-    end
+  -- release memory
+    sensors,package.loaded.sensors=nil,nil
+    collectgarbage()
     api.path=('update?key={put}&{path}'):gsub('{(.-)}',api)
   --api:sendData()
     require('sendData')(api,status)
