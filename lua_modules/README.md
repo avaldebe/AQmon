@@ -83,7 +83,8 @@ print(('h:%s %%, t:%s C, heap:%d'):format(h,t,node.heap()))
 -- module setup and read
 pinSET=7
 require('pms3003').init(pinSET)
-pms3003.read(true,false,function() -- verbose mode,TSI output
+pms3003.verbose=true -- verbose mode
+pms3003.read(function()
   pm01 = pms3003.pm01 or 'null'
   pm25 = pms3003.pm25 or 'null'
   pm10 = pms3003.pm10 or 'null'
@@ -98,14 +99,15 @@ end)
 #### Sensor Hub
 ```lua
 -- module setup and read: no PMS3003
-sda,scl,pinSET=5,6,nil -- no PMS3003
-require('sensor_hub').init(sda,scl,PMset,true) -- lowHeap mode
-sensor_hub.read(true) -- verbose mode
+sda,scl,pinSET=5,6,nil
+require('sensors').init(sda,scl,pinSET)
+sensors.verbose=true -- verbose mode
+sensors.read()
 
 -- module setup and read: all sensors
 sda,scl,pinSET=5,6,7
-require('sensors').init(sda,scl,pinSET,true) -- lowHeap mode
-sensors.read(false,function() -- quiet mode
+require('sensors').init(sda,scl,pinSET)
+sensors.read(function()
   print(sensors.format({heap=node.heap(),time=tmr.time()},
     'sensors:{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'))
 end)
