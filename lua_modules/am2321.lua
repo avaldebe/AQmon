@@ -19,9 +19,9 @@ local id=0
 local SDA,SCL -- buffer device address and pinout
 local init=false
 function M.init(sda,scl,volatile)
--- volatile module 
+-- volatile module
   if volatile==true then
-    _G[M.name],package.loaded[M.name]=nil,nil -- volatile module 
+    _G[M.name],package.loaded[M.name]=nil,nil -- volatile module
   end
 
 -- buffer pin set-up
@@ -31,11 +31,15 @@ function M.init(sda,scl,volatile)
   end
 
 -- initialization
-  if .not.init then
+  if not init then
+-- wakeup
+    i2c.start(id)
+    i2c.address(id,ADDR,i2c.TRANSMITTER)
+    i2c.stop(id)
+-- device found?
     i2c.start(id)
     init=i2c.address(id,ADDR,i2c.TRANSMITTER)
     i2c.stop(id)
-  --init=true
   end
 
 -- M.init suceeded if ADDR is found on SDA,SCL
