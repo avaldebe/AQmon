@@ -36,12 +36,39 @@ _G[M.name] = M
 -- M.verbose: verbose output
 
 local function decode(data)
+  -- data beggins with the byte pair 'BM' (dec 16973).
+  -- The next byte pair (pms[1]) should be dec20,
+  -- folowed by 10 byte pairs (20 bytes).
+-- check message lenght
+--assert(#data>=M.mlen,('%s: incomplete message.'):format(M.name))
+  local pms,cksum={},0
+  local i,n,msb,lsb
+  for i=1,M.mlen,2 do
+    n=(i-1)/2 -- index of byte pair (msb,lsb): 0..11
+    msb,lsb=data:byte(i,i+1)  -- 2*char-->2*byte
+    pms[n]=msb*256+lsb        -- 2*byte-->dec
+    cksum=cksum+(i<M.mlen-1 and msb+lsb or 0)
+  --print(('  data#%2d byte:%3d,%3d dec:%6d cksum:%6d'):format(n,msb,lsb,pms[n],cksum))
+  end
+  --assert(pms[0]==16973 and pms[1]==20 and #pms==M.mlen/2,
+  --  ('%s: wrongly phrased message.'):format(M.name))
+  if cksum~=pms[#pms] then
+    M.pm01,M.pm25,M.pm10=nil,nil,nil
+  elseif M.stdATM==true then
+    M.pm01,M.pm25,M.pm10=pms[5],pms[6],pms[7]
+  else -- TSI standard
+    M.pm01,M.pm25,M.pm10=pms[2],pms[3],pms[4]
+  end
+  if M.verbose==true then
+    print(('%s: %4s,%4s,%4s [ug/m3]')
+      :format(M.name,M.pm01 or 'null',M.pm25 or 'null',M.pm10 or 'null'))
+  end
 end
 
 local pinSET=nil
 local init=false
 function M.init(pin_set,volatile,status)
--- volatile module 
+-- volatile module
   if volatile==true then
     _G[M.name],package.loaded[M.name]=nil,nil
   end
@@ -54,11 +81,12 @@ function M.init(pin_set,volatile,status)
 
 -- initialization
   if type(pinSET)=='number' then
+    gpio.write(pinSET,gpio.LOW)   -- low-power standby mode
     if M.verbose==true then
       print(('%s: data acquisition %s.\n  Console %s.')
         :format(M.name,type(status)=='string' and status or 'paused','enhabled'))
     end
-    gpio.write(pinSET,gpio.LOW)   -- low-power standby mode
+    tmr.delay(3000) -- 3 ms
     uart.on('data')
   end
 
@@ -78,34 +106,10 @@ function M.read(callBack)
   uart.on('data',M.mlen,function(data)
   -- stop sampling time-out timer
     tmr.stop(4)
-  -- decode message
-    -- Beggins with the byte pair 'BM' (dec 16973).
-    -- The next byte pair (pms[1]) should be dec20,
-    -- folowed by 10 byte pairs (20 bytes).
-    local pms,cksum={},0
-    local i,n,msb,lsb
-    for i=1,#data,2 do
-      n=(i-1)/2 -- index of byte pair (msb,lsb): 0..11
-      msb,lsb=data:byte(i,i+1)  -- 2*char-->2*byte
-      pms[n]=msb*256+lsb        -- 2*byte-->dec
-      cksum=cksum+(i<#data-1 and msb+lsb or 0)
-    --print(('  data#%2d byte:%3d,%3d dec:%6d cksum:%6d'):format(n,msb,lsb,pms[n],cksum))
-    end
-    --assert(pms[0]==16973 and pms[1]==20 and #pms==M.mlen/2,
-    --  ('%s: wrongly phrased data.'):format(M.name))
-    if cksum~=pms[#pms] then
-      M.pm01,M.pm25,M.pm10=nil,nil,nil
-    elseif M.stdATM==true then
-      M.pm01,M.pm25,M.pm10=pms[5],pms[6],pms[7]
-    else -- TSI standard
-      M.pm01,M.pm25,M.pm10=pms[2],pms[3],pms[4]
-    end
-    if M.verbose==true then
-      print(('%s: %4s[ug/m3],%4s[ug/m3],%4s[ug/m3]')
-        :format(M.name,M.pm01 or 'null',M.pm25 or 'null',M.pm10 or 'null'))
-    end
-   -- restore UART & callBack
+  -- restore UART
     M.init(nil,nil,'finished')
+  -- decode message & callBack
+    decode(data)
     if type(callBack)=='function' then callBack() end
   end,0)
 
@@ -118,9 +122,10 @@ function M.read(callBack)
 
 -- sampling time-out: 1s after sampling started
   tmr.alarm(4,1000,0,function()
-    M.pm01,M.pm25,M.pm10=nil,nil,nil
-   -- restore UART & callBack
+  -- restore UART & callBack
     M.init(nil,nil,'failed')
+  -- module output & callBack
+    M.pm01,M.pm25,M.pm10=nil,nil,nil
     if type(callBack)=='function' then callBack() end
   end)
 end
