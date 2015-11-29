@@ -20,7 +20,7 @@ while (($#)); do
   bmp180|am2321|pms3003)        # sensor modules
     luatool.py -p $PORT -rcf $opt.lua;;
   hub|hub.*|*_hub|*_hub.*)      # sensor hub module
-    luatool.py -p $PORT -rf ${opt%.*}.lua -t sensors.lua;;
+    luatool.py -p $PORT -rcf ${opt%.*}.lua -t sensors.lua;;
   keys|wifi_connect|sendData|rgbLED|hueLED)
     luatool.py -p $PORT -cf $opt.lua;;
   app|app.*|AQmon|AQmon.*)

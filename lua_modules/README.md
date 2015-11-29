@@ -99,7 +99,7 @@ end)
 #### Sensor Hub
 ```lua
 -- module setup and read: no PMS3003
-sda,scl,pinSET=5,6,nil
+sda,scl,pinSET=3,4,nil -- GPIO0,GPIO2
 require('sensors').init(sda,scl,pinSET)
 sensors.verbose=true -- verbose mode
 sensors.read()

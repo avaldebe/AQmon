@@ -24,7 +24,7 @@ local id=0
 local SDA,SCL -- buffer device pinout
 local init=false
 function M.init(sda,scl,volatile)
--- volatile module 
+-- volatile module
    if volatile==true then
     _G[M.name],package.loaded[M.name]=nil,nil
   end
@@ -36,7 +36,7 @@ function M.init(sda,scl,volatile)
   end
 
 -- read calibration coeff.
-  if .not.init then
+  if not init then
   -- request CALIBRATION
     i2c.start(id)
     i2c.address(id,ADDR,i2c.TRANSMITTER)
