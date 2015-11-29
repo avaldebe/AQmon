@@ -65,7 +65,7 @@ end
 local SDA,SCL,PMset     -- buffer pinout
 local init=false
 function M.init(sda,scl,pm_set,volatile)
--- volatile module 
+-- volatile module
   if volatile==true then
     _G[M.name],package.loaded[M.name]=nil,nil
   end
@@ -85,7 +85,7 @@ function M.init(sda,scl,pm_set,volatile)
     ('%s.init %s argument sould be %s'):format(M.name,'2nd','SCL'))
   assert(type(PMset)=='number' or PMset==nil,
     ('%s.init %s argument sould be %s'):format(M.name,'3rd','PMset'))
-  require('pms3003').init(PMset,true) -- volatile module 
+  require('pms3003').init(PMset,true) -- volatile module
 
 -- M.init suceeded
   init=true
@@ -120,7 +120,7 @@ function M.read(callBack)
   sensor=nil -- release sensor module
 
   sensor=require('am2321')
-  if sensor.init(SDA,SCL,true) then -- volatile module 
+  if sensor.init(SDA,SCL,true) then -- volatile module
     sensor.read()
     if M.verbose then
       sensor.heap,sensor.time=node.heap(),tmr.time()
@@ -134,8 +134,8 @@ function M.read(callBack)
   sensor=nil -- release sensor module
 
   sensor=require('pms3003')
-  if sensor.init(PMset,true) then -- volatile module 
-    sensor.read(false,function()
+  if sensor.init(PMset,true) then -- volatile module
+    sensor.read(function()
       if M.verbose then
         sensor.heap,sensor.time=node.heap(),tmr.time()
         print(M.format(sensor,payload:format(sensor.name)))
