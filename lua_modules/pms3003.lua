@@ -40,17 +40,16 @@ local function decode(data)
   -- The next byte pair (pms[1]) should be dec20,
   -- folowed by 10 byte pairs (20 bytes).
 -- check message lenght
---assert(#data>=M.mlen,('%s: incomplete message.'):format(M.name))
-  local pms,cksum={},0
-  local i,n,msb,lsb
-  for i=1,M.mlen,2 do
-    n=(i-1)/2 -- index of byte pair (msb,lsb): 0..11
-    msb,lsb=data:byte(i,i+1)  -- 2*char-->2*byte
-    pms[n]=msb*256+lsb        -- 2*byte-->dec
-    cksum=cksum+(i<M.mlen-1 and msb+lsb or 0)
+--assert(#data==M.mlen,('%s: incomplete message.'):format(M.name))
+  local pms,cksum,mlen={},0,#data/2-1
+  local n,msb,lsb
+  for n=0,mlen do
+    msb,lsb=data:byte(2*n+1,2*n+2)  -- 2*char-->2*byte
+    pms[n]=msb*256+lsb              -- 2*byte-->dec
+    cksum=cksum+(i<mlen and msb+lsb or 0)
   --print(('  data#%2d byte:%3d,%3d dec:%6d cksum:%6d'):format(n,msb,lsb,pms[n],cksum))
   end
-  --assert(pms[0]==16973 and pms[1]==20 and #pms==M.mlen/2,
+  --assert(pms[0]==16973 and pms[1]==20 and #pms==mlen,
   --  ('%s: wrongly phrased message.'):format(M.name))
   if cksum~=pms[#pms] then
     M.pm01,M.pm25,M.pm10=nil,nil,nil
@@ -106,10 +105,10 @@ function M.read(callBack)
   uart.on('data',M.mlen,function(data)
   -- stop sampling time-out timer
     tmr.stop(4)
-  -- restore UART
+  -- decode message
+    decode(data:sub(1,M.len))
+  -- restore UART & callBack
     M.init(nil,nil,'finished')
-  -- decode message & callBack
-    decode(data)
     if type(callBack)=='function' then callBack() end
   end,0)
 
@@ -122,10 +121,9 @@ function M.read(callBack)
 
 -- sampling time-out: 1s after sampling started
   tmr.alarm(4,1000,0,function()
+    M.pm01,M.pm25,M.pm10=nil,nil,nil
   -- restore UART & callBack
     M.init(nil,nil,'failed')
-  -- module output & callBack
-    M.pm01,M.pm25,M.pm10=nil,nil,nil
     if type(callBack)=='function' then callBack() end
   end)
 end
