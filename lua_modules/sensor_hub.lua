@@ -11,8 +11,9 @@ MIT license, http://opensource.org/licenses/MIT
 ]]
 
 -- persistence: use last values when read fails
-local M = {name=...,persistence=false,verbose=false}
+local M = {name=...,persistence=nil,verbose=nil}
 _G[M.name] = M
+-- M.persistence: use last read set of output when/if reading fails
 -- M.verbose: verbose output
 
 -- Format module outputs

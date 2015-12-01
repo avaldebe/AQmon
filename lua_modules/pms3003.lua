@@ -29,7 +29,7 @@ Body:  20 bytes, 10 pairs of bytes (MSB,LSB)
   bytes 23..24: cksum=byte01+..+byte22.
 ]]
 
-local M = {name=...,mlen=24,stdATM=false,verbose=false}
+local M = {name=...,mlen=24,stdATM=nil,verbose=nil}
 _G[M.name] = M
 -- M.mlen: lenght of PMS3003 message
 -- M.stdATM: use standatd atm correction instead of TSI standard
@@ -45,18 +45,18 @@ local function decode(data)
   local n,msb,lsb
   for n=0,mlen do
     msb,lsb=data:byte(2*n+1,2*n+2)  -- 2*char-->2*byte
-    pms[n]=msb*256+lsb              -- 2*byte-->dec
+    pms[n]=msb*256+lsb               -- 2*byte-->dec
     cksum=cksum+(i<mlen and msb+lsb or 0)
   --print(('  data#%2d byte:%3d,%3d dec:%6d cksum:%6d'):format(n,msb,lsb,pms[n],cksum))
   end
   --assert(pms[0]==16973 and pms[1]==20 and #pms==mlen,
   --  ('%s: wrongly phrased message.'):format(M.name))
-  if cksum~=pms[#pms] then
-    M.pm01,M.pm25,M.pm10=nil,nil,nil
-  elseif M.stdATM==true then
-    M.pm01,M.pm25,M.pm10=pms[5],pms[6],pms[7]
-  else -- TSI standard
-    M.pm01,M.pm25,M.pm10=pms[2],pms[3],pms[4]
+  if cksum==pms[#pms] and M.stdATM~=true then
+    M.pm01,M.pm25,M.pm10=pms[2],pms[3],pms[4] -- TSI standard
+  elseif cksum==pms[#pms] then
+    M.pm01,M.pm25,M.pm10=pms[5],pms[6],pms[7] -- stdATM
+  else
+    M.pm01,M.pm25,M.pm10=nil,nil,nil          -- cksum~=pms[#pms]
   end
   if M.verbose==true then
     print(('%s: %4s,%4s,%4s [ug/m3]')
