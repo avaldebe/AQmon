@@ -80,12 +80,12 @@ function M.init(pin_set,volatile,status)
 
 -- initialization
   if type(pinSET)=='number' then
+    uart.on('data',0,function(data) end,0)  -- flush the uart buffer
     gpio.write(pinSET,gpio.LOW)             -- low-power standby mode
     if M.verbose==true then
       print(('%s: data acquisition %s.\n  Console %s.')
         :format(M.name,type(status)=='string' and status or 'paused','enhabled'))
     end
-    uart.on('data',0,function(data) end,0)  -- flush the uart buffer
     uart.on('data')                         -- release uart
   end
 
