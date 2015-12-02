@@ -90,7 +90,7 @@ pms3003.read(function()
   pm10 = pms3003.pm10 or 'null'
 
 -- release memory
-  pms0330,package.loaded.pms0330 = nil,nil
+  pms3003,package.loaded.pms3003 = nil,nil
 
 -- print the results
   print(('pm1:%s, pm2.5:%s, pm10:%s [ug/m3], heap:%d'):format(pm01,pm25,pm10,node.heap()))
@@ -109,7 +109,7 @@ sda,scl,pinSET=5,6,7
 require('sensors').init(sda,scl,pinSET)
 sensors.read(function()
   print(sensors.format({heap=node.heap(),time=tmr.time()},
-    'sensors:{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'))
+    'sensors:{time}[s],{t}[C],{h}[%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'))
 end)
 
 -- release memory
