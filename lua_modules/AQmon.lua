@@ -22,7 +22,7 @@ status('normal')
 
 local api=require('keys').api
 --api:sendData=require('sendData')(status)
-function speak(verbose)
+local function speak(verbose)
   if api.last and api.last>tmr.time() then -- tmr.time overflow
     print(('time overflow: %d>%d'):format(api.last,tmr.time()))
     api.last=tmr.time()
@@ -51,7 +51,7 @@ end
 
 --[[ Run code ]]
 print('Start WiFi')
-require('wifi_connect')(wifi.STATION,true) -- mode,sleep
+require('wifi_connect')(wifi.STATION,nil) -- mode,sleep
 status('iddle')
 
 --api.freq=1 -- debug
