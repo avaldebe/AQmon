@@ -46,7 +46,7 @@ local function decode(data)
   for n=0,mlen do
     msb,lsb=data:byte(2*n+1,2*n+2)  -- 2*char-->2*byte
     pms[n]=msb*256+lsb               -- 2*byte-->dec
-    cksum=cksum+(i<mlen and msb+lsb or 0)
+    cksum=cksum+(n<mlen and msb+lsb or 0)
   --print(('  data#%2d byte:%3d,%3d dec:%6d cksum:%6d'):format(n,msb,lsb,pms[n],cksum))
   end
   --assert(pms[0]==16973 and pms[1]==20 and #pms==mlen,
@@ -80,13 +80,13 @@ function M.init(pin_set,volatile,status)
 
 -- initialization
   if type(pinSET)=='number' then
-    gpio.write(pinSET,gpio.LOW)   -- low-power standby mode
+    gpio.write(pinSET,gpio.LOW)             -- low-power standby mode
     if M.verbose==true then
       print(('%s: data acquisition %s.\n  Console %s.')
         :format(M.name,type(status)=='string' and status or 'paused','enhabled'))
     end
-    tmr.delay(3000) -- 3 ms
-    uart.on('data')
+    uart.on('data',0,function(data) end,0)  -- flush the uart buffer
+    uart.on('data')                         -- release uart
   end
 
 -- M.init suceeded if pinSET is LOW
