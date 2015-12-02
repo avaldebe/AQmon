@@ -14,7 +14,7 @@ local M={name=...}
 return function(mode,sleep)
 -- mode: wifi.STATION|wifi.SOFTAP|wifi.STATIONAP
 -- sleep: nil|false(wifi.NONE_SLEEP)|true(wifi.MODEM_SLEEP)
-  package.loaded[M.name]=nil -- volatile module 
+  package.loaded[M.name]=nil -- volatile module
 
   local pass,cfg={},{} -- password,AP search config.
 
@@ -30,28 +30,30 @@ return function(mode,sleep)
     for ssid,v in pairs(t) do
       rssi=v:match("[^,]+,([^,]+),[^,]+,[^,]+")
       if pass[ssid] and wifi.sta.status()==5 then
-        print(('  STA Logged to: %s (%s dBm)'):format(ssid,rssi))
+        print(('  STA Logged to: %q (%s dBm)'):format(ssid,rssi))
         print(('    %s %s'):format(stat[5],wifi.sta.getip()))
-        return -- stop search
+      -- stop search
+        pass={}
       elseif pass[ssid] then
-        print(('  STA Loggin to: %s (%s dBm)'):format(ssid,rssi))
+        print(('  STA Loggin to: %q (%s dBm)'):format(ssid,rssi))
         wifi.sta.config(ssid,pass[ssid])
-        local n=20
-        tmr.alarm(0,10000,1,function()
+        local n=5
+        tmr.alarm(2,10000,1,function()
           local s=wifi.sta.status()
           if n>0 and s<=1 then
-            print(stat[s])
+            print(('    %s'):format(stat[s]))
             n=n-1
           elseif s==5 then
-            tmr.stop(0)
+            tmr.stop(2)
             print(('    %s %s'):format(stat[5],wifi.sta.getip()))
-            return -- stop search
+          -- stop search
+            pass={}
           elseif n>0 then
-            tmr.stop(0)
+            tmr.stop(2)
             print(('    %s'):format(stat[s]))
           else
-            tmr.stop(0)
-            print('  STA: Timed out')
+            tmr.stop(2)
+            print('  STA Timed out')
           end
         end)
       end
@@ -68,29 +70,31 @@ return function(mode,sleep)
     cfg=require('keys').ap -- {ssid=ssid,pwd=pass}
     wifi.setmode(mode)
     wifi.ap.config(cfg)
-    print(('  AP  %s %s'):format(cfg.ssid,wifi.ap.getip()))
+    print(('  AP %q %s'):format(cfg.ssid,wifi.ap.getip()))
   end
 
 -- STA modes: wifi.STATION|wifi.STATIONAP
   if mode==wifi.STATION or mode==wifi.STATIONAP then
-    pass=require('keys').sta -- {ssid1=pass1,...}
-    if wifi.sta.status()==5 then
-    -- test current SSID
-      cfg={ssid=wifi.sta.getconfig(),bssid=nil,channel=0,show_hidden=1}
-      wifi.sta.getap(cfg,0,listAP)
-    else
-    -- loop over available APs
-      wifi.sta.getap(listAP)
-    end
-    -- WiFi tranciver: sleep/wake-up
-    if wifi.sta.status()==5 and sleep==true then
-      print('WiFi sleep')
+    -- put tranciver to sleep
+    if sleep==true then
+      print('  STA Go to sleep')
       wifi.sta.disconnect()
       wifi.sleeptype(wifi.MODEM_SLEEP)
+    -- wake-up tranciver
     elseif sleep==false then
-      print('WiFi wakeup')
-      wifi.sleeptype(wifi.NONE_SLEEP)
-      wifi.sta.connect()
+        print('  STA Wakeup')
+        wifi.sleeptype(wifi.NONE_SLEEP)
+        wifi.sta.connect()
+    else
+      pass=require('keys').sta -- {ssid1=pass1,...}
+      -- test current SSID
+      if wifi.sta.status()==5 then
+        cfg={ssid=wifi.sta.getconfig(),bssid=nil,channel=0,show_hidden=1}
+        wifi.sta.getap(cfg,0,listAP)
+      -- loop over available APs
+      else
+        wifi.sta.getap(listAP)
+      end
     end
   end
 end
