@@ -48,46 +48,60 @@ function M.init(sda,scl,volatile)
   init=(next(cal)~=nil)
 
   if not init then
--- device found?
+    local found,c,w
+-- verify device address
     i2c.start(id)
-    local found=i2c.address(id,addr,i2c.TRANSMITTER)
+    found=i2c.address(id,addr,i2c.TRANSMITTER)
     i2c.stop(id)
+-- verify device ID
+    if found then
+    -- request REG_CHIPID 0xD0
+      i2c.start(id)
+      i2c.address(id,ADDR,i2c.TRANSMITTER)
+      i2c.write(id,0xD0)  -- REG_CHIPID
+      i2c.stop(id)
+    -- read REG_CHIPID 0xD0
+      i2c.start(id)
+      i2c.address(id,ADDR,i2c.RECEIVER)
+      c = i2c.read(id,1)  -- ID:1byte
+      i2c.stop(id)
+    -- CHIPID: BMP085/BMP180 0x55, BME280 0x60, BMP280 0x58
+      found=(c==0x60)
+    end
 -- read calibration coeff.
     if found then
-      local c
-    -- request CALIBRATION: T1,..,T3,P1,..,P9
+    -- request REG_DIG_T1 .. REG_DIG_P9+1 0x9F
       i2c.start(id)
       i2c.address(id,ADDR,i2c.TRANSMITTER)
       i2c.write(id,0x88) -- REG_DIG_T1
       i2c.stop(id)
-    -- read CALIBRATION: T1,..,T3,P1,..,P9
+    -- read REG_DIG_T1 .. REG_DIG_P9+1 0x9F
       i2c.start(id)
       i2c.address(id,ADDR,i2c.RECEIVER)
       c = i2c.read(id,24) -- T1:2byte,..,P2:2byte
       i2c.stop(id)
-    -- request CALIBRATION: H1
+    -- request REG_DIG_H1
       i2c.start(id)
       i2c.address(id,ADDR,i2c.TRANSMITTER)
       i2c.write(id,0xA1) -- REG_DIG_H1
       i2c.stop(id)
-    -- read CALIBRATION: H1
+    -- read REG_DIG_H1
       i2c.start(id)
       i2c.address(id,ADDR,i2c.RECEIVER)
       c = c..i2c.read(id,1) -- H1:1byte
       i2c.stop(id)
-    -- request CALIBRATION: H2,..,H7
+    -- request REG_DIG_H2 0xE1 .. REG_DIG_H6 0xE7
       i2c.start(id)
       i2c.address(id,ADDR,i2c.TRANSMITTER)
       i2c.write(id,0xE1) -- REG_DIG_H2
       i2c.stop(id)
-    -- read CALIBRATION: H2,..,H7
+    -- read REG_DIG_H2 0xE1 .. REG_DIG_H6 0xE7
       i2c.start(id)
       i2c.address(id,ADDR,i2c.RECEIVER)
       c = c..i2c.read(id,7) -- H2:2byte,H3:1byte,H3&H4:3byte,H6:1byte
       i2c.stop(id)
     -- unpack CALIBRATION: T1,..,T3,P1,..,P9,H1,..,H7
     --http://stackoverflow.com/questions/17152300/unsigned-to-signed-without-comparison
-      local w
       w=c:byte( 1)   +c:byte( 2)*256;cal.T1=w
       w=c:byte( 3)   +c:byte( 4)*256;cal.T2=w-bit.band(w,32768)*2
       w=c:byte( 5)   +c:byte( 6)*256;cal.T3=w-bit.band(w,32768)*2
@@ -107,6 +121,8 @@ function M.init(sda,scl,volatile)
       w=c:byte(31)*16+c:byte(30)/16 ;cal.H5=w
       w=c:byte(32)                  ;cal.H6=w
     end
+    -- M.init suceeded
+    init=found
   end
 
 -- M.init suceeded after/when read calibration coeff.
@@ -122,8 +138,23 @@ function M.read(oss)
   assert(type(oss)=='number' or oss==nil,
     ('%s.init %s argument should be %s'):format(M.name,'1st','number'))
 
+-- request REG_PRESSURE_MSB 0xF7 .. REG_HUMIDITY_LSB 0xFE
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.TRANSMITTER)
+  i2c.write(id,0xF7) -- REG_PRESSURE_MSB
+  i2c.stop(id)
+-- read REG_PRESSURE_MSB 0xF7 .. REG_HUMIDITY_LSB 0xFE
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.RECEIVER)
+  local c = i2c.read(id,8) -- p:3byte,t:3byte,h:byte
+  i2c.stop(id)
+-- unpack DATA
+  local p=c:byte(1)*4096+c:byte(2)*16+c:byte(3)/16
+  local t=c:byte(4)*4096+c:byte(5)*16+c:byte(6)/16
+  local h=c:byte(7)* 256+c:byte(8)
+
 -- expose results
-  M.temperature=nil -- integer value of temperature [10*C]
-  M.pressure   =nil -- integer value of preassure [100*hPa]
-  M.humidity   =nil -- integer value of relative humidity [10*%]
+  M.temperature=p -- integer value of temperature [10*C]
+  M.pressure   =t -- integer value of preassure [100*hPa]
+  M.humidity   =h -- integer value of relative humidity [10*%]
 end
