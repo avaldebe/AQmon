@@ -13,8 +13,8 @@ MIT license, http://opensource.org/licenses/MIT
 local M={
   name=...,       -- module name, upvalue from require('module-name')
   oss=1,          -- default pressure oversamplig: 0 .. 3
-  temperature=nil,-- integer value of temperature [10*C]
-  pressure   =nil -- integer value of preassure [100*hPa]
+  temperature=nil,-- integer value of temperature [0.01 C]
+  pressure   =nil -- integer value of preassure [Pa]=[0.01 hPa]
 }
 _G[M.name]=M
 
@@ -157,25 +157,25 @@ function M.read(oss)
   UP = c:byte(1)*65536+c:byte(2)*256+c:byte(3)
   UP = UP / 2^(8-oss)
   B6 = B5 - 4000
-  X1 = cal.B2 * (B6 * B6 / 4096) / 2048
-  X2 = cal.AC2 * B6 / 2048
+  X1 = B6 * B6 / 4096 * cal.B2 / 2048
+  X2 = B6 * cal.AC2 / 2048
   X3 = X1 + X2
   B3 = ((cal.AC1 * 4 + X3) * 2^oss + 2) / 4
   X1 = cal.AC3 * B6 / 8192
-  X2 = (cal.B1 * (B6 * B6 / 4096)) / 65536
+  X2 = B6 * B6 / 4096 * cal.B1 / 65536
   X3 = (X1 + X2 + 2) / 4
-  B4 = cal.AC4 * (X3 + 32768) / 32768
+  B4 = (X3 + 32768) * cal.AC4 / 32768
   B7 = (UP - B3) * (50000/2^oss)
 --p = (B7<0x80000000) and (B7*2)/B4 or (B7/B4)*2  -- retain preccision, avoid oveflow -- node.compile() fails
-  p = (B7 / B4) * 2
-  X1 = (p / 256) * (p / 256)
-  X1 = (X1 * 3038) / 65536
-  X2 = (-7357 * p) / 65536
-  p = p +(X1 + X2 + 3791) / 16
+  p = B7 * 2 / B4
+  X1 = (p/256) * (p/256)
+  X1 = X1 * 3038 / 65536
+  X2 = -7357 * p / 65536
+  p = p + (X1 + X2 + 3791) / 16
 
 -- expose results
-  M.temperature = t -- integer value of temp[C]*10
-  M.pressure    = p -- integer value of pres[hPa]*100
+  M.temperature = t*10  -- integer value of temp [0.01 C]
+  M.pressure    = p     -- integer value of pres [0.01 hPa]
 end
 
 return M

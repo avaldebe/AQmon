@@ -11,8 +11,8 @@ MIT license, http://opensource.org/licenses/MIT
 
 local M={
   name=...,       -- module name, upvalue from require('module-name')
-  temperature=nil,-- integer value of temperature [10*C]
-  humidity   =nil -- integer value of relative humidity [10*%]
+  temperature=nil,-- integer value of temperature [0.01 C]
+  humidity   =nil -- integer value of rel.humidity[0.01 %]
 }
 _G[M.name]=M
 
@@ -67,6 +67,7 @@ function M.read()
   i2c.start(id)
   i2c.address(id,ADDR,i2c.RECEIVER)
   local c=i2c.read(id,8)  -- cmd(2)+data(4)+crc(2)
+  i2c.stop(id)
 -- consistency check
   local len=c:len()
   local crc=0xFFFF
@@ -84,8 +85,8 @@ function M.read()
   end
 -- expose results
   if crc==c:byte(len)*256+c:byte(len-1) then
-    M.humidity   =c:byte(3)*256+c:byte(4)
-    M.temperature=c:byte(5)*256+c:byte(6)
+    M.humidity   =c:byte(3)*2560+c:byte(4)*10 -- rel.humidity[0.01 %]
+    M.temperature=c:byte(5)*2560+c:byte(6)*10 -- temperature [0.01 C]
   else
     M.humidity   =nil
     M.temperature=nil

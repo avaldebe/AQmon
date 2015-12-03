@@ -17,7 +17,7 @@ local M={
   verbose=nil,    -- verbose output
   t=nil,          -- string value of temperature [C]
   p=nil,          -- string value of preassure [hPa]
-  h=nil,          -- string value of relative humidity [%]
+  h=nil,          -- string value of rel.humidity[%]
   pm01=nil,       -- string value of PM 1.0 [ug/m3]
   pm25=nil,       -- string value of PM 2.5 [ug/m3]
   pm10=nil        -- string value of PM 10. [ug/m3]
@@ -32,15 +32,11 @@ function M.format(vars,message,squeese)
     if type(v)=='number' then
       if k=='pm01' or k=='pm25' or k=='pm10' then
         M[k]=('%4d'):format(v)
-      elseif k=='t' or k=='temperature' then  -- t/10 --> %5.1f
-        v=('%4d'):format(v)
-        M.t=('%3s.%1s'):format(v:sub(1,3),v:sub(4))
-      elseif k=='h' or k=='humidity' then     -- h/10 --> %5.1f
-        v=('%4d'):format(v)
-        M.h=('%3s.%1s'):format(v:sub(1,3),v:sub(4))
-      elseif k=='p' or k=='pressure' then      -- p/100 --> %7.2f
-        v=('%6d'):format(v)
-        M.p=('%4s.%2s'):format(v:sub(1,4),v:sub(5))
+      elseif k=='t' or k=='temperature'
+          or k=='h' or k=='humidity'
+          or k=='p' or k=='pressure' then     -- x/100 --> %7.2f
+        v,k=('%6d'):format(v),k:sub(1,1)
+        M[k]=('%4s.%2s'):format(v:sub(1,4),v:sub(5))
       elseif k=='upTime' then                 -- days:hh:mm:ss
         M[k]=('%02d:%02d:%02d:%02d')
             :format(v/86400,v%86400/3600,v%3600/60,v%60)
@@ -52,9 +48,7 @@ function M.format(vars,message,squeese)
       if v=='' then v='null' end
       if k=='pm01' or k=='pm25' or k=='pm10' then
         M[k]=('%4s'):format(v)
-      elseif k=='t' or k=='h' then
-        M[k]=('%5s'):format(v)
-      elseif k=='p' then
+      elseif k=='t' or k=='h' or k=='p' then
         M[k]=('%7s'):format(v)
       end
     end
@@ -111,7 +105,7 @@ function M.read(callBack)
 -- reset output
   if not M.persistence then M.init() end
 -- verbose print: csv/column output
-  local payload='%s:{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
+  local payload='%s:{time}[s],{t}[C],{h}[%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
   local sensor -- local "name" for sensor module
 
   sensor=require('bmp180')
