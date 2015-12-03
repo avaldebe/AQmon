@@ -11,10 +11,10 @@ MIT license, http://opensource.org/licenses/MIT
 ]]
 
 local M={
-  name=...,         -- module name, upvalue from require('module-name')
-  oss=1,            -- default pressure oversamplig: 0 .. 3
-  temperature=nil,  -- integer value of temperature [10*C]
-  pressure   =nil   -- integer value of preassure [100*hPa]
+  name=...,       -- module name, upvalue from require('module-name')
+  oss=1,          -- default pressure oversamplig: 0 .. 3
+  temperature=nil,-- integer value of temperature [10*C]
+  pressure   =nil -- integer value of preassure [100*hPa]
 }
 _G[M.name]=M
 
