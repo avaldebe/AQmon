@@ -8,10 +8,10 @@ Written by Álvaro Valdebenito.
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
-local M={name=...}
+local M={name=...}  -- module name, upvalue from require('module-name')
 
 return function(self,status)
-  package.loaded[M.name]=nil -- volatile module 
+  package.loaded[M.name]=nil -- volatile module
 
   status('normal')
   if self.sent~=nil then -- already sending data
@@ -22,8 +22,7 @@ return function(self,status)
   self.sent=false
 
   require('wifi_connect')(wifi.STATION,false) -- wifi wake-up
-  sk=nil
-  sk=net.createConnection(net.TCP,0)
+  local sk=net.createConnection(net.TCP,0)
 --[[Expected sequence of events:
     sk:connect(...)
     sk:on('connection')
