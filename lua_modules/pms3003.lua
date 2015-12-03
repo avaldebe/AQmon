@@ -29,11 +29,12 @@ Body:  20 bytes, 10 pairs of bytes (MSB,LSB)
   bytes 23..24: cksum=byte01+..+byte22.
 ]]
 
-local M = {name=...,mlen=24,stdATM=nil,verbose=nil}
-_G[M.name] = M
--- M.mlen: lenght of PMS3003 message
--- M.stdATM: use standatd atm correction instead of TSI standard
--- M.verbose: verbose output
+local M={
+  name=..., -- module name, upvalue from require('module-name')
+  mlen=24,  -- lenght of PMS3003 message
+  stdATM=nil, -- use standatd atm correction instead of TSI standard
+  verbose=nil}-- verbose output
+_G[M.name]=M
 
 local function decode(data)
   -- data beggins with the byte pair 'BM' (dec 16973).

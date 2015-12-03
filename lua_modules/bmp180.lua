@@ -10,9 +10,10 @@ Written by Álvaro Valdebenito,
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
-local M = {name=...,oss=1}
-_G[M.name] = M
--- M.oss: default pressure oversamplig setting, 0:low power .. 3:oversample
+local M={
+  name=..., -- module name, upvalue from require('module-name')
+  oss=1}    -- default pressure oversamplig setting, 0:low power .. 3:oversample
+_G[M.name]=M
 
 local ADDR = 0x77 -- BMP085/BMP180 address
 

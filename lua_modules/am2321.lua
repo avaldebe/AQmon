@@ -9,8 +9,8 @@ MIT license, http://opensource.org/licenses/MIT
 ]]
 
 
-local M = {name=...}
-_G[M.name] = M
+local M={name=...}  -- module name, upvalue from require('module-name')
+_G[M.name]=M
 
 local ADDR=bit.rshift(0xB8,1) -- use 7bit address
 
