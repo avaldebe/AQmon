@@ -43,10 +43,26 @@ function M.init(sda,scl,volatile)
   init=(next(cal)~=nil)
 
   if not init then
--- device found?
+    local found,c,model,w
+-- verify device address
     i2c.start(id)
-    local found=i2c.address(id,addr,i2c.TRANSMITTER)
+    found=i2c.address(id,addr,i2c.TRANSMITTER)
     i2c.stop(id)
+-- verify device ID
+    if found then
+    -- request REG_CHIPID 0xD0
+      i2c.start(id)
+      i2c.address(id,ADDR,i2c.TRANSMITTER)
+      i2c.write(id,0xD0)  -- REG_CHIPID
+      i2c.stop(id)
+    -- read REG_CHIPID 0xD0
+      i2c.start(id)
+      i2c.address(id,ADDR,i2c.RECEIVER)
+      c = i2c.read(id,1)  -- CHIPID:1byte
+      i2c.stop(id)
+    -- CHIPID: BMP085/BMP180 0x55, BME280 0x60, BMP280 0x58
+      found=(c==0x55)
+    end
 -- read calibration coeff.
     if found then
     -- request CALIBRATION
@@ -57,10 +73,9 @@ function M.init(sda,scl,volatile)
     -- read CALIBRATION
       i2c.start(id)
       i2c.address(id,ADDR,i2c.RECEIVER)
-      local c = i2c.read(id,22)
+      c = i2c.read(id,22)
       i2c.stop(id)
     -- unpack CALIBRATION
-      local w
     --http://stackoverflow.com/questions/17152300/unsigned-to-signed-without-comparison
       w=c:byte( 1)*256+c:byte( 2);cal.AC1=w-bit.band(w,32768)*2
       w=c:byte( 3)*256+c:byte( 4);cal.AC2=w-bit.band(w,32768)*2
@@ -73,9 +88,9 @@ function M.init(sda,scl,volatile)
       w=c:byte(17)*256+c:byte(18);cal.MB =w-bit.band(w,32768)*2
       w=c:byte(19)*256+c:byte(20);cal.MC =w-bit.band(w,32768)*2
       w=c:byte(21)*256+c:byte(22);cal.MD =w-bit.band(w,32768)*2
-    -- M.init suceeded
-      init=true
     end
+    -- M.init suceeded
+    init=found
   end
 
 -- M.init suceeded after/when read calibration coeff.
