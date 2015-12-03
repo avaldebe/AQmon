@@ -9,14 +9,12 @@ Written by Álvaro Valdebenito,
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
-local M={name=...}
+local M={name=...}  -- module name, upvalue from require('module-name')
 
 return function(mode,sleep)
 -- mode: wifi.STATION|wifi.SOFTAP|wifi.STATIONAP
 -- sleep: nil|false(wifi.NONE_SLEEP)|true(wifi.MODEM_SLEEP)
   package.loaded[M.name]=nil -- volatile module
-
-  local pass,cfg={},{} -- password,AP search config.
 
 -- callback function for wifi.sta.getap(cfg,0,listAP)
   local function listAP(t) -- (SSID:'Authmode, RSSI, BSSID, Channel')
@@ -27,9 +25,11 @@ return function(mode,sleep)
                 [4]='STATION_CONNECT_FAIL',
                 [5]='STATION_GOT_IP'}
     local ssid,v,rssi
+    local pass=require('keys').sta -- {ssid1=pass1,...}
     for ssid,v in pairs(t) do
       rssi=v:match("[^,]+,([^,]+),[^,]+,[^,]+")
       if pass[ssid] and wifi.sta.status()==5 then
+        tmr.stop(2)
         print(('  STA Logged to: %q (%s dBm)'):format(ssid,rssi))
         print(('    %s %s'):format(stat[5],wifi.sta.getip()))
       -- stop search
@@ -67,7 +67,7 @@ return function(mode,sleep)
 
 -- AP modes: wifi.SOFTAP|wifi.STATIONAP
   if mode==wifi.SOFTAP or mode==wifi.STATIONAP then
-    cfg=require('keys').ap -- {ssid=ssid,pwd=pass}
+    local cfg=require('keys').ap -- {ssid=ssid,pwd=pass}
     wifi.setmode(mode)
     wifi.ap.config(cfg)
     print(('  AP %q %s'):format(cfg.ssid,wifi.ap.getip()))
@@ -82,14 +82,13 @@ return function(mode,sleep)
       wifi.sleeptype(wifi.MODEM_SLEEP)
     -- wake-up tranciver
     elseif sleep==false then
-        print('  STA Wakeup')
-        wifi.sleeptype(wifi.NONE_SLEEP)
-        wifi.sta.connect()
+      print('  STA Wakeup')
+      wifi.sleeptype(wifi.NONE_SLEEP)
+      wifi.sta.connect()
     else
-      pass=require('keys').sta -- {ssid1=pass1,...}
       -- test current SSID
       if wifi.sta.status()==5 then
-        cfg={ssid=wifi.sta.getconfig(),bssid=nil,channel=0,show_hidden=1}
+        local cfg={ssid=wifi.sta.getconfig(),bssid=nil,channel=0,show_hidden=1}
         wifi.sta.getap(cfg,0,listAP)
       -- loop over available APs
       else
