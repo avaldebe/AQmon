@@ -39,35 +39,43 @@ function M.init(sda,scl,volatile)
     i2c.setup(id,SDA,SCL,i2c.SLOW)
   end
 
--- read calibration coeff.
-  if not init then
-  -- request CALIBRATION
-    i2c.start(id)
-    i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.write(id,0xAA) -- REG_CALIBRATION
-    i2c.stop(id)
-  -- read CALIBRATION
-    i2c.start(id)
-    i2c.address(id,ADDR,i2c.RECEIVER)
-    local c = i2c.read(id,22)
-    i2c.stop(id)
-  -- unpack CALIBRATION
-    local w
---http://stackoverflow.com/questions/17152300/unsigned-to-signed-without-comparison
-    w=c:byte( 1)*256+c:byte( 2);cal.AC1=w-bit.band(w,32768)*2
-    w=c:byte( 3)*256+c:byte( 4);cal.AC2=w-bit.band(w,32768)*2
-    w=c:byte( 5)*256+c:byte( 6);cal.AC3=w-bit.band(w,32768)*2
-    w=c:byte( 7)*256+c:byte( 8);cal.AC4=w
-    w=c:byte( 9)*256+c:byte(10);cal.AC5=w
-    w=c:byte(11)*256+c:byte(12);cal.AC6=w
-    w=c:byte(13)*256+c:byte(14);cal.B1 =w-bit.band(w,32768)*2
-    w=c:byte(15)*256+c:byte(16);cal.B2 =w-bit.band(w,32768)*2
-    w=c:byte(17)*256+c:byte(18);cal.MB =w-bit.band(w,32768)*2
-    w=c:byte(19)*256+c:byte(20);cal.MC =w-bit.band(w,32768)*2
-    w=c:byte(21)*256+c:byte(22);cal.MD =w-bit.band(w,32768)*2
+-- M.init suceeded after/when read calibration coeff.
+  init=(next(cal)~=nil)
 
-  -- M.init suceeded
-    init=true
+  if not init then
+-- device found?
+    i2c.start(id)
+    local found=i2c.address(id,addr,i2c.TRANSMITTER)
+    i2c.stop(id)
+-- read calibration coeff.
+    if found then
+    -- request CALIBRATION
+      i2c.start(id)
+      i2c.address(id,ADDR,i2c.TRANSMITTER)
+      i2c.write(id,0xAA) -- REG_CALIBRATION
+      i2c.stop(id)
+    -- read CALIBRATION
+      i2c.start(id)
+      i2c.address(id,ADDR,i2c.RECEIVER)
+      local c = i2c.read(id,22)
+      i2c.stop(id)
+    -- unpack CALIBRATION
+      local w
+    --http://stackoverflow.com/questions/17152300/unsigned-to-signed-without-comparison
+      w=c:byte( 1)*256+c:byte( 2);cal.AC1=w-bit.band(w,32768)*2
+      w=c:byte( 3)*256+c:byte( 4);cal.AC2=w-bit.band(w,32768)*2
+      w=c:byte( 5)*256+c:byte( 6);cal.AC3=w-bit.band(w,32768)*2
+      w=c:byte( 7)*256+c:byte( 8);cal.AC4=w
+      w=c:byte( 9)*256+c:byte(10);cal.AC5=w
+      w=c:byte(11)*256+c:byte(12);cal.AC6=w
+      w=c:byte(13)*256+c:byte(14);cal.B1 =w-bit.band(w,32768)*2
+      w=c:byte(15)*256+c:byte(16);cal.B2 =w-bit.band(w,32768)*2
+      w=c:byte(17)*256+c:byte(18);cal.MB =w-bit.band(w,32768)*2
+      w=c:byte(19)*256+c:byte(20);cal.MC =w-bit.band(w,32768)*2
+      w=c:byte(21)*256+c:byte(22);cal.MD =w-bit.band(w,32768)*2
+    -- M.init suceeded
+      init=true
+    end
   end
 
 -- M.init suceeded after/when read calibration coeff.
