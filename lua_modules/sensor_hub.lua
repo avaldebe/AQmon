@@ -11,10 +11,18 @@ MIT license, http://opensource.org/licenses/MIT
 ]]
 
 -- persistence: use last values when read fails
-local M = {name=...,persistence=nil,verbose=nil}
-_G[M.name] = M
--- M.persistence: use last read set of output when/if reading fails
--- M.verbose: verbose output
+local M={
+  name=...,       -- module name, upvalue from require('module-name')
+  persistence=nil,-- use last read set of output when/if reading fails
+  verbose=nil,    -- verbose output
+  t=nil,          -- string value of temperature [C]
+  p=nil,          -- string value of preassure [hPa]
+  h=nil,          -- string value of relative humidity [%]
+  pm01=nil,       -- string value of PM 1.0 [ug/m3]
+  pm25=nil,       -- string value of PM 2.5 [ug/m3]
+  pm10=nil        -- string value of PM 10. [ug/m3]
+}
+_G[M.name]=M
 
 -- Format module outputs
 function M.format(vars,message,squeese)

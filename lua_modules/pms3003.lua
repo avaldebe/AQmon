@@ -30,10 +30,14 @@ Body:  20 bytes, 10 pairs of bytes (MSB,LSB)
 ]]
 
 local M={
-  name=..., -- module name, upvalue from require('module-name')
-  mlen=24,  -- lenght of PMS3003 message
+  name=...,   -- module name, upvalue from require('module-name')
+  mlen=24,    -- lenght of PMS3003 message
   stdATM=nil, -- use standatd atm correction instead of TSI standard
-  verbose=nil}-- verbose output
+  verbose=nil,-- verbose output
+  pm01=nil,   -- integer value of PM 1.0 [ug/m3]
+  pm25=nil,   -- integer value of PM 2.5 [ug/m3]
+  pm10=nil    -- integer value of PM 10. [ug/m3]
+}
 _G[M.name]=M
 
 local function decode(data)

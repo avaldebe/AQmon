@@ -9,7 +9,10 @@ MIT license, http://opensource.org/licenses/MIT
 ]]
 
 
-local M={name=...}  -- module name, upvalue from require('module-name')
+local M={
+  name=...,       -- module name, upvalue from require('module-name')
+  temperature=nil,  -- integer value of temperature [C/10]
+  humidity   =nil}  -- integer value of relative humidity [%/10]
 _G[M.name]=M
 
 local ADDR=bit.rshift(0xB8,1) -- use 7bit address
