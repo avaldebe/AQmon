@@ -83,7 +83,7 @@ function M.init(sda,scl,volatile)
     -- read CALIBRATION: H2,..,H7
       i2c.start(id)
       i2c.address(id,ADDR,i2c.RECEIVER)
-      c = c..i2c.read(id,7) -- H2:2byte,H3:1byte,..,H7:1byte
+      c = c..i2c.read(id,7) -- H2:2byte,H3:1byte,H3&H4:3byte,H6:1byte
       i2c.stop(id)
     -- unpack CALIBRATION: T1,..,T3,P1,..,P9,H1,..,H7
     --http://stackoverflow.com/questions/17152300/unsigned-to-signed-without-comparison
@@ -104,7 +104,7 @@ function M.init(sda,scl,volatile)
       w=c:byte(26)   +c:byte(27)*256;cal.H2=w-bit.band(w,32768)*2
       w=c:byte(28)                  ;cal.H3=w
       w=c:byte(29)*16+c:byte(30)%16 ;cal.H4=w
-      w=c:byte(31)*16+c:byte(30)/16 ;cal.H4=w
+      w=c:byte(31)*16+c:byte(30)/16 ;cal.H5=w
       w=c:byte(32)                  ;cal.H6=w
     end
   end
