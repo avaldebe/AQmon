@@ -184,7 +184,11 @@ function M.read(oss)
     v2 = v2/4 + bit.lshift(cal.P4,16)
     v2 = bit.rshift(v2,12)
     p = (1048576 - p - v2)*3125
-    p = p*2/v1
+    if p<0x40000000 then
+      p = p*2/v1
+    else
+      p = p/v1*2
+    end
     v1 = bit.rshift((p/8)*(p/8),13)
     v1 = bit.rshift(v1*cal.P9,12)
     v2 = bit.rshift(p/4*cal.P8,13)
