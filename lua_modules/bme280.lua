@@ -69,7 +69,7 @@ function M.init(sda,scl,volatile)
       c = i2c.read(id,1)  -- ID:1byte
       i2c.stop(id)
     -- CHIPID: BMP085/BMP180 0x55, BME280 0x60, BMP280 0x58
-      found=(c==0x60)
+      found=(c:byte()==0x60)
     end
 -- read calibration coeff.
     if found then
@@ -203,7 +203,7 @@ function M.read(oss)
   v2 = bit.rshift(v1*cal.H6,10)
   v2 = v2*(bit.rshift(v1*cal.H3,11) + 32768)
   v2 =(bit.rshift(v2,10) + 2097152)*cal.H2 + 8192
-  v1 = bit.lshift(h,14) - bit.lshift(cal.H4,20) - cal.H5*v1 + 16384  
+  v1 = bit.lshift(h,14) - bit.lshift(cal.H4,20) - cal.H5*v1 + 16384
   v1 = bit.rshift(v1,15)*bit.rshift(v2,14)
   v2 = bit.rshift(v1,15)
   v1 = v1 - bit.rshift(v2*v2,7)*cal.H1/16

@@ -43,10 +43,10 @@ function M.init(sda,scl,volatile)
   init=(next(cal)~=nil)
 
   if not init then
-    local found,c,model,w
+    local found,c,w
 -- verify device address
     i2c.start(id)
-    found=i2c.address(id,addr,i2c.TRANSMITTER)
+    found=i2c.address(id,ADDR,i2c.TRANSMITTER)
     i2c.stop(id)
 -- verify device ID
     if found then
@@ -61,7 +61,7 @@ function M.init(sda,scl,volatile)
       c = i2c.read(id,1)  -- CHIPID:1byte
       i2c.stop(id)
     -- CHIPID: BMP085/BMP180 0x55, BME280 0x60, BMP280 0x58
-      found=(c==0x55)
+      found=(c:byte()==0x55)
     end
 -- read calibration coeff.
     if found then
