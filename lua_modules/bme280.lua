@@ -6,13 +6,13 @@ bme280.lua for ESP8266 with nodemcu-firmware
 Written by Álvaro Valdebenito,
   based on:
   - bme280.lua by WG
-    https://github.com/wogum/esp12
-  - bme280.py by Kieran Brownlees
-    https://github.com/kbrownlees/bme280
-  - Adafruit_BME280.py by adafruit
-    https://github.com/adafruit/Adafruit_Python_BME280
+      https://github.com/wogum/esp12
   - BME280_driver by BoschSensortec
-    https://github.com/BoschSensortec/BME280_drive
+      https://github.com/BoschSensortec/BME280_driver
+  - bme280.py by Kieran Brownlees
+      https://github.com/kbrownlees/bme280
+  - Adafruit_BME280.py by adafruit
+      https://github.com/adafruit/Adafruit_Python_BME280
 
 MIT license, http://opensource.org/licenses/MIT
 ]]
@@ -173,43 +173,43 @@ function M.read(oss)
   Returns the value in Pascal (Pa),
   and output value of "96386" equals 96386 Pa = 963.86 hPa. ]]
   v1 = tfine/2 - 64000
-  v2 = bit.rshift((v1/4)*(v1/4),11)*cal.P6
-  v2 = v2 + v1*cal.P5*2
-  v2 = v2/4 + bit.lshift(cal.P4,16)
-  v2 = bit.rshift(v2,12)
+  v2 = bit.rshift((v1/4)*(v1/4),11)
+  v2 = v2*cal.P6 + v1*cal.P5*2
   v1 = cal.P3*bit.rshift((v1/4)*(v1/4),13)/8
-     + bit.rshift(cal.P2*v1/2,18)
-  v1 = bit.rshift((32768 + v1)*cal.P1,15)
+     + bit.rshift(cal.P2*v1/2,18) + 32768
+  v1 = bit.rshift(v1*cal.P1,15)
   if v1==0 then
     p = nil
   else
+    v2 = v2/4 + bit.lshift(cal.P4,16)
+    v2 = bit.rshift(v2,12)
     p = (1048576 - p - v2)*3125
     p = p*2/v1
     v1 = bit.rshift((p/8)*(p/8),13)
     v1 = bit.rshift(v1*cal.P9,12)
     v2 = bit.rshift(p/4*cal.P8,13)
-    p = p + bit.rshift(v1 + v2 + cal.P7,4)
+    p = p + (v1 + v2 + cal.P7)/16
   end
-
 
 --[[ Humidity: Adapted from bme280_compensate_humidity_int32.
   Calculte actual humidity from uncompensated humidity.
-  Returns the value in %rH as unsigned 32bit integer
-  in Q22.10 format(22 integer 10 fractional bits).
-  An output value of 42313 represents 42313 / 1024 = 41.321 %rH ]]
+  Returns the value in 0.01 %rH.
+  An output value of 4132.1 represents 41.321 %rH ]]
   v1 = tfine - 76800
-  v2 = v1 * cal.H6 / 1024
-  v1 = h * 16384 - cal.H4 * 1048576 - cal.H5 * v1 + 16384
-  v2 = ((v2 * v2 + 32768) / 1024 + 2097152) * cal.H2 + 8192
-  v1 = (v1/32768) * (v2/16384)
-  v2 = (v1/32768) * (v1/32768)
-  v1 = v1 - v2/128 * H1 / 16
+  v2 = bit.rshift(v1*cal.H6,10)
+  v2 = v2*(bit.rshift(v1*cal.H3,11) + 32768)
+  v2 =(bit.rshift(v2,10) + 2097152)*cal.H2 + 8192
+  v1 = bit.lshift(h,14) - bit.lshift(cal.H4,20) - cal.H5*v1 + 16384  
+  v1 = bit.rshift(v1,15)*bit.rshift(v2,14)
+  v2 = bit.rshift(v1,15)
+  v1 = v1 - bit.rshift(v2*v2,7)*cal.H1/16
   if v1 < 0 then
     v1 = 0
   elseif v1 > 419430400 then
     v1 = 419430400
   end
-  h = v1 / 4096
+  h = bit.rshift(v1,12)     -- Q22.10, ie 42313 means 42313/1024=41.321 %rH
+  h = bit.rshift(h*100,10)  -- 0.01 C, ie 4132.1 means 41.321 %rH
 
 -- expose results
   M.temperature=t -- integer value of temperature [0.01 C]
