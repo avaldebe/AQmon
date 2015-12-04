@@ -49,7 +49,6 @@ DIY Air Quality Monitor
 
 ### Development HW
 - Status RGB LED
-- [OLED][]: I2C 128X64 display driven by an SSD1306
 - [Base Shield][]:  base board for wide nodemcu modules (devkit-0.9).
   Incudes a 5V/1A buck regulator.
 - [Motor Shield][]: base board for thin nodemcu modules (devkit-1.0).
@@ -73,15 +72,13 @@ DIY Air Quality Monitor
 
 - lua_modules: There is bearly enough RAM for the current modules.
   A [nodemcu-custom-build][] for 0.9.6 could be the way forward.
+  - BME280 sensor, oversample modes.
   - MAX17043 sensor.
-  - BME280 sensor.
   - browser side makrdown with [strapdown.js][]
   - index.md: index page with thingspeak plugins and external widgets
   - config.md: config page
     - save params to `keys.lua`
     - wifi.SOFTAP only(?)
-- plugins
-  - live update for the last hour datapoint(?)
 
 [strapdown.js]: http://strapdownjs.com
 [luatool.py]: https://github.com/4refr0nt/luatool

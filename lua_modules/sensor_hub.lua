@@ -105,7 +105,7 @@ function M.read(callBack)
 -- reset output
   if not M.persistence then M.init() end
 -- verbose print: csv/column output
-  local payload='%s:{time}[s],{t}[C],{h}[%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
+  local payload='%s:{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
   local sensor -- local "name" for sensor module
 
   sensor=require('bmp180')
@@ -125,6 +125,20 @@ function M.read(callBack)
   sensor=require('am2321')
   if sensor.init(SDA,SCL,true) then -- volatile module
     sensor.read()
+    if M.verbose then
+      sensor.heap,sensor.time=node.heap(),tmr.time()
+      print(M.format(sensor,payload:format(sensor.name)))
+    else
+      M.format(sensor)
+    end
+  elseif M.verbose then
+    print(('--Sensor "%s" not found!'):format(sensor.name))
+  end
+  sensor=nil -- release sensor module
+
+  sensor=require('bme280')
+  if sensor.init(SDA,SCL,true) then -- volatile module
+    sensor.read(0)   -- 0:low power .. 5:oversample
     if M.verbose then
       sensor.heap,sensor.time=node.heap(),tmr.time()
       print(M.format(sensor,payload:format(sensor.name)))

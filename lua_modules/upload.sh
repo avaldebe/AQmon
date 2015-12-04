@@ -4,7 +4,7 @@
 : ${VERSION:=0.9.6-dev_20150704}
 : ${CHANNEL:=37527}
 
-(($#))||set wipe bmp180 am2321 pms3003 sensor_hub \
+(($#))||set wipe bmp180 am2321 bme280 pms3003 sensor_hub \
             keys_v$CHANNEL wifi_connect rgbLED sendData AQmon init
 
 while (($#)); do
@@ -17,7 +17,7 @@ while (($#)); do
 # list) luatool.py -p $PORT -l;;
   wipe)
     luatool.py -p $PORT -rw;;
-  bmp180|am2321|pms3003)        # sensor modules
+  bmp180|am2321|bme280|pms3003)        # sensor modules
     luatool.py -p $PORT -cf $opt.lua;;
   hub|hub.*|*_hub|*_hub.*)      # sensor hub module
     luatool.py -p $PORT -rcf ${opt%.*}.lua -t sensors.lua;;

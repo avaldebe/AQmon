@@ -162,6 +162,11 @@ My biggest thanks to the following authors:
 - @geekscape: his [skeleton][]/`setup.lua` is almost esactly the same as my first version of `wifi.init`.
   From him I took the idea of using a generic module name (`appliation.lua`) for the appliation specific code.
 - @hwiguna: his [esp8266 videos][] are an inspiration go out and play (or code).
+- For my `bme280.lua` module I took bit and pieces from many sources:
+  - [bme280.lua][] by @wogum
+  - [BME280_driver][] by @BoschSensortec
+  - [bme280.py][] by @kbrownlees
+  - [Adafruit_BME280.py][] by @adafruit
 
 [AQmon]: https://github.com/avaldebe/AQmon
 [bigdanz]:      https://bigdanzblog.wordpress.com
@@ -172,3 +177,8 @@ My biggest thanks to the following authors:
 [captain-slow]:    http://captain-slow.dk
 [posting to thingspeak]: http://captain-slow.dk/2015/04/16/posting-to-thingspeak-with-esp8266-and-nodemcu
 [AM2321]:         https://github.com/saper-2/esp8266-am2321-remote-sensor
+[bme280.lua]:     https://github.com/wogum/esp12
+[BME280_driver]:  https://github.com/BoschSensortec/BME280_driver
+[bme280.py]:      https://github.com/kbrownlees/bme280
+[Adafruit_BME280.py]: https://github.com/adafruit/Adafruit_Python_BME280
+
