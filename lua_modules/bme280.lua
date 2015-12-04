@@ -54,7 +54,7 @@ function M.init(sda,scl,volatile)
     local found,c,w
 -- verify device address
     i2c.start(id)
-    found=i2c.address(id,addr,i2c.TRANSMITTER)
+    found=i2c.address(id,ADDR,i2c.TRANSMITTER)
     i2c.stop(id)
 -- verify device ID
     if found then
@@ -220,3 +220,5 @@ function M.read(oss)
   M.pressure   =p -- integer value of preassure   [0.01 hPa]
   M.humidity   =h -- integer value of rel.humidity[0.01 %]
 end
+
+return M
