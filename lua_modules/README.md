@@ -6,6 +6,7 @@ Lua modules for [AQmon][] project.<br/>
 ### Sensor modules
 - `bmp180.lua`: BMP085 / BMP180 sensors.
 - `am2321.lua`: AM2320 / AM2321 sensors.
+- `bme280.lua`: BME280 sensor, can replace BMPxxx and AM232x sensors.
 - `pms3003.lua`: PMS3003 sensor.
 - `sensor_hub.lua`: Read all sensors above.
 
@@ -76,6 +77,36 @@ if type(t)=='number' then
 end
 print(('h:%s %%, t:%s C, heap:%d')
  :format(h or 'null',t or 'null',node.heap()))
+```
+
+#### BME280
+```lua
+-- module setup and read
+sda,scl=3,4 -- GPIO0,GPIO2
+found=require('bme280').init(sda,scl)
+if found then
+  bme280.read()
+  p,t,h = bme280.pressure,bme280.temperature,bme280.humidity
+end
+
+-- release memory
+bme280,package.loaded.bme280 = nil,nil
+
+-- format and print the results
+if type(p)=='number' then
+  p=('%6d'):format(p)
+  p=('%4s.%2s'):format(p:sub(1,4),p:sub(5))
+end
+if type(t)=='number' then
+  t=('%5d'):format(t)
+  t=('%3s.%2s'):format(t:sub(1,3),t:sub(4))
+end
+if type(h)=='number' then
+  h=('%5d'):format(h)
+  h=('%3s.%2s'):format(h:sub(1,3),h:sub(4))
+end
+print(('p:%s hPa, t:%s C, h:%s %%, heap:%d')
+ :format(p or 'null',t or 'null',h or 'null',node.heap()))
 ```
 
 #### PMS3003
