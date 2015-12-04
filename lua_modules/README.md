@@ -33,8 +33,7 @@ sda,scl=3,4 -- GPIO0,GPIO2
 found=require('bmp180').init(sda,scl)
 if found then
   bmp180.read(0)   -- 0:low power .. 3:oversample
-  p = bmp180.pressure or 'null'
-  t = bmp180.temperature or 'null'
+  p,t = bmp180.pressure,bmp180.temperature
 end
 
 -- release memory
@@ -42,25 +41,25 @@ bmp180,package.loaded.bmp180 = nil,nil
 
 -- format and print the results
 if type(p)=='number' then
-  p=('%5d'):format(p)
+  p=('%6d'):format(p)
   p=('%4s.%2s'):format(p:sub(1,4),p:sub(5))
 end
 if type(t)=='number' then
-  t=('%4d'):format(t)
-  t=('%3s.%1s'):format(t:sub(1,3),t:sub(4))
+  t=('%5d'):format(t)
+  t=('%3s.%2s'):format(t:sub(1,3),t:sub(4))
 end
-print(('p:%s hPa, t:%s C, heap:%d'):format(p,t,node.heap()))
+print(('p:%s hPa, t:%s C, heap:%d')
+  :format(p or 'null',t or 'null',node.heap()))
 ```
 
 #### AM2320, AM2321
 ```lua
 -- module setup and read
 sda,scl=3,4 -- GPIO0,GPIO2
-found=require('am2321').init(sda, scl)
+found=require('am2321').init(sda,scl)
 if found then
   am2321.read()
-  h = am2321.humidity or 'null'
-  t = am2321.temperature or 'null'
+  h,t = am2321.humidity,am2321.temperature
 end
 
 -- release memory
@@ -68,14 +67,15 @@ am2321,package.loaded.am2321 = nil,nil
 
 -- format and print the results
 if type(h)=='number' then
-  h=('%4d'):format(h)
-  h=('%3s.%1s'):format(h:sub(1,3),h:sub(4))
+  h=('%5d'):format(h)
+  h=('%3s.%2s'):format(h:sub(1,3),h:sub(4))
 end
 if type(t)=='number' then
-  t=('%4d'):format(t)
-  t=('%3s.%1s'):format(t:sub(1,3),t:sub(4))
+  t=('%5d'):format(t)
+  t=('%3s.%2s'):format(t:sub(1,3),t:sub(4))
 end
-print(('h:%s %%, t:%s C, heap:%d'):format(h,t,node.heap()))
+print(('h:%s %%, t:%s C, heap:%d')
+ :format(h or 'null',t or 'null',node.heap()))
 ```
 
 #### PMS3003
