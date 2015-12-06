@@ -57,6 +57,7 @@ status('iddle')
 --api.freq=1 -- debug
 tmr.alarm(0,10000,0,function() -- 10s after start
   if api.freq>0 then
+    require('wifi_connect')(wifi.STATION,true) -- wifi sleep
     print(('Send data every %s min'):format(api.freq))
     speak(false) -- send 1st dataset & start PM sensor data collection
     tmr.alarm(0,api.freq*60000,1,function() speak(false) end)
