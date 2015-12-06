@@ -111,14 +111,17 @@ function M.read(callBack)
     ('%s.init %s argument should be %s'):format(M.name,'1st','function'))
 
 -- capture and decode message
-  uart.on('data',M.mlen,function(data)
+  uart.on('data',M.mlen*2,function(data)
+    local bm=data:find("BM")
+    if bm then
   -- stop sampling time-out timer
-    tmr.stop(4)
+      tmr.stop(4)
   -- decode message
-    decode(data:sub(1,M.mlen))
+      decode(data:sub(bm,M.mlen+bm-1))
   -- restore UART & callBack
-    M.init(nil,nil,'finished')
-    if type(callBack)=='function' then callBack() end
+      M.init(nil,nil,'finished')
+      if type(callBack)=='function' then callBack() end
+    end
   end,0)
 
 -- start sampling: continuous sampling mode
@@ -128,8 +131,8 @@ function M.read(callBack)
   end
   gpio.write(pinSET,gpio.HIGH)
 
--- sampling time-out: 1s after sampling started
-  tmr.alarm(4,1000,0,function()
+-- sampling time-out: 2s after sampling started
+  tmr.alarm(4,2000,0,function()
     M.pm01,M.pm25,M.pm10=nil,nil,nil
   -- restore UART & callBack
     M.init(nil,nil,'failed')
