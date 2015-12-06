@@ -34,6 +34,7 @@ local M={
   mlen=24,    -- lenght of PMS3003 message
   stdATM=nil, -- use standatd atm correction instead of TSI standard
   verbose=nil,-- verbose output
+  debug=nil,  -- additional ckecks
   pm01=nil,   -- integer value of PM 1.0 [ug/m3]
   pm25=nil,   -- integer value of PM 2.5 [ug/m3]
   pm10=nil    -- integer value of PM 10. [ug/m3]
@@ -45,17 +46,20 @@ local function decode(data)
   -- The next byte pair (pms[1]) should be dec20,
   -- folowed by 10 byte pairs (20 bytes).
 -- check message lenght
---assert(#data==M.mlen,('%s: incomplete message.'):format(M.name))
+  assert(not M.debug or #data==M.mlen,('%s: incomplete message.'):format(M.name))
   local pms,cksum,mlen={},0,#data/2-1
   local n,msb,lsb
   for n=0,mlen do
     msb,lsb=data:byte(2*n+1,2*n+2)  -- 2*char-->2*byte
     pms[n]=msb*256+lsb               -- 2*byte-->dec
     cksum=cksum+(n<mlen and msb+lsb or 0)
-  --print(('  data#%2d byte:%3d,%3d dec:%6d cksum:%6d'):format(n,msb,lsb,pms[n],cksum))
+    if M.debug==true then
+      print(('  data#%2d byte:%3d,%3d dec:%6d cksum:%6d'):
+        format(n,msb,lsb,pms[n],cksum))
+    end
   end
-  --assert(pms[0]==16973 and pms[1]==20 and #pms==mlen,
-  --  ('%s: wrongly phrased message.'):format(M.name))
+  assert(not M.debug or (pms[0]==16973 and pms[1]==20 and #pms==mlen),
+    ('%s: wrongly phrased message.'):format(M.name))
   if cksum==pms[#pms] and M.stdATM~=true then
     M.pm01,M.pm25,M.pm10=pms[2],pms[3],pms[4] -- TSI standard
   elseif cksum==pms[#pms] then
@@ -111,7 +115,7 @@ function M.read(callBack)
   -- stop sampling time-out timer
     tmr.stop(4)
   -- decode message
-    decode(data:sub(1,M.len))
+    decode(data:sub(1,M.mlen))
   -- restore UART & callBack
     M.init(nil,nil,'finished')
     if type(callBack)=='function' then callBack() end
