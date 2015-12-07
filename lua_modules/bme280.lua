@@ -79,7 +79,7 @@ local function config(...)
   i2c.stop(id)
 
 -- oversampling delay: forced/on-demmand mode (M.mode:1|2), see DS 11.1
-  if M.mode==0x01 or M.mode==0x02  then
+  if M.mode==0x01 or M.mode==0x02 then
 -- t_meas,max=1.25 [ms]+t_temp,max+t_pres,max+t_rhum,max, where
   -- t_temp,max= 2.3*2^oss_t [ms]
   -- t_pres,max= 2.3*2^oss_p + 0.575 [ms]
