@@ -34,11 +34,69 @@ local ADDR = 0x77 -- BME280 address, could also be 0x76
 -- calibration coefficients
 local cal={} -- T1,..,T3,P1,..,P9,H1,..,H6
 
+-- sampling configuration
+local function config(...)
+-- ensure module is initialized
+  assert(init,('Need %s.init(...) before %s.config(...)'):format(M.name,M.name))
+
+-- sampling: normal/continous mode (M.mode:3)
+  if M.mode==0x03  then
+  -- config writeable only in sleep mode
+    local REG_COMMAND=0x00 -- sleep mode
+    i2c.start(id)
+    i2c.address(id,ADDR,i2c.TRANSMITTER)
+    i2c.write(id,0xF4,REG_COMMAND)  -- REG_CONTROL_MEAS
+    i2c.stop(id)      
+  -- Continious sampling setup (if M.mode==0x03), see DS 7.4.6.
+  -- dt: sample every dt; dt=1000ms (5<<5).
+  -- IIR: data=(data_new+(IIR-1)*data_old)/IIR; IIR=4 (2<<2).
+  -- spi3w: enhable 3-wire SPI interface; na (0<<1).
+    REG_COMMAND=0xA8 -- 5*2^5+2*2^2+0*2^1
+    i2c.start(id)
+    i2c.address(id,ADDR,i2c.TRANSMITTER)
+    i2c.write(id,0xF5,REG_COMMAND)  -- REG_CONFIG
+    i2c.stop(id)
+  end
+
+-- oversampling: all modes
+  local oss_t,oss_h,oss_p=...
+  if type(oss_t)~="number" or oss_t<1 or oss_t>5 then oss_t=M.oss end
+  if type(oss_h)~="number" or oss_h<1 or oss_h>5 then oss_h=M.oss end
+  if type(oss_p)~="number" or oss_p<1 or oss_p>5 then oss_p=M.oss end
+-- H oversampling 2^(M.oss_h-1): 
+  local REG_COMMAND=bit.band(oss_h,0x07)
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.TRANSMITTER)
+  i2c.write(id,0xF2,REG_COMMAND)  -- REG_CONTROL_HUM
+  i2c.stop(id)
+-- T oversampling 2^(M.oss_t-1), P oversampling 2^(M.oss_p-1),  mode M.mode
+  REG_COMMAND=bit.band(oss_t,0x07)*32
+             +bit.band(oss_p,0x07)*4
+             +bit.band(M.mode,0x03)
+  i2c.start(id)
+  i2c.address(id,ADDR,i2c.TRANSMITTER)
+  i2c.write(id,0xF4,REG_COMMAND)  -- REG_CONTROL_MEAS
+  i2c.stop(id)
+
+-- oversampling delay: forced/on-demmand mode (M.mode:1|2), see DS 11.1
+  if M.mode==0x01 or M.mode==0x02  then
+-- t_meas,max=1.25 [ms]+t_temp,max+t_pres,max+t_rhum,max, where
+  -- t_temp,max= 2.3*2^oss_t [ms]
+  -- t_pres,max= 2.3*2^oss_p + 0.575 [ms]
+  -- t_rhum,max= 2.3*2^oss_h + 0.575 [ms]
+-- then, t_meas,max=2.4+2.3*(2^oss_t+2^oss_h+2^oss_p) [ms]
+    local WAIT=2400+2300*(bit.lshift(1,oss_t)
+                         +bit.lshift(1,oss_h)
+                         +bit.lshift(1,oss_p)) -- 9.3,..,112.8 ms
+    tmr.delay(WAIT)
+  end
+end
+
 -- initialize module
 local id=0
 local SDA,SCL -- buffer device pinout
 local init=false
-function M.init(sda,scl,volatile)
+function M.init(sda,scl,volatile,...)
 -- volatile module
    if volatile==true then
     _G[M.name],package.loaded[M.name]=nil,nil
@@ -132,75 +190,20 @@ function M.init(sda,scl,volatile)
   end
 
 -- Sampling setup
-  if init then
-  -- config writeable only in sleep mode
-    local REG_COMMAND=0x00 -- sleep mode
-    i2c.start(id)
-    i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.write(id,0xF4,REG_COMMAND)  -- REG_CONTROL_MEAS
-    i2c.stop(id)      
-  -- Continious sampling setup (if M.mode==0x03), see DS 7.4.6.
-  -- dt: sample every dt; dt=1000ms (5<<5).
-  -- IIR: data=(data_new+(IIR-1)*data_old)/IIR; IIR=4 (2<<2).
-  -- spi3w: enhable 3-wire SPI interface; na (0<<1).
-    REG_COMMAND=0xA8 -- 5*2^5+2*2^2+0*2^1
-    i2c.start(id)
-    i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.write(id,0xF5,REG_COMMAND)  -- REG_CONFIG
-    i2c.stop(id)
-  -- H oversampling 2^(M.oss-1): 
-    REG_COMMAND=bit.band(M.oss,0x07)
-    i2c.start(id)
-    i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.write(id,0xF2,REG_COMMAND)  -- REG_CONTROL_HUM
-    i2c.stop(id)
-  -- P oversampling 2^(M.oss-1), T oversampling 2^(M.oss-1), mode M.mode
-    REG_COMMAND=(32+4)*bit.band(M.oss,0x07)+bit.band(M.mode,0x03)
-    i2c.start(id)
-    i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.write(id,0xF4,REG_COMMAND)  -- REG_CONTROL_MEAS
-    i2c.stop(id)      
-  end
+  if init then config(...) end
 
 -- M.init suceeded after/when read calibration coeff.
-  return init
+  return init,oss_delay
 end
 
 -- read temperature, pressure and relative humidity from BME
 -- oss: oversampling setting. 0..5
-function M.read(oss)
+function M.read(...)
 -- ensure module is initialized
   assert(init,('Need %s.init(...) before %s.read(...)'):format(M.name,M.name))
--- check input varables
-  assert(type(oss)=='number' or oss==nil,
-    ('%s.read %s argument should be %s'):format(M.name,'1st','number'))
 
--- forced/on-demmand mode (M.mode: 1 or 2): configure oversampling
-  if M.mode==0x01 or M.mode==0x02  then
-    if type(oss)~="number" or oss<1 or oss>5 then oss=M.oss end
-  -- H oversampling 2^(M.oss-1): 
-    local REG_COMMAND=bit.band(oss,0x07)
-    i2c.start(id)
-    i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.write(id,0xF2,REG_COMMAND)  -- REG_CONTROL_HUM
-    i2c.stop(id)
-
-  -- P oversampling 2^(M.oss-1), T oversampling 2^(M.oss-1), mode M.mode
-    REG_COMMAND=(32+4)*bit.band(oss,0x07)+bit.band(M.mode,0x03)
-    i2c.start(id)
-    i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.write(id,0xF4,REG_COMMAND)  -- REG_CONTROL_MEAS
-    i2c.stop(id)
-  
-  -- delay, see DS 11.1
-  -- t_meas,max=1.25 [ms]+t_temp,max+t_pres,max+t_rhum,max, where
-    -- t_temp,max= 2.3*2^oss_temp [ms]
-    -- t_pres,max= 2.3*2^oss_pres + 0.575 [ms]
-    -- t_rhum,max= 2.3*2^oss_rhum + 0.575 [ms]
-  -- then, t_meas,max=2.4+6.9*2^oss [ms]
-    local WAIT=({9300,16200,30000,57600,112800})[oss] -- 9.3,..,112.8 ms
-    tmr.delay(WAIT)
-  end
+-- oversampling: forced/on-demmand mode (M.mode:1|2)
+  if M.mode==0x01 or M.mode==0x02 then config(...) end
 
 -- request REG_PRESSURE_MSB 0xF7 .. REG_HUMIDITY_LSB 0xFE
   i2c.start(id)
