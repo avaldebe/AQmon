@@ -110,7 +110,7 @@ function M.read(callBack)
 
   sensor=require('bmp180')
   if sensor.init(SDA,SCL,true) then -- volatile module
-    sensor.read(0)   -- 0:low power .. 3:oversample
+    sensor.read() -- default sampling
     if M.verbose then
       sensor.heap,sensor.time=node.heap(),tmr.time()
       print(M.format(sensor,payload:format(sensor.name)))
@@ -138,7 +138,7 @@ function M.read(callBack)
 
   sensor=require('bme280')
   if sensor.init(SDA,SCL,true) then -- volatile module
-    sensor.read(0)   -- 0:low power .. 5:oversample
+    sensor.read() -- default sampling
     if M.verbose then
       sensor.heap,sensor.time=node.heap(),tmr.time()
       print(M.format(sensor,payload:format(sensor.name)))
