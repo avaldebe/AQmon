@@ -6,24 +6,22 @@
 -- map internal IO references to GPIO numbers
 -- https://github.com/nodemcu/nodemcu-firmware/wiki/nodemcu_api_en#new_gpio_map
 local gpio_pin= {5,4,0,2,14,12,13}--,15,3,1,9,10}
-local id=0
 
-local function find_dev(addr,sda,scl,setup)
-  local try,found
+local function find_dev(ADDR,SDA,SCL,setup,ntry)
+  local id=0
 -- initialize i2c with our id and current pins in slow mode :-)
-  if setup then i2c.setup(id,sda,scl,i2c.SLOW) end
+  if setup then i2c.setup(id,SDA,SCL,i2c.SLOW) end
 
 -- try 3 times: see if device responds with ACK to i2c start
-  found=false
-  for try=1,3 do
-    if not found then
-      i2c.start(id)
-      found=i2c.address(id,addr,i2c.TRANSMITTER)
-      i2c.stop(id)
-      if found then
-        print(('Device found at address 0x%02X, SDA %d (GPIO%02d), SCL %d (GPIO%02d) on try %d.')
-          :format(addr,sda,gpio_pin[sda],scl,gpio_pin[scl],try))
-      end
+  local found,try=false,0
+  for try=1,ntry or 3 do
+    i2c.start(id)
+    found=i2c.address(id,ADDR,i2c.TRANSMITTER)
+    i2c.stop(id)
+    if found then
+      print(('Device found at address 0x%02X, SDA %d (GPIO%02d), SCL %d (GPIO%02d) on try %d.')
+        :format(ADDR,SDA,gpio_pin[SDA],SCL,gpio_pin[SCL],try))
+      break
     end
   end
   return found
