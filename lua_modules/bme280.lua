@@ -13,13 +13,16 @@ Written by Álvaro Valdebenito,
       https://github.com/kbrownlees/bme280
   - Adafruit_BME280.py by adafruit
       https://github.com/adafruit/Adafruit_Python_BME280
+  - SparkFunBME280.cpp by sparkfun
+      https://github.com/sparkfun/SparkFun_BME280_Arduino_Library
 
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
 local M={
   name=...,         -- module name, upvalue from require('module-name')
-  oss=1,            -- default pressure oversamplig: 0 .. 5
+  oss=0x01,         -- default oversamplig: 0=skip, 1=x1 .. 5=x16
+  mode=0x03,        -- default sampling: 0=sleep, 1&2=forced(on demand), 3:normal(continious)
   temperature=nil,  -- integer value of temperature [10*C]
   pressure   =nil,  -- integer value of preassure [100*hPa]
   humidity   =nil   -- integer value of relative humidity [10*%]
@@ -70,7 +73,7 @@ function M.init(sda,scl,volatile)
       i2c.stop(id)
     -- CHIPID: BMP085/BMP180 0x55, BME280 0x60, BMP280 0x58
       found=(c:byte()==0x60)
-    end
+    end  
 -- read calibration coeff.
     if found then
     -- request REG_DIG_T1 .. REG_DIG_P9+1 0x9F
@@ -128,6 +131,37 @@ function M.init(sda,scl,volatile)
     init=found
   end
 
+-- Sampling setup
+  if init then
+  -- config writeable only in sleep mode
+    local REG_COMMAND=0x00 -- sleep mode
+    i2c.start(id)
+    i2c.address(id,ADDR,i2c.TRANSMITTER)
+    i2c.write(id,0xF4,REG_COMMAND)  -- REG_CONTROL_MEAS
+    i2c.stop(id)      
+  -- Continious sampling setup (if M.mode==0x03), see DS 7.4.6.
+  -- dt: sample every dt; dt=1000ms (5<<5).
+  -- IIR: data=(data_new+(IIR-1)*data_old)/IIR; IIR=4 (2<<2).
+  -- spi3w: enhable 3-wire SPI interface; na (0<<1).
+    REG_COMMAND=0xA8 -- 5*2^5+2*2^2+0*2^1
+    i2c.start(id)
+    i2c.address(id,ADDR,i2c.TRANSMITTER)
+    i2c.write(id,0xF5,REG_COMMAND)  -- REG_CONFIG
+    i2c.stop(id)
+  -- H oversampling 2^(M.oss-1): 
+    REG_COMMAND=bit.band(M.oss,0x07)
+    i2c.start(id)
+    i2c.address(id,ADDR,i2c.TRANSMITTER)
+    i2c.write(id,0xF2,REG_COMMAND)  -- REG_CONTROL_HUM
+    i2c.stop(id)
+  -- P oversampling 2^(M.oss-1), T oversampling 2^(M.oss-1), mode M.mode
+    REG_COMMAND=(32+4)*bit.band(M.oss,0x07)+bit.band(M.mode,0x03)
+    i2c.start(id)
+    i2c.address(id,ADDR,i2c.TRANSMITTER)
+    i2c.write(id,0xF4,REG_COMMAND)  -- REG_CONTROL_MEAS
+    i2c.stop(id)      
+  end
+
 -- M.init suceeded after/when read calibration coeff.
   return init
 end
@@ -139,7 +173,34 @@ function M.read(oss)
   assert(init,('Need %s.init(...) before %s.read(...)'):format(M.name,M.name))
 -- check input varables
   assert(type(oss)=='number' or oss==nil,
-    ('%s.init %s argument should be %s'):format(M.name,'1st','number'))
+    ('%s.read %s argument should be %s'):format(M.name,'1st','number'))
+
+-- forced/on-demmand mode (M.mode: 1 or 2): configure oversampling
+  if M.mode==0x01 or M.mode==0x02  then
+    if type(oss)~="number" or oss<1 or oss>5 then oss=M.oss end
+  -- H oversampling 2^(M.oss-1): 
+    local REG_COMMAND=bit.band(oss,0x07)
+    i2c.start(id)
+    i2c.address(id,ADDR,i2c.TRANSMITTER)
+    i2c.write(id,0xF2,REG_COMMAND)  -- REG_CONTROL_HUM
+    i2c.stop(id)
+
+  -- P oversampling 2^(M.oss-1), T oversampling 2^(M.oss-1), mode M.mode
+    REG_COMMAND=(32+4)*bit.band(oss,0x07)+bit.band(M.mode,0x03)
+    i2c.start(id)
+    i2c.address(id,ADDR,i2c.TRANSMITTER)
+    i2c.write(id,0xF4,REG_COMMAND)  -- REG_CONTROL_MEAS
+    i2c.stop(id)
+  
+  -- delay, see DS 11.1
+  -- t_meas,max=1.25 [ms]+t_temp,max+t_pres,max+t_rhum,max, where
+    -- t_temp,max= 2.3*2^oss_temp [ms]
+    -- t_pres,max= 2.3*2^oss_pres + 0.575 [ms]
+    -- t_rhum,max= 2.3*2^oss_rhum + 0.575 [ms]
+  -- then, t_meas,max=2.4+6.9*2^oss [ms]
+    local WAIT=({9300,16200,30000,57600,112800})[oss] -- 9.3,..,112.8 ms
+    tmr.delay(WAIT)
+  end
 
 -- request REG_PRESSURE_MSB 0xF7 .. REG_HUMIDITY_LSB 0xFE
   i2c.start(id)

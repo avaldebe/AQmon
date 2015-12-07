@@ -135,8 +135,8 @@ function M.read(oss)
 
 -- read pressure from BMP
   if type(oss)~="number" or oss<0 or oss>3 then oss=M.oss end
-  REG_COMMAND = ({[0]=0x34,[1]=0x74,[2]=0xB4, [3]=0xF4 })[oss] -- 0x34+64*oss
-  WAIT        = ({[0]=5000,[1]=8000,[2]=14000,[3]=26000})[oss] -- 5,..,26 ms
+  REG_COMMAND = ({0x34,0x74,0xB4, 0xF4 })[oss+1] -- 0x34+64*oss
+  WAIT        = ({4500,7500,13500,25500})[oss+1] -- 4.5,..,25.5 ms
 -- request PRESSURE
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
