@@ -193,7 +193,7 @@ function M.init(sda,scl,volatile,...)
   if init then config(...) end
 
 -- M.init suceeded after/when read calibration coeff.
-  return init,oss_delay
+  return init
 end
 
 -- read temperature, pressure and relative humidity from BME
