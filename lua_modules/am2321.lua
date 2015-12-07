@@ -18,6 +18,25 @@ _G[M.name]=M
 
 local ADDR=bit.rshift(0xB8,1) -- use 7bit address
 
+-- consistency check
+local function crc_check(c)
+  local len=c:len()
+  local crc=0xFFFF
+  local l,i
+  for l=1,len-2 do
+    crc=bit.bxor(crc,c:byte(l))
+    for i=1,8 do
+      if bit.band(crc,1) ~= 0 then
+        crc=bit.rshift(crc,1)
+        crc=bit.bxor(crc,0xA001)
+      else
+        crc=bit.rshift(crc,1)
+      end
+    end
+  end
+  return crc==c:byte(len)*256+c:byte(len-1)
+end
+
 -- initialize i2c
 local id=0
 local SDA,SCL -- buffer device address and pinout
@@ -40,13 +59,35 @@ function M.init(sda,scl,volatile)
     i2c.start(id)
     i2c.address(id,ADDR,i2c.TRANSMITTER)
     i2c.stop(id)
--- device found?
+-- verify device address
     i2c.start(id)
-    init=i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.stop(id)
+    local found=i2c.address(id,ADDR,i2c.TRANSMITTER)
+    i2c.stop(id)    
+-- verify device MODEL
+    if found then
+    -- request MODEL_MSB 0x08 .. MODEL_LSB 0x09
+      i2c.start(id)
+      i2c.address(id,ADDR,i2c.TRANSMITTER)
+      i2c.write(id,0x03,0x08,0x02)
+      i2c.stop(id)
+      tmr.delay(1600)         -- wait at least 1.5ms
+    -- read MODEL_MSB 0x08 .. MODEL_LSB 0x09
+      i2c.start(id)
+      i2c.address(id,ADDR,i2c.RECEIVER)
+      local c=i2c.read(id,6)  -- cmd(2)+data(2)+crc(2)
+      i2c.stop(id)
+    -- MODEL: AM2320 0x2320, AM2321 0x2321
+      found=crc_check(c)
+      if found then
+        local m=c:byte(3)*256+c:byte(4)
+        found=(m==0x2320) or (m==0x2321)
+      end
+    end
+    -- M.init suceeded
+    init=found
   end
 
--- M.init suceeded if ADDR is found on SDA,SCL
+-- M.init suceeded if an AM2320/AM2321 is found on SDA,SCL
   return init
 end
 
@@ -68,23 +109,8 @@ function M.read()
   i2c.address(id,ADDR,i2c.RECEIVER)
   local c=i2c.read(id,8)  -- cmd(2)+data(4)+crc(2)
   i2c.stop(id)
--- consistency check
-  local len=c:len()
-  local crc=0xFFFF
-  local l,i
-  for l=1,len-2 do
-    crc=bit.bxor(crc,c:byte(l))
-    for i=1,8 do
-      if bit.band(crc,1) ~= 0 then
-        crc=bit.rshift(crc,1)
-        crc=bit.bxor(crc,0xA001)
-      else
-        crc=bit.rshift(crc,1)
-      end
-    end
-  end
 -- expose results
-  if crc==c:byte(len)*256+c:byte(len-1) then
+  if crc_check(c) then
     M.humidity   =c:byte(3)*2560+c:byte(4)*10 -- rel.humidity[0.01 %]
     M.temperature=c:byte(5)*2560+c:byte(6)*10 -- temperature [0.01 C]
   else
