@@ -40,7 +40,7 @@ local function config(...)
   assert(init,('Need %s.init(...) before %s.config(...)'):format(M.name,M.name))
 
 -- sampling: normal/continous mode (M.mode:3)
-  if M.mode==0x03  then
+  if M.mode==0x03 then
   -- config writeable only in sleep mode
     local REG_COMMAND=0x00 -- sleep mode
     i2c.start(id)
