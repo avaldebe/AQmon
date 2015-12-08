@@ -1,7 +1,7 @@
 # Sensor modules
 Lua modules for [AQmon][] project.<br/>
 
-[luatool.py]: https://github.com/4refr0nt/luatool
+[AQmon]:      https://github.com/avaldebe/AQmon
 
 ### Sensor modules
 - `bmp180.lua`: BMP085 / BMP180 sensors.
@@ -17,8 +17,6 @@ Lua modules for [AQmon][] project.<br/>
   so you can ony have one of them on the buss.
 
 ### Ussage example
-*Note*: Do not use pin `D8` (`gpio15`) for `I2C` as the pull-up resistors will
-interfeere with the bootiung process.
 
 #### BMP085, BMP180
 ```lua

@@ -1,7 +1,14 @@
 # lua_modules
 Lua modules for [AQmon][] project.<br/>
 
+[AQmon]:      https://github.com/avaldebe/AQmon
+[thingspeak]: https://thingspeak.com
 [luatool.py]: https://github.com/4refr0nt/luatool
+
+### Project specific modules
+- `AQmon.lua`: Read sensors and publish to [thingspeak][].
+- `keys.lua`: Contains the known APs SSID/PASS pairs,
+              [thingspeak][] keys and pin assignment (LED,SDA/SCL,&c).
 
 ### Sensor modules
 - `bmp180.lua`: BMP085 / BMP180 sensors.
@@ -10,6 +17,20 @@ Lua modules for [AQmon][] project.<br/>
 - `pms3003.lua`: PMS3003 sensor.
 - `sensor_hub.lua`: Read all sensors above.
 
+### I-Net modules
+- `wifi_connect.lua`: Connect to a known AP, as defined in keys.lua.
+- `sendData.lua`: Publish data to [thingspeak][] or other API, as defined in keys.lua
+
+### General purpose modules
+- `init.lua`: Exit infinite reboot caused by a PANIC error.
+              Calls `require('app')` after 2 seconds from boot.
+              Before that, the call can be aborted by pressing KEY_FLASH,
+              which drives pin3 (gpio0) low.
+- `rgbLED.lua`: Returns a status function for a RGB LED.
+- `hueLED.lua`: Returns a function that control a RGB LED with Hue,
+                at full Saturation and Brightness (HSV).
+- `i2c-autoscan.lua`: scan gpio pins and address and report devices found.
+
 #### Upload from command line with [luatool.py][]
 
 ```sh
@@ -17,20 +38,21 @@ Lua modules for [AQmon][] project.<br/>
 PORT=`ls /dev/ttyUSB? /dev/rfcomm? 2>/dev/null`
 # remove all *.lua and *.lc files
 luatool.py -p $PORT -w -r
-# upload, compile and restart
-luatool.py -p $PORT -c -r -f bmp180.lua
-luatool.py -p $PORT -c -r -f bme280.lua
-luatool.py -p $PORT -c -r -f am2321.lua
-luatool.py -p $PORT -c -r -f pms3003.lua
+# upload and compile
+luatool.py -p $PORT -c -f bmp180.lua
+luatool.py -p $PORT -c -f bme280.lua
+luatool.py -p $PORT -c -f am2321.lua
+luatool.py -p $PORT -c -f pms3003.lua
+luatool.py -p $PORT -c -f keys.lua
+luatool.py -p $PORT -c -f wifi_connect.lua
+luatool.py -p $PORT -c -f sendData.lua
+luatool.py -p $PORT -c -f rgbLED.lua
 # upload, rename, compile and restart
-luatool.py -p $PORT -c -r -f sensor_hub.lua -t sensors.lua
+luatool.py -p $PORT -rc -f sensor_hub.lua -t sensors.lua
+luatool.py -p $PORT -rc -f AQmon.lua      -t app.lua
+# upload and restart
+luatool.py -p $PORT -r -f init.lua
 ```
-
-#### Notes
-- Do not use pin `D8` (`gpio15`) for `I2C` as the
-  pull-up resistors will interfeere with the bootiung process.
-- BMP085, BMP180 and BME280 sensors have the same I2C address,
-  so you can ony have one of them on the buss.
 
 ### Ussage examples
 Information for each sensor module can be found at [SENSORS.md][]
@@ -79,7 +101,6 @@ My biggest thanks to the following authors:
   - [Adafruit_BME280.py][] by @adafruit
   - [SparkFunBME280.cpp][] by @sparkfun
 
-[AQmon]: https://github.com/avaldebe/AQmon
 [bigdanz]:      https://bigdanzblog.wordpress.com
 [interrupting]: https://bigdanzblog.wordpress.com/2015/04/24/esp8266-nodemcu-interrupting-init-lua-during-boot
 [BMP180 and DTH22]: https://github.com/javieryanez/nodemcu-modules
@@ -93,4 +114,3 @@ My biggest thanks to the following authors:
 [bme280.py]:      https://github.com/kbrownlees/bme280
 [Adafruit_BME280.py]: https://github.com/adafruit/Adafruit_Python_BME280
 [SparkFunBME280.cpp]: https://github.com/sparkfun/SparkFun_BME280_Arduino_Library
-

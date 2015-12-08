@@ -1,7 +1,7 @@
 --[[
 AQmon.lua for ESP8266 with nodemcu-firmware
-  Read sensors (sensors.lua) and publish to thingspeak.com
-  More info at  https://github.com/avaldebe/AQmon
+  Read sensors and publish to thingspeak.com
+  More info at https://github.com/avaldebe/AQmon
 
 Written by Álvaro Valdebenito.
 

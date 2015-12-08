@@ -17,7 +17,7 @@ while (($#)); do
 # list) luatool.py -p $PORT -l;;
   wipe)
     luatool.py -p $PORT -rw;;
-  bmp180|am2321|bme280|pms3003)        # sensor modules
+  bmp180|am2321|bme280|pms3003) # sensor modules
     luatool.py -p $PORT -cf $opt.lua;;
   hub|hub.*|*_hub|*_hub.*)      # sensor hub module
     luatool.py -p $PORT -rcf ${opt%.*}.lua -t sensors.lua;;
