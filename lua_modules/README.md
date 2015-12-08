@@ -18,115 +18,25 @@ PORT=`ls /dev/ttyUSB? /dev/rfcomm? 2>/dev/null`
 # remove all *.lua and *.lc files
 luatool.py -p $PORT -w -r
 # upload, compile and restart
-luatool.py -p $PORT -c -r -f bmp180.lua am2321.lua pms3003.lua
+luatool.py -p $PORT -c -r -f bmp180.lua
+luatool.py -p $PORT -c -r -f bme280.lua
+luatool.py -p $PORT -c -r -f am2321.lua
+luatool.py -p $PORT -c -r -f pms3003.lua
 # upload, rename, compile and restart
 luatool.py -p $PORT -c -r -f sensor_hub.lua -t sensors.lua
 ```
 
-### Ussage example
-*Note*: Do not use pin `D8` (`gpio15`) for `I2C` as the pull-up resistors will
-interfeere with the bootiung process.
+#### Notes
+- Do not use pin `D8` (`gpio15`) for `I2C` as the
+  pull-up resistors will interfeere with the bootiung process.
+- BMP085, BMP180 and BME280 sensors have the same I2C address,
+  so you can ony have one of them on the buss.
 
-#### BMP085, BMP180
-```lua
--- module setup and read
-sda,scl=3,4 -- GPIO0,GPIO2
-found=require('bmp180').init(sda,scl)
-if found then
-  bmp180.read(0)   -- 0:low power .. 3:oversample
-  p,t = bmp180.pressure,bmp180.temperature
-end
+### Ussage examples
+Information for each sensor module can be found at [SENSORS.md][]
 
--- release memory
-bmp180,package.loaded.bmp180 = nil,nil
+[SENSORS.md]: ./SENSORS.md
 
--- format and print the results
-if type(p)=='number' then
-  p=('%6d'):format(p)
-  p=('%4s.%2s'):format(p:sub(1,4),p:sub(5))
-end
-if type(t)=='number' then
-  t=('%5d'):format(t)
-  t=('%3s.%2s'):format(t:sub(1,3),t:sub(4))
-end
-print(('p:%s hPa, t:%s C, heap:%d')
-  :format(p or 'null',t or 'null',node.heap()))
-```
-
-#### AM2320, AM2321
-```lua
--- module setup and read
-sda,scl=3,4 -- GPIO0,GPIO2
-found=require('am2321').init(sda,scl)
-if found then
-  am2321.read()
-  h,t = am2321.humidity,am2321.temperature
-end
-
--- release memory
-am2321,package.loaded.am2321 = nil,nil
-
--- format and print the results
-if type(h)=='number' then
-  h=('%5d'):format(h)
-  h=('%3s.%2s'):format(h:sub(1,3),h:sub(4))
-end
-if type(t)=='number' then
-  t=('%5d'):format(t)
-  t=('%3s.%2s'):format(t:sub(1,3),t:sub(4))
-end
-print(('h:%s %%, t:%s C, heap:%d')
- :format(h or 'null',t or 'null',node.heap()))
-```
-
-#### BME280
-```lua
--- module setup and read
-sda,scl=3,4 -- GPIO0,GPIO2
-found=require('bme280').init(sda,scl)
-if found then
-  bme280.read()
-  p,t,h = bme280.pressure,bme280.temperature,bme280.humidity
-end
-
--- release memory
-bme280,package.loaded.bme280 = nil,nil
-
--- format and print the results
-if type(p)=='number' then
-  p=('%6d'):format(p)
-  p=('%4s.%2s'):format(p:sub(1,4),p:sub(5))
-end
-if type(t)=='number' then
-  t=('%5d'):format(t)
-  t=('%3s.%2s'):format(t:sub(1,3),t:sub(4))
-end
-if type(h)=='number' then
-  h=('%5d'):format(h)
-  h=('%3s.%2s'):format(h:sub(1,3),h:sub(4))
-end
-print(('p:%s hPa, t:%s C, h:%s %%, heap:%d')
- :format(p or 'null',t or 'null',h or 'null',node.heap()))
-```
-
-#### PMS3003
-```lua
--- module setup and read
-pinSET=7
-require('pms3003').init(pinSET)
-pms3003.verbose=true -- verbose mode
-pms3003.read(function()
-  pm01 = pms3003.pm01 or 'null'
-  pm25 = pms3003.pm25 or 'null'
-  pm10 = pms3003.pm10 or 'null'
-
--- release memory
-  pms3003,package.loaded.pms3003 = nil,nil
-
--- print the results
-  print(('pm1:%s, pm2.5:%s, pm10:%s [ug/m3], heap:%d'):format(pm01,pm25,pm10,node.heap()))
-end)
-```
 #### Sensor Hub
 ```lua
 -- module setup and read: no PMS3003
@@ -167,6 +77,7 @@ My biggest thanks to the following authors:
   - [BME280_driver][] by @BoschSensortec
   - [bme280.py][] by @kbrownlees
   - [Adafruit_BME280.py][] by @adafruit
+  - [SparkFunBME280.cpp][] by @sparkfun
 
 [AQmon]: https://github.com/avaldebe/AQmon
 [bigdanz]:      https://bigdanzblog.wordpress.com
@@ -181,4 +92,5 @@ My biggest thanks to the following authors:
 [BME280_driver]:  https://github.com/BoschSensortec/BME280_driver
 [bme280.py]:      https://github.com/kbrownlees/bme280
 [Adafruit_BME280.py]: https://github.com/adafruit/Adafruit_Python_BME280
+[SparkFunBME280.cpp]: https://github.com/sparkfun/SparkFun_BME280_Arduino_Library
 
