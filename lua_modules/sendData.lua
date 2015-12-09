@@ -14,9 +14,9 @@ return function(self,status)
   package.loaded[M.name]=nil -- volatile module
 
   status('alert')
-  assert(self.sent~=nil,('%s: last message not sent'):format(M.name))
-  self.sent=false
+  assert(self.sent==nil,('%s: last message not sent'):format(M.name))
   status('normal')
+  self.sent=false
 
   require('wifi_connect')(wifi.STATION,false) -- wifi wake-up
   local sk=net.createConnection(net.TCP,0)
