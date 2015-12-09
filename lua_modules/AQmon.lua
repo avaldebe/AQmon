@@ -8,6 +8,8 @@ Written by Álvaro Valdebenito.
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
+package.loaded[...]=nil -- volatile module
+
 --[[ HW pin assignment ]]
 
 local pin=require('keys').pin
@@ -16,7 +18,7 @@ local pin=require('keys').pin
 
 -- LED status indicator
 local status=require('rgbLED')(500,pin.ledR,pin.ledG,pin.ledB,
-  {warning='320000',alert='010000',normal='000100',iddle='000001'})
+  {alert='010000',normal='000100',iddle='000001'})
 status('normal')
 -- low heap(?) alternative: local status=print
 
