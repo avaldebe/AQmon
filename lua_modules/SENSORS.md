@@ -14,7 +14,7 @@ Lua modules for [AQmon][] project.<br/>
 - Do not use pin `D8` (`gpio15`) for `I2C` as the
   pull-up resistors will interfeere with the bootiung process.
 - BMP085, BMP180 and BME280 sensors have the same I2C address,
-  so you can ony have one of them on the buss.
+  so you can ony have one of them on the bus.
 
 ### Ussage example
 
