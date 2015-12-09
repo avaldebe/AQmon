@@ -15,6 +15,8 @@ Lua modules for [AQmon][] project.<br/>
   pull-up resistors will interfeere with the bootiung process.
 - BMP085, BMP180 and BME280 sensors have the same I2C address,
   so you can ony have one of them on the bus.
+- AM2320 and AM2321 sensors have the same I2C address,
+  so you can ony have one of them on the bus.
 
 ### Ussage example
 
