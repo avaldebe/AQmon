@@ -12,8 +12,10 @@ while (($#)); do
   trap "exit" SIGHUP SIGINT SIGTERM
   case $opt in
   nodemcu_float|nodemcu_integer)
-    esptool.py --port $PORT --baud 115200 write_flash 0x00000 \
-      ../nodemcu-firmware/bin/$opt\_$VERSION.bin ;;
+    esptool.py --port $PORT --baud 115200 write_flash \
+      0x00000 ../nodemcu-firmware/bin/$opt\_$VERSION.bin \
+      0x7C000 ../nodemcu-firmware/bin/esp_init_data_default.bin \
+      0x7E000 ../nodemcu-firmware/bin/blank.bin ;;
 # list) luatool.py -p $PORT -l;;
   wipe)
     luatool.py -p $PORT -rw;;
