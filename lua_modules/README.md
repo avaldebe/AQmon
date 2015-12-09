@@ -36,17 +36,17 @@ Lua modules for [AQmon][] project.<br/>
 ```sh
 # find the port
 PORT=`ls /dev/ttyUSB? /dev/rfcomm? 2>/dev/null`
-# remove all *.lua and *.lc files
+# remove all *.lua and *.lc files and restart
 luatool.py -p $PORT -w -r
-# upload and compile
-luatool.py -p $PORT -c -f bmp180.lua
-luatool.py -p $PORT -c -f bme280.lua
-luatool.py -p $PORT -c -f am2321.lua
-luatool.py -p $PORT -c -f pms3003.lua
-luatool.py -p $PORT -c -f keys.lua
-luatool.py -p $PORT -c -f wifi_connect.lua
-luatool.py -p $PORT -c -f sendData.lua
-luatool.py -p $PORT -c -f rgbLED.lua
+# upload, compile and restart
+luatool.py -p $PORT -rc -f bme280.lua
+luatool.py -p $PORT -rc -f bmp180.lua
+luatool.py -p $PORT -rc -f am2321.lua
+luatool.py -p $PORT -rc -f pms3003.lua
+luatool.py -p $PORT -rc -f keys.lua
+luatool.py -p $PORT -rc -f wifi_connect.lua
+luatool.py -p $PORT -rc -f sendData.lua
+luatool.py -p $PORT -rc -f rgbLED.lua
 # upload, rename, compile and restart
 luatool.py -p $PORT -rc -f sensor_hub.lua -t sensors.lua
 luatool.py -p $PORT -rc -f AQmon.lua      -t app.lua
