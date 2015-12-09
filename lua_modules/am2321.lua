@@ -41,6 +41,7 @@ end
 local id=0
 local SDA,SCL -- buffer device address and pinout
 local init=false
+local last    -- wait at least 500 ms between reads
 function M.init(sda,scl,volatile)
 -- volatile module
   if volatile==true then
@@ -76,13 +77,14 @@ function M.init(sda,scl,volatile)
       i2c.address(id,ADDR,i2c.RECEIVER)
       local c=i2c.read(id,6)  -- cmd(2)+data(2)+crc(2)
       i2c.stop(id)
-    -- MODEL: AM2320 2320(0 on my experiments), AM2321 2321
+    -- MODEL: AM2320 2320, AM2321 2321
       found=crc_check(c)
       if found then
         local m=c:byte(3)*256+c:byte(4)
-        found=(m==2321) or (m==2320) or (m==0)
+        found=(m==2321) or (m==2320) or (m==0) -- my AM2320 responds 0
       end
     end
+    last=tmr.now() -- wait at least 500 ms between reads
     -- M.init suceeded
     init=found
   end
@@ -94,6 +96,11 @@ end
 function M.read()
 -- ensure module is initialized
   assert(init,('Need %s.init(...) before %s.read(...)'):format(M.name,M.name))
+-- wait at least 500 ms between reads
+--print(tmr.now()-last+500000)
+  if (tmr.now()-last+500000)>0 then
+    tmr.delay(tmr.now()-last+500000)
+  end
 -- wakeup
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
@@ -113,9 +120,12 @@ function M.read()
   if crc_check(c) then
     M.humidity   =c:byte(3)*2560+c:byte(4)*10 -- rel.humidity[0.01 %]
     M.temperature=c:byte(5)*2560+c:byte(6)*10 -- temperature [0.01 C]
+--  print((('{name}:{humidity},{temperature}'):gsub('{(.-)}',M)))
+    last=tmr.now() -- wait at least 500 ms between reads
   else
     M.humidity   =nil
     M.temperature=nil
+--  print((('{name}: failed crc'):gsub('{(.-)}',M)))
   end
 end
 
