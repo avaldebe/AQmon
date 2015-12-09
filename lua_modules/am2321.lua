@@ -62,7 +62,7 @@ function M.init(sda,scl,volatile)
 -- verify device address
     i2c.start(id)
     local found=i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.stop(id)    
+    i2c.stop(id)
 -- verify device MODEL
     if found then
     -- request MODEL_MSB 0x08 .. MODEL_LSB 0x09
@@ -76,11 +76,11 @@ function M.init(sda,scl,volatile)
       i2c.address(id,ADDR,i2c.RECEIVER)
       local c=i2c.read(id,6)  -- cmd(2)+data(2)+crc(2)
       i2c.stop(id)
-    -- MODEL: AM2320 0x2320, AM2321 0x2321
+    -- MODEL: AM2320 2320(0 on my experiments), AM2321 2321
       found=crc_check(c)
       if found then
         local m=c:byte(3)*256+c:byte(4)
-        found=(m==0x2320) or (m==0x2321)
+        found=(m==2321) or (m==2320) or (m==0)
       end
     end
     -- M.init suceeded
