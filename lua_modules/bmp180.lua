@@ -13,6 +13,7 @@ MIT license, http://opensource.org/licenses/MIT
 local M={
   name=...,       -- module name, upvalue from require('module-name')
   oss=1,          -- default pressure oversamplig: 0 .. 3
+  model=nil,      -- sensor model: BMP180
   temperature=nil,-- integer value of temperature [0.01 C]
   pressure   =nil -- integer value of preassure [Pa]=[0.01 hPa]
 }
@@ -60,8 +61,9 @@ function M.init(sda,scl,volatile)
       i2c.address(id,ADDR,i2c.RECEIVER)
       c = i2c.read(id,1)  -- CHIPID:1byte
       i2c.stop(id)
-    -- CHIPID: BMP085/BMP180 0x55, BME280 0x60, BMP280 0x58
-      found=(c:byte()==0x55)
+    -- CHIPID: BMP085/BMP180 0x55, BMP280 0x58, BME280 0x60
+      M.model=({[0x55]='BMP180',[0x58]='BMP280',[0x60]='BME280'})[c:byte()]
+      found=(M.model=='BMP180')
     end
 -- read calibration coeff.
     if found then
@@ -135,7 +137,7 @@ function M.read(oss)
 
 -- read pressure from BMP
   if type(oss)~="number" or oss<0 or oss>3 then oss=M.oss end
-  REG_COMMAND = ({0x34,0x74,0xB4, 0xF4 })[oss+1] -- 0x34+64*oss
+  REG_COMMAND = ({0x34,0x74,0xB4 ,0xF4 })[oss+1] -- 0x34+64*oss
   WAIT        = ({4500,7500,13500,25500})[oss+1] -- 4.5,..,25.5 ms
 -- request PRESSURE
   i2c.start(id)

@@ -20,12 +20,13 @@ MIT license, http://opensource.org/licenses/MIT
 ]]
 
 local M={
-  name=...,         -- module name, upvalue from require('module-name')
-  oss=0x01,         -- default oversamplig: 0=skip, 1=x1 .. 5=x16
-  mode=0x03,        -- default sampling: 0=sleep, 1&2=forced(on demand), 3:normal(continious)
-  temperature=nil,  -- integer value of temperature [10*C]
-  pressure   =nil,  -- integer value of preassure [100*hPa]
-  humidity   =nil   -- integer value of relative humidity [10*%]
+  name=...,       -- module name, upvalue from require('module-name')
+  model=nil,      -- sensor model: BME280
+  oss=0x01,       -- default oversamplig: 0=skip, 1=x1 .. 5=x16
+  mode=0x03,      -- default sampling: 0=sleep, 1&2=forced(on demand), 3:normal(continious)
+  temperature=nil,-- integer value of temperature [10*C]
+  pressure   =nil,-- integer value of preassure [100*hPa]
+  humidity   =nil -- integer value of relative humidity [10*%]
 }
 _G[M.name]=M
 
@@ -46,7 +47,7 @@ local function config(...)
     i2c.start(id)
     i2c.address(id,ADDR,i2c.TRANSMITTER)
     i2c.write(id,0xF4,REG_COMMAND)  -- REG_CONTROL_MEAS
-    i2c.stop(id)      
+    i2c.stop(id)
   -- Continious sampling setup (if M.mode==0x03), see DS 7.4.6.
   -- dt: sample every dt; dt=1000ms (5<<5).
   -- IIR: data=(data_new+(IIR-1)*data_old)/IIR; IIR=4 (2<<2).
@@ -63,7 +64,7 @@ local function config(...)
   if type(oss_t)~="number" or oss_t<1 or oss_t>5 then oss_t=M.oss end
   if type(oss_h)~="number" or oss_h<1 or oss_h>5 then oss_h=M.oss end
   if type(oss_p)~="number" or oss_p<1 or oss_p>5 then oss_p=M.oss end
--- H oversampling 2^(M.oss_h-1): 
+-- H oversampling 2^(M.oss_h-1):
   local REG_COMMAND=bit.band(oss_h,0x07)
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
@@ -129,9 +130,10 @@ function M.init(sda,scl,volatile,...)
       i2c.address(id,ADDR,i2c.RECEIVER)
       c = i2c.read(id,1)  -- ID:1byte
       i2c.stop(id)
-    -- CHIPID: BMP085/BMP180 0x55, BME280 0x60, BMP280 0x58
-      found=(c:byte()==0x60)
-    end  
+    -- CHIPID: BMP085/BMP180 0x55, BMP280 0x58, BME280 0x60
+      M.model=({[0x55]='BMP180',[0x58]='BMP280',[0x60]='BME280'})[c:byte()]
+      found=(M.model=='BMP280')
+    end
 -- read calibration coeff.
     if found then
     -- request REG_DIG_T1 .. REG_DIG_P9+1 0x9F

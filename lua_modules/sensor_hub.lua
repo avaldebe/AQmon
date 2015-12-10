@@ -113,7 +113,7 @@ function M.read(callBack)
     sensor.read() -- default sampling
     if M.verbose then
       sensor.heap,sensor.time=node.heap(),tmr.time()
-      print(M.format(sensor,payload:format(sensor.name)))
+      print(M.format(sensor,payload:format(sensor.model)))
     else
       M.format(sensor)
     end
@@ -127,7 +127,7 @@ function M.read(callBack)
     sensor.read()
     if M.verbose then
       sensor.heap,sensor.time=node.heap(),tmr.time()
-      print(M.format(sensor,payload:format(sensor.name)))
+      print(M.format(sensor,payload:format(sensor.model)))
     else
       M.format(sensor)
     end
@@ -141,7 +141,7 @@ function M.read(callBack)
     sensor.read() -- default sampling
     if M.verbose then
       sensor.heap,sensor.time=node.heap(),tmr.time()
-      print(M.format(sensor,payload:format(sensor.name)))
+      print(M.format(sensor,payload:format(sensor.model)))
     else
       M.format(sensor)
     end
@@ -155,7 +155,7 @@ function M.read(callBack)
     sensor.read(function()
       if M.verbose then
         sensor.heap,sensor.time=node.heap(),tmr.time()
-        print(M.format(sensor,payload:format(sensor.name)))
+        print(M.format(sensor,payload:format(sensor.model)))
       else
         M.format(sensor)
       end

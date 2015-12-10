@@ -31,6 +31,7 @@ Body:  20 bytes, 10 pairs of bytes (MSB,LSB)
 
 local M={
   name=...,   -- module name, upvalue from require('module-name')
+  model=nil,  -- sensor model: PMS3003
   mlen=24,    -- lenght of PMS3003 message
   stdATM=nil, -- use standatd atm correction instead of TSI standard
   verbose=nil,-- verbose output
@@ -85,6 +86,7 @@ function M.init(pin_set,volatile,status)
   if type(pin_set)=='number' then
     pinSET=pin_set
     gpio.mode(pinSET,gpio.OUTPUT)
+    M.model=({[24]='PMS3003'})[M.mlen]
   end
 
 -- initialization
@@ -98,8 +100,8 @@ function M.init(pin_set,volatile,status)
     uart.on('data')                         -- release uart
   end
 
--- M.init suceeded if pinSET is LOW
-  init=(type(pinSET)=='number')
+-- M.init suceeded if sensor model is set
+  init=(M.model~=nil)
   return init
 end
 
