@@ -11,6 +11,7 @@ MIT license, http://opensource.org/licenses/MIT
 
 local M={
   name=...,       -- module name, upvalue from require('module-name')
+  model=nil,      -- sensor model: AM232x
   temperature=nil,-- integer value of temperature [0.01 C]
   humidity   =nil -- integer value of rel.humidity[0.01 %]
 }
@@ -63,15 +64,12 @@ function M.init(sda,scl,volatile)
 -- verify device address
     i2c.start(id)
     local found=i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.stop(id)
--- verify device MODEL
     if found then
     -- request MODEL_MSB 0x08 .. MODEL_LSB 0x09
-      i2c.start(id)
-      i2c.address(id,ADDR,i2c.TRANSMITTER)
       i2c.write(id,0x03,0x08,0x02)
-      i2c.stop(id)
-      tmr.delay(1600)         -- wait at least 1.5ms
+    end
+    i2c.stop(id)
+    if found then
     -- read MODEL_MSB 0x08 .. MODEL_LSB 0x09
       i2c.start(id)
       i2c.address(id,ADDR,i2c.RECEIVER)
@@ -80,8 +78,9 @@ function M.init(sda,scl,volatile)
     -- MODEL: AM2320 2320, AM2321 2321
       found=crc_check(c)
       if found then
-        local m=c:byte(3)*256+c:byte(4)
-        found=(m==2321) or (m==2320) or (m==0) -- my AM2320 responds 0
+        local m=c:byte(3)*256+c:byte(4) -- my AM2320 responds 0
+        M.model=({[0]='AM232x',[2320]='AM2320',[2321]='AM2321'})[m]
+        found=(M.model~=nil)
       end
     end
     last=tmr.now() -- wait at least 500 ms between reads
@@ -93,13 +92,14 @@ function M.init(sda,scl,volatile)
   return init
 end
 
-function M.read()
+function M.read(wait_ms)
 -- ensure module is initialized
   assert(init,('Need %s.init(...) before %s.read(...)'):format(M.name,M.name))
--- wait at least 500 ms between reads
---print(tmr.now()-last+500000)
-  if (tmr.now()-last+500000)>0 then
-    tmr.delay(tmr.now()-last+500000)
+-- wait_ms between reads: default 500 ms
+  if type(wait_ms)~='number' then wait_ms=500 end
+--print(tmr.now()-last+wait_ms*1000)
+  if (tmr.now()-last+wait_ms*1000)>0 then
+    tmr.delay(tmr.now()-last+wait_ms*1000)
   end
 -- wakeup
   i2c.start(id)
@@ -120,12 +120,10 @@ function M.read()
   if crc_check(c) then
     M.humidity   =c:byte(3)*2560+c:byte(4)*10 -- rel.humidity[0.01 %]
     M.temperature=c:byte(5)*2560+c:byte(6)*10 -- temperature [0.01 C]
---  print((('{name}:{humidity},{temperature}'):gsub('{(.-)}',M)))
     last=tmr.now() -- wait at least 500 ms between reads
   else
     M.humidity   =nil
     M.temperature=nil
---  print((('{name}: failed crc'):gsub('{(.-)}',M)))
   end
 end
 
