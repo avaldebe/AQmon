@@ -11,7 +11,7 @@ Sampling:
 - 1 shot/on demand.
 - ~650 ms sample & decoding.
 - pin3 (SET) of the PMS3003 controles operation mode.
-  SET=H continious sampling, SET=L standby.
+  SET=H (hardware default) continious sampling, SET=L standby.
 
 Data format:
   The PMS3003 write UART (3.3V TTL) messages 4+20 bytes long.

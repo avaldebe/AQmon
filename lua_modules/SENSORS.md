@@ -11,12 +11,23 @@ Lua modules for [AQmon][] project.<br/>
 - `sensor_hub.lua`: Read all sensors above.
 
 #### Notes
-- Do not use pin `D8` (`gpio15`) for `I2C` as the
-  pull-up resistors will interfeere with the bootiung process.
+- The [nodemcu-devkit][] has a pull-up resistors on pins
+  `D3` (`gpio0`) and  `D4` (`gpio0`). `D3` is attacked to `KEY_FLASH`.
+  - The pull-down resistor could be usefull for `I2C` bus,
+    as long as `KEY_FLASH` is not used.
+- The [nodemcu-devkit][] has a pull-down resistor on pin
+  `D8` (`gpio15`), in order to boot from the `SPI FLASH IC`:
+  - Do not use it for the `I2C` bus
+    as the pull-up resistors will interfeere with the bootiung process.
+  - Do not use it to drive `PMS3003`'s `PMset` pin as it floats high
+    (needs to be driven low to put the `PMS3003` on standby),
+    and will interfeere with the bootiung process.
 - BMP085, BMP180 and BME280 sensors have the same I2C address,
   so you can ony have one of them on the bus.
 - AM2320 and AM2321 sensors have the same I2C address,
   so you can ony have one of them on the bus.
+
+[nodemcu-devkit]:   https://github.com/nodemcu/nodemcu-devkit
 
 ### Ussage example
 
@@ -105,8 +116,8 @@ print(('p:%s hPa, t:%s C, h:%s %%, heap:%d')
 #### PMS3003
 ```lua
 -- module setup and read
-pinSET=7
-require('pms3003').init(pinSET)
+PMset=7
+require('pms3003').init(PMset)
 pms3003.verbose=true -- verbose mode
 pms3003.read(function()
   pm01 = pms3003.pm01 or 'null'
@@ -123,14 +134,14 @@ end)
 #### Sensor Hub
 ```lua
 -- module setup and read: no PMS3003
-sda,scl,pinSET=3,4,nil -- GPIO0,GPIO2
-require('sensors').init(sda,scl,pinSET)
+sda,scl,PMset=3,4,nil -- GPIO0,GPIO2
+require('sensors').init(sda,scl,PMset)
 sensors.verbose=true -- verbose mode
 sensors.read()
 
 -- module setup and read: all sensors
-sda,scl,pinSET=5,6,7
-require('sensors').init(sda,scl,pinSET)
+sda,scl,PMset=5,6,7
+require('sensors').init(sda,scl,PMset)
 sensors.read(function()
   print(sensors.format({heap=node.heap(),time=tmr.time()},
     'sensors:{time}[s],{t}[C],{h}[%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'))
