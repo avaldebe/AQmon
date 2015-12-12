@@ -15,9 +15,9 @@ local M={
   name=...,       -- module name, upvalue from require('module-name')
   persistence=nil,-- use last read set of output when/if reading fails
   verbose=nil,    -- verbose output
-  t=nil,          -- string value of temperature [C]
-  p=nil,          -- string value of preassure [hPa]
-  h=nil,          -- string value of rel.humidity[%]
+  temp=nil,       -- string value of temperature [C]
+  rhum=nil,       -- string value of rel.humidity[%]
+  pres=nil,       -- string value of preassure [hPa]
   pm01=nil,       -- string value of PM 1.0 [ug/m3]
   pm25=nil,       -- string value of PM 2.5 [ug/m3]
   pm10=nil        -- string value of PM 10. [ug/m3]
@@ -27,15 +27,19 @@ _G[M.name]=M
 -- Format module outputs
 function M.format(vars,message,squeese)
   local k,v
+  local varD4={pm01='pm01',pm25='pm25',pm10='pm10'} -- %d4 format
+  local varF7={temp='temp',temperature='temp',
+               rhum='rhum',humidity='rhum',
+               pres='pres',pressure='pres'}         -- %7.2f format
+
   for k,v in pairs(vars) do
 -- formatted output (w/padding) from integer values
     if type(v)=='number' then
-      if k=='pm01' or k=='pm25' or k=='pm10' then
+      if varD4[k]~=nil then
+        k=varD4[k]
         M[k]=('%4d'):format(v)
-      elseif k=='t' or k=='temperature'
-          or k=='h' or k=='humidity'
-          or k=='p' or k=='pressure' then     -- x/100 --> %7.2f
-        k=k:sub(1,1)
+      elseif varF7[k]~=nil then     -- x/100 --> %7.2f
+        k=varF7[k]
         if (1/2)==0 then  -- no floating point operations
           M[k]=('%4d.%02d'):format(v/100,(v>=0 and v or -v)%100)
         else              -- use floating point fomatting
@@ -50,9 +54,11 @@ function M.format(vars,message,squeese)
 -- formatted output (w/padding) default values ('null')
     elseif type(v)=='string' then
       if v=='' then v='null' end
-      if k=='pm01' or k=='pm25' or k=='pm10' then
+      if varD4[k]~=nil then
+        k=varD4[k]
         M[k]=('%4s'):format(v)
-      elseif k=='t' or k=='h' or k=='p' then
+      elseif varF7[k]~=nil then
+        k=varF7[k]
         M[k]=('%7s'):format(v)
       end
     end
@@ -78,7 +84,7 @@ function M.init(sda,scl,pm_set,volatile)
   end
 
 -- Output variables (padded for csv/column output)
-  M.format({p='',h='',t='',pm01='',pm25='',pm10=''})
+  M.format({temp='',rhum='',pres='',pm01='',pm25='',pm10=''})
 
 -- buffer pin set-up
   if type(sda)=='number' then SDA=sda end
@@ -109,7 +115,7 @@ function M.read(callBack)
 -- reset output
   if not M.persistence then M.init() end
 -- verbose print: csv/column output
-  local payload='%s:{time}[s],{t}[C],{h}[%%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
+  local payload='%s:{time}[s],{temp}[C],{rhum}[%%],{pres}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
   local sensor -- local "name" for sensor module
 
   sensor=require('bmp180')
