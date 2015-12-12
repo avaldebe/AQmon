@@ -3,7 +3,9 @@ am2321.lua for ESP8266 with nodemcu-firmware
   Read temperature and relative humidity from AM2320/AM2321 sensors
   More info at  https://github.com/avaldebe/AQmon
 
-Written by Álvaro Valdebenito.
+Written by Álvaro Valdebenito,
+  unsigned to signed conversion, eg uint32_t to int32_t
+    http://stackoverflow.com/questions/17152300/unsigned-to-signed-without-comparison
 
 MIT license, http://opensource.org/licenses/MIT
 ]]
@@ -118,9 +120,11 @@ function M.read(wait_ms)
   i2c.stop(id)
 -- expose results
   if crc_check(c) then
-    M.humidity   =c:byte(3)*2560+c:byte(4)*10 -- rel.humidity[0.01 %]
-    M.temperature=c:byte(5)*2560+c:byte(6)*10 -- temperature [0.01 C]
-    last=tmr.now() -- wait at least 500 ms between reads
+    local h,t=c:byte(3)*256+c:byte(4),c:byte(5)*256+c:byte(6)
+    t=t-bit.band(t,32768)*2 -- uint32_t to int32_t
+    M.humidity   =h*10      -- rel.humidity[0.01 %]
+    M.temperature=t*10      -- temperature [0.01 C]
+    last=tmr.now()          -- wait at least 500 ms between reads
   else
     M.humidity   =nil
     M.temperature=nil
