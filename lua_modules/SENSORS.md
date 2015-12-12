@@ -38,23 +38,28 @@ sda,scl=3,4 -- GPIO0,GPIO2
 found=require('bmp180').init(sda,scl)
 if found then
   bmp180.read(0)   -- 0:low power .. 3:oversample
-  p,t = bmp180.pressure,bmp180.temperature
+  pres,temp = bmp180.pressure,bmp180.temperature
 end
 
 -- release memory
 bmp180,package.loaded.bmp180 = nil,nil
 
 -- format and print the results
-if type(p)=='number' then
-  p=('%6d'):format(p)
-  p=('%4s.%2s'):format(p:sub(1,4),p:sub(5))
+function f7p2(v)
+  if v==nil then
+    return ('%7s'):format('null')
+  elseif (1/2)==0 then  -- no floating point operations
+    return ('%4d.%02d'):format(v/100,(v>=0 and v or -v)%100)
+  else                  -- use floating point fomatting
+    return ('%7.2f'):format(v)
+  end
 end
-if type(t)=='number' then
-  t=('%5d'):format(t)
-  t=('%3s.%2s'):format(t:sub(1,3),t:sub(4))
-end
-print(('p:%s hPa, t:%s C, heap:%d')
-  :format(p or 'null',t or 'null',node.heap()))
+
+print(('pres:%s hPa, temp:%s C, heap:%d')
+  :format(f7p2(pres),f7p2(temp),node.heap()))
+
+-- release memory
+f7p2 = nil
 ```
 
 #### AM2320, AM2321
@@ -64,23 +69,28 @@ sda,scl=3,4 -- GPIO0,GPIO2
 found=require('am2321').init(sda,scl)
 if found then
   am2321.read()
-  h,t = am2321.humidity,am2321.temperature
+  rhum,temp = am2321.humidity,am2321.temperature
 end
 
 -- release memory
 am2321,package.loaded.am2321 = nil,nil
 
 -- format and print the results
-if type(h)=='number' then
-  h=('%5d'):format(h)
-  h=('%3s.%2s'):format(h:sub(1,3),h:sub(4))
+function f7p2(v)
+  if v==nil then
+    return ('%7s'):format('null')
+  elseif (1/2)==0 then  -- no floating point operations
+    return ('%4d.%02d'):format(v/100,(v>=0 and v or -v)%100)
+  else                  -- use floating point fomatting
+    return ('%7.2f'):format(v)
+  end
 end
-if type(t)=='number' then
-  t=('%5d'):format(t)
-  t=('%3s.%2s'):format(t:sub(1,3),t:sub(4))
-end
-print(('h:%s %%, t:%s C, heap:%d')
- :format(h or 'null',t or 'null',node.heap()))
+
+print(('rhum:%s %%, temp:%s C, heap:%d')
+ :format(f7p2(rhum),f7p2(temp),node.heap()))
+
+-- release memory
+f7p2 = nil
 ```
 
 #### BME280
@@ -90,27 +100,28 @@ sda,scl=3,4 -- GPIO0,GPIO2
 found=require('bme280').init(sda,scl)
 if found then
   bme280.read()
-  p,t,h = bme280.pressure,bme280.temperature,bme280.humidity
+  pres,temp,rhum = bme280.pressure,bme280.temperature,bme280.humidity
 end
 
 -- release memory
 bme280,package.loaded.bme280 = nil,nil
 
 -- format and print the results
-if type(p)=='number' then
-  p=('%6d'):format(p)
-  p=('%4s.%2s'):format(p:sub(1,4),p:sub(5))
+function f7p2(v)
+  if v==nil then
+    return ('%7s'):format('null')
+  elseif (1/2)==0 then  -- no floating point operations
+    return ('%4d.%02d'):format(v/100,(v>=0 and v or -v)%100)
+  else                  -- use floating point fomatting
+    return ('%7.2f'):format(v)
+  end
 end
-if type(t)=='number' then
-  t=('%5d'):format(t)
-  t=('%3s.%2s'):format(t:sub(1,3),t:sub(4))
-end
-if type(h)=='number' then
-  h=('%5d'):format(h)
-  h=('%3s.%2s'):format(h:sub(1,3),h:sub(4))
-end
-print(('p:%s hPa, t:%s C, h:%s %%, heap:%d')
- :format(p or 'null',t or 'null',h or 'null',node.heap()))
+
+print(('pres:%s hPa, temp:%s C, rhum:%s %%, heap:%d')
+ :format(f7p2(pres),f7p2(temp),f7p2(rhum),node.heap()))
+
+-- release memory
+f7p2 = nil
 ```
 
 #### PMS3003
@@ -144,7 +155,7 @@ sda,scl,PMset=5,6,7
 require('sensors').init(sda,scl,PMset)
 sensors.read(function()
   print(sensors.format({heap=node.heap(),time=tmr.time()},
-    'sensors:{time}[s],{t}[C],{h}[%],{p}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'))
+    '{name}:{time}[s],{temp}[C],{rhum}[%],{pres}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'))
 end)
 
 -- release memory
