@@ -4,7 +4,7 @@ am2321.lua for ESP8266 with nodemcu-firmware
   More info at  https://github.com/avaldebe/AQmon
 
 Written by Álvaro Valdebenito,
-  unsigned to signed conversion, eg uint32_t to int32_t
+  unsigned to signed conversion, eg uint16_t (unsigned short) to int16_t (short)
     http://stackoverflow.com/questions/17152300/unsigned-to-signed-without-comparison
 
 MIT license, http://opensource.org/licenses/MIT
@@ -121,10 +121,10 @@ function M.read(wait_ms)
 -- expose results
   if crc_check(c) then
     local h,t=c:byte(3)*256+c:byte(4),c:byte(5)*256+c:byte(6)
-    t=t-bit.band(t,32768)*2 -- uint32_t to int32_t
-    M.humidity   =h*10      -- rel.humidity[0.01 %]
-    M.temperature=t*10      -- temperature [0.01 C]
-    last=tmr.now()          -- wait at least 500 ms between reads
+    t=t-bit.band(t,0x8000)*2  -- uint16_t to int16_t
+    M.humidity   =h*10        -- rel.humidity[0.01 %]
+    M.temperature=t*10        -- temperature [0.01 C]
+    last=tmr.now()            -- wait at least 500 ms between reads
   else
     M.humidity   =nil
     M.temperature=nil
