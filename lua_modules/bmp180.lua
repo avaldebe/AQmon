@@ -6,7 +6,7 @@ bmp180.lua for ESP8266 with nodemcu-firmware
 Written by Álvaro Valdebenito,
   based on bmp180.lua by Javier Yanez
     https://github.com/javieryanez/nodemcu-modules
-  unsigned to signed conversion, eg uint32_t to int32_t
+  unsigned to signed conversion, eg uint16_t (unsigned short) to int16_t (short)
     http://stackoverflow.com/questions/17152300/unsigned-to-signed-without-comparison
 
 MIT license, http://opensource.org/licenses/MIT
@@ -26,8 +26,9 @@ local ADDR = 0x77 -- BMP085/BMP180 address
 -- calibration coefficients
 local cal={} -- AC1, AC2, AC3, AC4, AC5, AC6, B1, B2, MB, MC, MD
 
-local function int32_t(uint32_t)
-  return uint32_t-bit.band(uint32_t,32768)*2
+local function int16_t(uint,nbits)
+-- first negative number uint16_t(unsigned short): 2^15
+  return uint-bit.band(uint,0x8000)*2
 end
 
 -- initialize module
@@ -84,17 +85,17 @@ function M.init(sda,scl,volatile)
       c = i2c.read(id,22)
       i2c.stop(id)
     -- unpack CALIBRATION
-      cal.AC1=int32_t(c:byte( 1)*256+c:byte( 2))
-      cal.AC2=int32_t(c:byte( 3)*256+c:byte( 4))
-      cal.AC3=int32_t(c:byte( 5)*256+c:byte( 6))
-      cal.AC4=        c:byte( 7)*256+c:byte( 8)
-      cal.AC5=        c:byte( 9)*256+c:byte(10)
-      cal.AC6=        c:byte(11)*256+c:byte(12)
-      cal.B1 =int32_t(c:byte(13)*256+c:byte(14))
-      cal.B2 =int32_t(c:byte(15)*256+c:byte(16))
-      cal.MB =int32_t(c:byte(17)*256+c:byte(18))
-      cal.MC =int32_t(c:byte(19)*256+c:byte(20))
-      cal.MD =int32_t(c:byte(21)*256+c:byte(22))
+      cal.AC1=int16_t(c:byte( 1)*256+c:byte( 2))  -- (signed) short
+      cal.AC2=int16_t(c:byte( 3)*256+c:byte( 4))  -- (signed) short
+      cal.AC3=int16_t(c:byte( 5)*256+c:byte( 6))  -- (signed) short
+      cal.AC4=        c:byte( 7)*256+c:byte( 8)   -- unsigned short
+      cal.AC5=        c:byte( 9)*256+c:byte(10)   -- unsigned short
+      cal.AC6=        c:byte(11)*256+c:byte(12)   -- unsigned short
+      cal.B1 =int16_t(c:byte(13)*256+c:byte(14))  -- (signed) short
+      cal.B2 =int16_t(c:byte(15)*256+c:byte(16))  -- (signed) short
+      cal.MB =int16_t(c:byte(17)*256+c:byte(18))  -- (signed) short
+      cal.MC =int16_t(c:byte(19)*256+c:byte(20))  -- (signed) short
+      cal.MD =int16_t(c:byte(21)*256+c:byte(22))  -- (signed) short
     end
     -- M.init suceeded
     init=found
@@ -134,11 +135,11 @@ function M.read(oss)
   c = i2c.read(id,2)
   i2c.stop(id)
 -- unpack TEMPERATURE
-  UT = int32_t(c:byte(1)*265+c:byte(2))
-  X1 = (UT - cal.AC6) * cal.AC5 / 32768
-  X2 = cal.MC * 2048 / (X1 + cal.MD)
+  UT = c:byte(1)*265+c:byte(2)
+  X1 = (UT - cal.AC6)*cal.AC5/32768
+  X2 = cal.MC*2048/(X1 + cal.MD)
   B5 = X1 + X2
-  t = int32_t((B5 + 8)/16)
+  t = (B5 + 8)/16
 
 -- read pressure from BMP
   if type(oss)~="number" or oss<0 or oss>3 then oss=M.oss end
@@ -161,26 +162,28 @@ function M.read(oss)
   c = i2c.read(id,3)
   i2c.stop(id)
 -- unpack PRESSURE
+  -- Note that, bit.rshift(x,n)~=x/2^n for n<0
   UP = c:byte(1)*65536+c:byte(2)*256+c:byte(3)
-  UP = UP / 2^(8-oss)
+  UP = bit.rshift(UP,8-oss)
   B6 = B5 - 4000
-  X1 = B6 * B6 / 4096 * cal.B2 / 2048
-  X2 = B6 * cal.AC2 / 2048
-  X3 = X1 + X2
-  B3 = ((cal.AC1 * 4 + X3) * 2^oss + 2) / 4
-  X1 = cal.AC3 * B6 / 8192
-  X2 = B6 * B6 / 4096 * cal.B1 / 65536
+  X1 = bit.rshift(B6*B6,12)*cal.B2
+  X2 = B6*cal.AC2
+  X3 = (X1+X2)/2048
+  B3 = bit.lshift(1,oss)
+  B3 = ((cal.AC1*4 + X3)*B3 + 2) / 4
+  X1 = cal.AC3*B6/8192
+  X2 = bit.rshift(B6*B6,12)*cal.B1/65536
   X3 = (X1 + X2 + 2) / 4
-  B4 = (X3 + 32768) * cal.AC4 / 32768
-  B7 = (UP - B3) * (50000/2^oss)
+  B4 = bit.rshift((X3 + 32768)*cal.AC4,15)  -- unsigned long
+  B7 = (UP - B3)*bit.rshift(50000,oss)      -- unsigned long
 -- retain preccision, avoid oveflow
-  if B7<0x40000000 then
+  if B7*2>0 then
     p = B7 * 2 / B4
   else
     p = B7 / B4 * 2
   end
   X1 = (p/256) * (p/256)
-  X1 = X1 * 3038 / 65536
+  X1 = bit.rshift(X1*3038,16)
   X2 = -7357 * p / 65536
   p = p + (X1 + X2 + 3791) / 16
 
