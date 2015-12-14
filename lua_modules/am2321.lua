@@ -121,7 +121,7 @@ function M.read(wait_ms)
 -- expose results
   if crc_check(c) then
     local h,t=c:byte(3)*256+c:byte(4),c:byte(5)*256+c:byte(6)
-    t=t-bit.band(t,0x8000)*2  -- uint16_t to int16_t
+    if bit.band(t,0x8000)~=0 then t=-bit.band(t,0x7fff) end
     M.humidity   =h*10        -- rel.humidity[0.01 %]
     M.temperature=t*10        -- temperature [0.01 C]
     last=tmr.now()            -- wait at least 500 ms between reads
