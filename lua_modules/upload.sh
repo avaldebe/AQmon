@@ -7,6 +7,7 @@
 (($#))||set wipe bmp180 am2321 bme280 pms3003 sensor_hub \
             keys_v$CHANNEL wifi_connect rgbLED sendData AQmon init
 
+TRANSPORT="-p $PORT"; [[ -n $IP ]] && TRANSPORT="--ip $IP:2323"
 while (($#)); do
   opt=$1
   trap "exit" SIGHUP SIGINT SIGTERM
@@ -18,23 +19,23 @@ while (($#)); do
       0x7E000 ../nodemcu-firmware/bin/blank.bin ;;
 # list) luatool.py -p $PORT -l;;
   wipe)
-    luatool.py -p $PORT -rw;;
+    luatool.py $TRANSPORT -rw;;
   bmp180|am2321|bme280|pms3003) # sensor modules
-    luatool.py -p $PORT -cf $opt.lua;;
+    luatool.py $TRANSPORT -cf $opt.lua;;
   hub|hub.*|*_hub|*_hub.*)      # sensor hub module
-    luatool.py -p $PORT -rcf ${opt%.*}.lua -t sensors.lua;;
+    luatool.py $TRANSPORT -rcf ${opt%.*}.lua -t sensors.lua;;
   keys|wifi_connect|sendData|rgbLED|hueLED)
-    luatool.py -p $PORT -cf $opt.lua;;
-  app|app.*|AQmon|AQmon.*)
-    luatool.py -p $PORT -rcf ${opt%.*}.lua -t app.lua;;
+    luatool.py $TRANSPORT -cf $opt.lua;;
+  AQmon|AQmon.*|*_app|*_app.*)
+    luatool.py $TRANSPORT -rcf ${opt%.*}.lua -t app.lua;;
   init|init.lua)
-    luatool.py -p $PORT -rf ${opt%.*}.lua;;
+    luatool.py $TRANSPORT -rf ${opt%.*}.lua;;
   *_v*|*_v*.lua)  # alternative versions, eg keys_v37527
-    luatool.py -p $PORT -cf ${opt%.*}.lua -t ${opt/_v*/.lua};;
+    luatool.py $TRANSPORT -cf ${opt%.*}.lua -t ${opt/_v*/.lua};;
   *_test.lua)# test scripts
-    luatool.py -p $PORT -df $opt -t test.lua;;
+    luatool.py $TRANSPORT -df $opt -t test.lua;;
   *.lua)     # other scipts
-    luatool.py -p $PORT -f $opt;;
+    luatool.py $TRANSPORT -f $opt;;
   esac && shift
   trap - SIGHUP SIGINT SIGTERM
 done
