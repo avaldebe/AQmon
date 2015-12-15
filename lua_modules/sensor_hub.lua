@@ -41,7 +41,8 @@ function M.format(vars,message,squeese)
       elseif varF7[k]~=nil then     -- x/100 --> %7.2f
         k=varF7[k]
         if (1/2)==0 then  -- no floating point operations
-          M[k]=('%4d.%02d'):format(v/100,(v>=0 and v or -v)%100)
+          v=(v>=0 and '%03d' or '%04d'):format(v)
+          M[k]=('%4s.%2s'):format(v:sub(1,-3),v:sub(-2))
         else              -- use floating point fomatting
           M[k]=('%7.2f'):format(v)
         end
