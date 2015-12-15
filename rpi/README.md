@@ -12,6 +12,29 @@ Stable plataform for sensor evaluation.
 [yr.no]:          http://www.yr.no/place/Norway/Oslo/Oslo/Marienlyst_skole
 [thingspeak]:     https://thingspeak.com
 
+## Lua libraries
+Test AQmon lua modules on the Pi.
+
+- [rpi-gpio][]: GPIO only.
+  - [intro][] with example.
+- [lua-periphery][]: GPIO, SPI, I2C, MMIO, and Serial peripheral I/O.
+- [luabitop][]: bitwise operations on numbers for Lua 5.1.
+
+```bash
+# install lua 5.1 and luarocks
+sudo apt-get install lua5.1 liblua5.1-0-dev
+sudo apt-get install luarocks
+# install lua-periphery
+sudo luarocks install lua-periphery
+# install luabitop
+luarocks install luabitop
+```
+
+[intro]:         http://www.andre-simon.de/doku/rpi_gpio_lua/en/rpi_gpio_lua.php
+[rpi-gpio]:      https://luarocks.org/modules/luarocks/rpi-gpio
+[lua-periphery]: https://luarocks.org/modules/vsergeev/lua-periphery
+[luabitop]:      https://luarocks.org/modules/luarocks/luabitop
+
 ## RPi management, maintinence & other
 ### Password-less login
 ```bash
