@@ -9,6 +9,9 @@ Written by Álvaro Valdebenito,
   unsigned to signed conversion, eg uint16_t (unsigned short) to int16_t (short)
     http://stackoverflow.com/questions/17152300/unsigned-to-signed-without-comparison
 
+Note:
+  bit.rshift(x,n)~=x/2^n for n<0, use bit.arshift(x,n) instead
+
 MIT license, http://opensource.org/licenses/MIT
 ]]
 
@@ -136,8 +139,8 @@ function M.read(oss)
   i2c.stop(id)
 -- unpack TEMPERATURE
   UT = c:byte(1)*265+c:byte(2)
-  X1 = (UT - cal.AC6)*cal.AC5/32768
-  X2 = cal.MC*2048/(X1 + cal.MD)
+  X1 = bit.arshift((UT - cal.AC6)*cal.AC5,15)
+  X2 = bit.lshift(cal.MC,11)/(X1 + cal.MD)
   B5 = X1 + X2
   t = (B5 + 8)/16
 
@@ -162,17 +165,18 @@ function M.read(oss)
   c = i2c.read(id,3)
   i2c.stop(id)
 -- unpack PRESSURE
-  -- Note that, bit.rshift(x,n)~=x/2^n for n<0
   UP = c:byte(1)*65536+c:byte(2)*256+c:byte(3)
   UP = bit.rshift(UP,8-oss)
   B6 = B5 - 4000
-  X1 = bit.rshift(B6*B6,12)*cal.B2
-  X2 = B6*cal.AC2
-  X3 = (X1+X2)/2048
+  X1 = bit.rshift(B6*B6,12)
+  X1 = bit.arshift(X1*cal.B2 ,11)
+  X2 = bit.arshift(B6*cal.AC2,11)
+  X3 = X1 + X2
   B3 = bit.lshift(1,oss)
   B3 = ((cal.AC1*4 + X3)*B3 + 2) / 4
-  X1 = cal.AC3*B6/8192
-  X2 = bit.rshift(B6*B6,12)*cal.B1/65536
+  X1 = bit.arshift(cal.AC3*B6,13)
+  X2 = bit.rshift(B6*B6,12)
+  X2 = bit.arshift(X2*cal.B1,16)
   X3 = (X1 + X2 + 2) / 4
   B4 = bit.rshift((X3 + 32768)*cal.AC4,15)  -- unsigned long
   B7 = (UP - B3)*bit.rshift(50000,oss)      -- unsigned long
@@ -184,7 +188,7 @@ function M.read(oss)
   end
   X1 = (p/256) * (p/256)
   X1 = bit.rshift(X1*3038,16)
-  X2 = -7357 * p / 65536
+  X2 = bit.arshift(-7357*p,16)
   p = p + (X1 + X2 + 3791) / 16
 
 -- expose results
