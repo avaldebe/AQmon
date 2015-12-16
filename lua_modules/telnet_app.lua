@@ -1,3 +1,11 @@
+-- put PMS3003 on stand-by mode before enhabling UART
+local pinSET=require('keys').pin.PMset
+if type(pinSET)=='number' then
+  gpio.mode(pinSET,gpio.OUTPUT)
+  gpio.write(pinSET,gpio.LOW)
+end
+uart.on('data')
+
 print('Start WiFi')
 require('wifi_connect')(wifi.STATION,nil) -- mode,sleep
 
@@ -14,3 +22,6 @@ tmr.alarm(0,10000,0,function() -- 10s after start
     print("Welcome to NodeMcu world.")
   end)
 end)
+
+
+
