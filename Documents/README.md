@@ -25,7 +25,7 @@ sudo rfcomm bind 1
 sudo rfcomm release 1
 ```
 
-### Connect via telnet (not working yet)
+### Connect via telnet (partally working)
 Using a [telnet script][] and [socat][].
 
 [socat]: https://gist.github.com/ajfisher/1fdbcbbf96b7f2ba73cd#socat-to-the-rescue-mac--linux
@@ -34,12 +34,14 @@ Using a [telnet script][] and [socat][].
 
 ```bash
 # assume that esp8266 has IP 192.168.15.110, and listen to port 2323
-sudo socat -d -d  pty,nonblock,link=/dev/ttyTCP0,group=dialout tcp:192.168.15.110:2323
+sudo socat -d -d \
+  pty,nonblock,link=/dev/rfcomm9,group=dialout,mode=760,ispeed=9600,ospeed=9600,raw \
+  tcp:192.168.15.110:2323
 ```
 
 ### Console
 ```bash
 minicom -b 9600 -D /dev/ttyUSB0 -s # USB-UART on ttyUSB0
 minicom -b 9600 -D /dev/rfcomm1 -s # BT-UART  on rfcomm1
-minicom -b 9600 -D /dev/ttyTCP0 -s # telnet   on ttyTCP0
+minicom -b 9600 -D /dev/rfcomm9 -s # telnet   on rfcomm9
 ```
