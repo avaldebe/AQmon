@@ -67,12 +67,12 @@ function M.format(vars,message,squeese)
 
 -- process message for csv/column output
   if type(message)=='string' and message~='' then
-    local payload=message:gsub('{(.-)}',M)
+    message=message:gsub('{(.-)}',M)
     M.upTime,M.time,M.heap=nil,nil,nil  -- release memory
     if squeese then                     -- remove all spaces (and padding)
-      payload=payload:gsub(' ','')      --   from output
+      message=message:gsub(' ','')      --   from output
     end
-    return payload
+    return message
   end
 end
 
@@ -116,7 +116,7 @@ function M.read(callBack)
 -- reset output
   if not M.persistence then M.init() end
 -- verbose print: csv/column output
-  local payload='%s:{time}[s],{temp}[C],{rhum}[%%],{pres}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
+  local message='%s:{time}[s],{temp}[C],{rhum}[%%],{pres}[hPa],{pm01},{pm25},{pm10}[ug/m3],{heap}[b]'
   local sensor -- local "name" for sensor module
 
   sensor=require('bmp180')
@@ -124,7 +124,7 @@ function M.read(callBack)
     sensor.read() -- default sampling
     if M.verbose then
       sensor.heap,sensor.time=node.heap(),tmr.time()
-      print(M.format(sensor,payload:format(sensor.model)))
+      print(M.format(sensor,message:format(sensor.model)))
     else
       M.format(sensor)
     end
@@ -138,7 +138,7 @@ function M.read(callBack)
     sensor.read()
     if M.verbose then
       sensor.heap,sensor.time=node.heap(),tmr.time()
-      print(M.format(sensor,payload:format(sensor.model)))
+      print(M.format(sensor,message:format(sensor.model)))
     else
       M.format(sensor)
     end
@@ -152,7 +152,7 @@ function M.read(callBack)
     sensor.read() -- default sampling
     if M.verbose then
       sensor.heap,sensor.time=node.heap(),tmr.time()
-      print(M.format(sensor,payload:format(sensor.model)))
+      print(M.format(sensor,message:format(sensor.model)))
     else
       M.format(sensor)
     end
@@ -166,7 +166,7 @@ function M.read(callBack)
     sensor.read(function()
       if M.verbose then
         sensor.heap,sensor.time=node.heap(),tmr.time()
-        print(M.format(sensor,payload:format(sensor.model)))
+        print(M.format(sensor,message:format(sensor.model)))
       else
         M.format(sensor)
       end
