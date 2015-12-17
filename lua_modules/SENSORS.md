@@ -22,10 +22,14 @@ Lua modules for [AQmon][] project.<br/>
   - Do not use it to drive `PMS3003`'s `PMset` pin as it floats high
     (needs to be driven low to put the `PMS3003` on standby),
     and will interfeere with the bootiung process.
-- BMP085, BMP180 and BME280 sensors have the same I2C address,
-  so you can ony have one of them on the bus.
-- AM2320 and AM2321 sensors have the same I2C address,
-  so you can ony have one of them on the bus.
+- I2C address (in 7-bit format):
+  - BMP085 and BMP180 sensors have the same address: 0x77.
+    Can ony have one of them on the same bus.
+  - BME280 sensors can have one of 2 addresses: 0x76 or 0x77.
+    Can have two of them on the same bus if the addresses differ.
+  - AM2320 and AM2321 sensors have the same address: 0x5C.
+    Can ony have one of them on the same bus.
+  - The `i2c-autoscan.lua` script can help to find connected I2C devises.
 
 [nodemcu-devkit]:   https://github.com/nodemcu/nodemcu-devkit
 

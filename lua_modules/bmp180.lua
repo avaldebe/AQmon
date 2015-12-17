@@ -29,7 +29,7 @@ local ADDR = 0x77 -- BMP085/BMP180 address
 -- calibration coefficients
 local cal={} -- AC1, AC2, AC3, AC4, AC5, AC6, B1, B2, MB, MC, MD
 
-local function int16_t(uint,nbits)
+local function int16_t(uint)
 -- first negative number uint16_t(unsigned short): 2^15
   return uint-bit.band(uint,0x8000)*2
 end

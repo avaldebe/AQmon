@@ -19,7 +19,7 @@ local M={
 }
 _G[M.name]=M
 
-local ADDR=bit.rshift(0xB8,1) -- use 7bit address
+local ADDR=0x5C -- 7bit address
 
 -- consistency check
 local function crc_check(c)
@@ -121,10 +121,10 @@ function M.read(wait_ms)
 -- expose results
   if crc_check(c) then
     local h,t=c:byte(3)*256+c:byte(4),c:byte(5)*256+c:byte(6)
-    if bit.band(t,0x8000)~=0 then t=-bit.band(t,0x7fff) end
-    M.humidity   =h*10        -- rel.humidity[0.01 %]
-    M.temperature=t*10        -- temperature [0.01 C]
-    last=tmr.now()            -- wait at least 500 ms between reads
+    if bit.isset(t,15) then t=-bit.band(t,0x7fff) end
+    M.humidity   =h*10    -- rel.humidity[0.01 %]
+    M.temperature=t*10    -- temperature [0.01 C]
+    last=tmr.now()        -- wait at least 500 ms between reads
   else
     M.humidity   =nil
     M.temperature=nil
