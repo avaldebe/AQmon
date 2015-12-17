@@ -12,9 +12,18 @@ while (($#)); do
   opt=$1
   trap "exit" SIGHUP SIGINT SIGTERM
   case $opt in
+  AT-095)
+    esptool.py --port $PORT --baud 115200 write_flash \
+      0x00000 ../nodemcu-firmware/bin/095/AI-v0.9.5.0\ AT\ Firmware.bin ;;
   nodemcu_float|nodemcu_integer)
     esptool.py --port $PORT --baud 115200 write_flash \
-      0x00000 ../nodemcu-firmware/bin/$opt\_$VERSION.bin \
+      0x00000 ../nodemcu-firmware/bin/096/$opt\_$VERSION.bin ;;
+  nodemcu_custom) # 1.4.0
+    esptool.py --port $PORT --baud 115200 write_flash \
+      0x00000 ../nodemcu-firmware/bin/0x00000.bin \
+      0x10000 ../nodemcu-firmware/bin/0x10000.bin ;;
+  nodemcu_blank)
+    esptool.py --port $PORT --baud 115200 write_flash \
       0x7C000 ../nodemcu-firmware/bin/esp_init_data_default.bin \
       0x7E000 ../nodemcu-firmware/bin/blank.bin ;;
 # list) luatool.py -p $PORT -l;;
