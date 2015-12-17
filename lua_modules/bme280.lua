@@ -35,7 +35,7 @@ local M={
 }
 _G[M.name]=M
 
-local ADDR = 0x76 -- BME280 address, could also be 0x77
+local ADDR = {0x76,0x77} -- BME280 have 2 possible addresses
 
 -- calibration coefficients
 local cal={} -- T1,..,T3,P1,..,P9,H1,..,H6
@@ -128,9 +128,15 @@ function M.init(sda,scl,volatile,...)
   if not init then
     local found,c
 -- verify device address
-    i2c.start(id)
-    found=i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.stop(id)
+    for c=1,#ADDR do
+      i2c.start(id)
+      found=i2c.address(id,ADDR[c],i2c.TRANSMITTER)
+      i2c.stop(id)
+      if found then
+        ADDR=ADDR[c]
+        break
+      end
+    end
 -- verify device ID
     if found then
     -- request REG_CHIPID 0xD0
@@ -232,10 +238,10 @@ function M.read(...)
   an output value of "5123" equals 51.23 DegC. ]]
   local v1,v2,tfine
   t  = t/8 - cal.T1*2
-  v1 = bit.rshift(t*cal.T2,11)
+  v1 = bit.arshift(t*cal.T2,11)
   v2 = bit.rshift((t/2)*(t/2),12)
-  tfine = v1 + bit.rshift(v2*cal.T3,14)
-  t = bit.rshift(tfine*5 + 128,8)
+  tfine = v1 + bit.arshift(v2*cal.T3,14)
+  t = bit.arshift(tfine*5 + 128,8)
 
 --[[ Pressure: Adapted from bme280_compensate_pressure_int32.
   Calculate actual pressure from uncompensated pressure.
@@ -245,13 +251,13 @@ function M.read(...)
   v2 = bit.rshift((v1/4)*(v1/4),11)
   v2 = v2*cal.P6 + v1*cal.P5*2
   v1 = cal.P3*bit.rshift((v1/4)*(v1/4),13)/8
-     + bit.rshift(cal.P2*v1/2,18) + 32768
-  v1 = bit.rshift(v1*cal.P1,15)
+     + bit.arshift(cal.P2*v1/2,18) + 32768
+  v1 = bit.arshift(v1*cal.P1,15)
   if v1==0 then
     p = nil
   else
     v2 = v2/4 + bit.lshift(cal.P4,16)
-    v2 = bit.rshift(v2,12)
+    v2 = bit.arshift(v2,12)
     p = (1048576 - p - v2)*3125
     if p*2>=0 then
       p = p*2/v1
@@ -259,8 +265,8 @@ function M.read(...)
       p = p/v1*2
     end
     v1 = bit.rshift((p/8)*(p/8),13)
-    v1 = bit.rshift(v1*cal.P9,12)
-    v2 = bit.rshift(p/4*cal.P8,13)
+    v1 = bit.arshift(v1*cal.P9,12)
+    v2 = bit.arshift(p/4*cal.P8,13)
     p = p + (v1 + v2 + cal.P7)/16
   end
 
@@ -269,17 +275,17 @@ function M.read(...)
   Returns the value in 0.01 %rH.
   An output value of 4132.1 represents 41.321 %rH ]]
   v1 = tfine - 76800
-  v2 = bit.rshift(v1*cal.H6,10)
-  v2 = v2*(bit.rshift(v1*cal.H3,11) + 32768)
-  v2 =(bit.rshift(v2,10) + 2097152)*cal.H2 + 8192
+  v2 = bit.arshift(v1*cal.H6,10)
+  v2 = v2*(bit.arshift(v1*cal.H3,11) + 32768)
+  v2 =(bit.arshift(v2,10) + 2097152)*cal.H2 + 8192
   v1 = bit.lshift(h,14) - bit.lshift(cal.H4,20) - cal.H5*v1 + 16384
-  v1 = bit.rshift(v1,15)*bit.rshift(v2,14)
-  v2 = bit.rshift(v1,15)
+  v1 = bit.arshift(v1,15)*bit.arshift(v2,14)
+  v2 = bit.arshift(v1,15)
   v1 = v1 - bit.rshift(v2*v2,7)*cal.H1/16
   if v1 < 0 then
     v1 = 0
-  elseif v1 > 419430400 then
-    v1 = 419430400
+  elseif v1 > 0x19000000 then
+    v1 = 0x19000000
   end
   h = bit.rshift(v1,12)     -- Q22.10, ie 42313 means 42313/1024=41.321 %rH
   h = bit.rshift(h*100,10)  -- 0.01 C, ie 4132.1 means 41.321 %rH
