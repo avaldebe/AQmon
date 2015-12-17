@@ -7,7 +7,7 @@
 -- https://github.com/nodemcu/nodemcu-firmware/wiki/nodemcu_api_en#new_gpio_map
 local gpio_pin= {5,4,0,2,14,12,13}--,15,3,1,9,10}
 
-local function find_dev(ADDR,SDA,SCL,setup,ntry)
+function find_dev(ADDR,SDA,SCL,setup,ntry)
   local id=0
 -- initialize i2c with our id and current pins in slow mode :-)
   if setup then i2c.setup(id,SDA,SCL,i2c.SLOW) end
