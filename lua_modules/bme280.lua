@@ -15,6 +15,11 @@ Written by Álvaro Valdebenito,
       https://github.com/adafruit/Adafruit_Python_BME280
   - SparkFunBME280.cpp by sparkfun
       https://github.com/sparkfun/SparkFun_BME280_Arduino_Library
+  - Unsigned to signed conversion, eg uint16_t (unsigned short) to int16_t (short)
+      http://stackoverflow.com/questions/17152300/unsigned-to-signed-without-comparison
+
+Note:
+  bit.rshift(x,n)~=x/2^n for n<0, use bit.arshift(x,n) instead
 
 MIT license, http://opensource.org/licenses/MIT
 ]]
@@ -30,10 +35,18 @@ local M={
 }
 _G[M.name]=M
 
-local ADDR = 0x77 -- BME280 address, could also be 0x76
+local ADDR = 0x76 -- BME280 address, could also be 0x77
 
 -- calibration coefficients
 local cal={} -- T1,..,T3,P1,..,P9,H1,..,H6
+
+local function int16_t(uint,nbits)
+-- first negative number uint8_t (unsigned char ): 2^7
+-- first negative number uint16_t(unsigned short): 2^15
+-- first negative number uint32_t(unsigned long ): 2^31
+  local first_neg=({[8]=0x80,[16]=0x8000})[nbits or 16]
+  return uint-bit.band(uint,first_neg)*2
+end
 
 -- sampling configuration
 local function config(...)
@@ -113,7 +126,7 @@ function M.init(sda,scl,volatile,...)
   init=(next(cal)~=nil)
 
   if not init then
-    local found,c,w
+    local found,c
 -- verify device address
     i2c.start(id)
     found=i2c.address(id,ADDR,i2c.TRANSMITTER)
@@ -136,56 +149,46 @@ function M.init(sda,scl,volatile,...)
     end
 -- read calibration coeff.
     if found then
-    -- request REG_DIG_T1 .. REG_DIG_P9+1 0x9F
+    -- request calib00 0x08 .. calib25 0xA1
       i2c.start(id)
       i2c.address(id,ADDR,i2c.TRANSMITTER)
-      i2c.write(id,0x88) -- REG_DIG_T1
+      i2c.write(id,0x88) -- calib00: REG_DIG_T1
       i2c.stop(id)
-    -- read REG_DIG_T1 .. REG_DIG_P9+1 0x9F
+    -- read calib00 0x08 .. calib25 0xA1
       i2c.start(id)
       i2c.address(id,ADDR,i2c.RECEIVER)
-      c = i2c.read(id,24) -- T1:2byte,..,P2:2byte
+      c = i2c.read(id,26) -- calib00 .. calib25
       i2c.stop(id)
-    -- request REG_DIG_H1
+    -- request calib26 0xE1 .. calib32 0xE7
       i2c.start(id)
       i2c.address(id,ADDR,i2c.TRANSMITTER)
-      i2c.write(id,0xA1) -- REG_DIG_H1
+      i2c.write(id,0xE1) -- calib26: REG_DIG_H2
       i2c.stop(id)
-    -- read REG_DIG_H1
+    -- read calib26 0xE1 .. calib32 0xE7
       i2c.start(id)
       i2c.address(id,ADDR,i2c.RECEIVER)
-      c = c..i2c.read(id,1) -- H1:1byte
-      i2c.stop(id)
-    -- request REG_DIG_H2 0xE1 .. REG_DIG_H6 0xE7
-      i2c.start(id)
-      i2c.address(id,ADDR,i2c.TRANSMITTER)
-      i2c.write(id,0xE1) -- REG_DIG_H2
-      i2c.stop(id)
-    -- read REG_DIG_H2 0xE1 .. REG_DIG_H6 0xE7
-      i2c.start(id)
-      i2c.address(id,ADDR,i2c.RECEIVER)
-      c = c..i2c.read(id,7) -- H2:2byte,H3:1byte,H3&H4:3byte,H6:1byte
+      c = c..i2c.read(id,7) -- calib26 .. calib32
       i2c.stop(id)
     -- unpack CALIBRATION: T1,..,T3,P1,..,P9,H1,..,H7
-    --http://stackoverflow.com/questions/17152300/unsigned-to-signed-without-comparison
-      w=c:byte( 1)   +c:byte( 2)*256;cal.T1=w
-      w=c:byte( 3)   +c:byte( 4)*256;cal.T2=w-bit.band(w,32768)*2
-      w=c:byte( 5)   +c:byte( 6)*256;cal.T3=w-bit.band(w,32768)*2
-      w=c:byte( 7)   +c:byte( 8)*256;cal.P1=w
-      w=c:byte( 9)   +c:byte(10)*256;cal.P2=w-bit.band(w,32768)*2
-      w=c:byte(11)   +c:byte(12)*256;cal.P3=w-bit.band(w,32768)*2
-      w=c:byte(13)   +c:byte(14)*256;cal.P4=w-bit.band(w,32768)*2
-      w=c:byte(15)   +c:byte(16)*256;cal.P5=w-bit.band(w,32768)*2
-      w=c:byte(17)   +c:byte(18)*256;cal.P6=w-bit.band(w,32768)*2
-      w=c:byte(19)   +c:byte(20)*256;cal.P7=w-bit.band(w,32768)*2
-      w=c:byte(21)   +c:byte(22)*256;cal.P8=w-bit.band(w,32768)*2
-      w=c:byte(23)   +c:byte(24)*256;cal.P9=w-bit.band(w,32768)*2
-      w=c:byte(25)                  ;cal.H1=w
-      w=c:byte(26)   +c:byte(27)*256;cal.H2=w-bit.band(w,32768)*2
-      w=c:byte(28)                  ;cal.H3=w
-      w=c:byte(29)*16+c:byte(30)%16 ;cal.H4=w
-      w=c:byte(31)*16+c:byte(30)/16 ;cal.H5=w
-      w=c:byte(32)                  ;cal.H6=w
+
+      cal.T1=        c:byte( 1)   +c:byte( 2)*256
+      cal.T2=int16_t(c:byte( 3)   +c:byte( 4)*256)
+      cal.T3=int16_t(c:byte( 5)   +c:byte( 6)*256)
+      cal.P1=        c:byte( 7)   +c:byte( 8)*256
+      cal.P2=int16_t(c:byte( 9)   +c:byte(10)*256)
+      cal.P3=int16_t(c:byte(11)   +c:byte(12)*256)
+      cal.P4=int16_t(c:byte(13)   +c:byte(14)*256)
+      cal.P5=int16_t(c:byte(15)   +c:byte(16)*256)
+      cal.P6=int16_t(c:byte(17)   +c:byte(18)*256)
+      cal.P7=int16_t(c:byte(19)   +c:byte(20)*256)
+      cal.P8=int16_t(c:byte(21)   +c:byte(22)*256)
+      cal.P9=int16_t(c:byte(23)   +c:byte(24)*256)
+      cal.H1=        c:byte(25)
+      cal.H2=int16_t(c:byte(26)   +c:byte(27)*256)
+      cal.H3=        c:byte(28)
+      cal.H4=int16_t(c:byte(29)*16+c:byte(30)%16 )
+      cal.H5=int16_t(c:byte(31)*16+c:byte(30)/16 )
+      cal.H6=int16_t(c:byte(32),8)
     end
     -- M.init suceeded
     init=found
@@ -250,7 +253,7 @@ function M.read(...)
     v2 = v2/4 + bit.lshift(cal.P4,16)
     v2 = bit.rshift(v2,12)
     p = (1048576 - p - v2)*3125
-    if p<0x40000000 then
+    if p*2>=0 then
       p = p*2/v1
     else
       p = p/v1*2
