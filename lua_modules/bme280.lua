@@ -27,6 +27,7 @@ MIT license, http://opensource.org/licenses/MIT
 local M={
   name=...,       -- module name, upvalue from require('module-name')
   model=nil,      -- sensor model: BME280
+  verbose=nil,    -- verbose output
   oss=0x01,       -- default oversamplig: 0=skip, 1=x1 .. 5=x16
   mode=0x03,      -- default sampling: 0=sleep, 1&2=forced(on demand), 3:normal(continious)
   temperature=nil,-- integer value of temperature [10*C]
@@ -35,7 +36,8 @@ local M={
 }
 _G[M.name]=M
 
-local ADDR = {0x76,0x77} -- BME280 have 2 possible addresses
+-- BME280 have 2 possible addresses
+local ADDR = {0x76,0x77}
 
 -- calibration coefficients
 local cal={} -- T1,..,T3,P1,..,P9,H1,..,H6
@@ -49,6 +51,8 @@ local function int16_t(uint,nbits)
 end
 
 -- sampling configuration
+local id=0
+local init=false
 local function config(...)
 -- ensure module is initialized
   assert(init,('Need %s.init(...) before %s.config(...)'):format(M.name,M.name))
@@ -107,9 +111,7 @@ local function config(...)
 end
 
 -- initialize module
-local id=0
 local SDA,SCL -- buffer device pinout
-local init=false
 function M.init(sda,scl,volatile,...)
 -- volatile module
    if volatile==true then
@@ -137,6 +139,11 @@ function M.init(sda,scl,volatile,...)
         break
       end
     end
+    if M.verbose==true then
+      print(found and
+        ('%s: address 0x%02X.'):format(M.name,ADDR) or
+        ('%s: unknown address.'):format(M.name) )
+    end
 -- verify device ID
     if found then
     -- request REG_CHIPID 0xD0
@@ -151,7 +158,12 @@ function M.init(sda,scl,volatile,...)
       i2c.stop(id)
     -- CHIPID: BMP085/BMP180 0x55, BMP280 0x58, BME280 0x60
       M.model=({[0x55]='BMP180',[0x58]='BMP280',[0x60]='BME280'})[c:byte()]
-      found=(M.model=='BMP280')
+      found=(M.model=='BME280')
+    end
+    if M.verbose==true then
+      print(found and
+        ('%s: model %q.'):format(M.name,M.model) or
+        ('%s: unknown model.'):format(M.name))
     end
 -- read calibration coeff.
     if found then
@@ -176,7 +188,6 @@ function M.init(sda,scl,volatile,...)
       c = c..i2c.read(id,7) -- calib26 .. calib32
       i2c.stop(id)
     -- unpack CALIBRATION: T1,..,T3,P1,..,P9,H1,..,H7
-
       cal.T1=        c:byte( 1)   +c:byte( 2)*256
       cal.T2=int16_t(c:byte( 3)   +c:byte( 4)*256)
       cal.T3=int16_t(c:byte( 5)   +c:byte( 6)*256)
