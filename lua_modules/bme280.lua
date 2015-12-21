@@ -181,6 +181,9 @@ function M.init(sda,scl,volatile,...)
     end
 -- read calibration coeff.
     if found then
+      if M.verbose==true then
+        print(('%s:'):format(M.name))
+      end
     -- request calib00 0x08 .. calib25 0xA1
       i2c.start(id)
       i2c.address(id,ADDR,i2c.TRANSMITTER)
@@ -191,6 +194,13 @@ function M.init(sda,scl,volatile,...)
       i2c.address(id,ADDR,i2c.RECEIVER)
       c = i2c.read(id,26) -- calib00 .. calib25
       i2c.stop(id)
+      if M.verbose==true then
+        local i
+        for i=0,25 do
+          print(('--calib%02d=0x%02X:c:byte(%02d)=0x%02X')
+            :format(i,0x88+i,i+1,c:byte(i+1)))
+        end
+      end
     -- request calib26 0xE1 .. calib32 0xE7
       i2c.start(id)
       i2c.address(id,ADDR,i2c.TRANSMITTER)
@@ -201,6 +211,13 @@ function M.init(sda,scl,volatile,...)
       i2c.address(id,ADDR,i2c.RECEIVER)
       c = c..i2c.read(id,7) -- calib26 .. calib32
       i2c.stop(id)
+      if M.verbose==true then
+        local i
+        for i=26,32 do
+          print(('--calib%02d=0x%02X:c:byte(%02d)=0x%02X')
+            :format(i,0xE1+i-26,i+1,c:byte(i+1)))
+        end
+      end
     -- unpack CALIBRATION: T1,..,T3,P1,..,P9,H1,..,H7
       cal.T1=        c:byte( 1)+c:byte( 2)*256  -- 0x88,0x89; unsigned short
       cal.T2=int16_t(c:byte( 3)+c:byte( 4)*256) -- 0x8A,0x8B; (signed) short
@@ -221,10 +238,16 @@ function M.init(sda,scl,volatile,...)
       cal.H4=int16_t(cal.H4+c:byte(30)*16)      --  ...,0xE4; (signed) short
       cal.H5=bit.rshift(c:byte(31),4)           -- 0xE5[7:4],...
       cal.H5=int16_t(cal.H5+c:byte(32)*16)      --  ...,0xE6; (signed) short
-      cal.H6=int16_t(c:byte(33),8)              -- 0xE1,0xE2; (signed) char
+      cal.H6=int16_t(c:byte(33),8)              -- 0xE7     ; (signed) char
     end
     -- M.init suceeded
     init=found
+  end
+  if init and M.verbose==true then
+    print((('%s:\n--cal.%s.\n--cal.%s.\n--cal.%s.'):format(M.name,
+      'T[1:3]={T1},{T2},{T3}',
+      'P[1:7]={P1},{P2},{P3},{P4},{P5},{P6},{P7}',
+      'H[1:6]={H1},{H2},{H3},{H4},{H5},{H6}'):gsub('{(.-)}',cal)))
   end
 
 -- Sampling setup
@@ -254,10 +277,13 @@ function M.read(...)
   local c = i2c.read(id,8) -- p:3byte,t:3byte,h:byte
   i2c.stop(id)
 -- unpack RAW DATA
-  local p,t,h
-  p=c:byte(1)*4096+c:byte(2)*16+c:byte(3)/16  -- uncompensated pressure
-  t=c:byte(4)*4096+c:byte(5)*16+c:byte(6)/16  -- uncompensated temperature
-  h=c:byte(7)* 256+c:byte(8)                  -- uncompensated humidity
+  local p,t,h                                 -- uncompensated
+  p=c:byte(1)*4096+c:byte(2)*16+c:byte(3)/16  --   pressure
+  t=c:byte(4)*4096+c:byte(5)*16+c:byte(6)/16  --   temperature
+  h=c:byte(7)* 256+c:byte(8)                  --   humidity
+  if M.verbose==true then
+    print(('%s: UP=%d,UT=%d,UH=%d.'):format(M.name,p,t,h))
+  end
 
 --[[ Temperature: Adapted from bme280_compensate_temperature_int32.
   Calculate actual temperature from uncompensated temperature.
@@ -304,24 +330,28 @@ function M.read(...)
   An output value of 4132.1 represents 41.321 %rH ]]
   v1 = tfine - 76800
   v2 = bit.arshift(v1*cal.H6,10)
-  v2 = v2*(bit.arshift(v1*cal.H3,11) + 32768)
+  v2 = v2*bit.arshift(v1*cal.H3,11) + 32768
   v2 =(bit.arshift(v2,10) + 2097152)*cal.H2 + 8192
   v1 = bit.lshift(h,14) - bit.lshift(cal.H4,20) - cal.H5*v1 + 16384
   v1 = bit.arshift(v1,15)*bit.arshift(v2,14)
   v2 = bit.arshift(v1,15)
   v1 = v1 - bit.rshift(v2*v2,7)*cal.H1/16
+-- v1 between 0 and 100*2^22
   if v1 < 0 then
     v1 = 0
   elseif v1 > 0x19000000 then
     v1 = 0x19000000
   end
-  h = bit.rshift(v1,12)     -- Q22.10, ie 42313 means 42313/1024=41.321 %rH
-  h = bit.rshift(h*100,10)  -- 0.01 C, ie 4132.1 means 41.321 %rH
+  h = bit.rshift(v1,12)   -- Q22.10, ie 42313 means 42313/1024=41.321 %rH
+  h = bit.rshift(h*25,8)  -- 0.01 C, ie 4132.1 means 41.321 %rH
 
 -- expose results
   M.temperature=t -- integer value of temperature [0.01 C]
   M.pressure   =p -- integer value of preassure   [0.01 hPa]
   M.humidity   =h -- integer value of rel.humidity[0.01 %]
+  if M.verbose==true then
+    print(('%s: p=%d[hPa],t=%d[C],h=%d[%%].'):format(M.name,p/100,t/100,h/100))
+  end
 end
 
 return M
