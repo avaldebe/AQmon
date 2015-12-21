@@ -265,9 +265,10 @@ function M.read(...)
   and output value of "96386" equals 96386 Pa = 963.86 hPa. ]]
   v1 = tfine/2 - 64000
   v2 = bit.rshift((v1/4)*(v1/4),11)
+  v3 = v2/4
   v2 = v2*cal.P6 + v1*cal.P5*2
-  v3 = bit.rshift((v1/4)*(v1/4),13)
-  v1 = bit.arshift(cal.P3*v3/8+cal.P2*v1/2,18) + 32768
+--v3 = bit.rshift((v1/4)*(v1/4),13)
+  v1 = bit.arshift(v3*cal.P3/8+v1*cal.P2/2,18) + 32768
   v1 = bit.arshift(v1*cal.P1,15)
   if v1==0 then
     p = nil
