@@ -142,8 +142,7 @@ function M.read(oss)
   X1 = bit.arshift((UT - cal.AC6)*cal.AC5,15)
   X2 = bit.lshift(cal.MC,11)/(X1 + cal.MD)
   B5 = X1 + X2
-  t = (B5 + 8)/16
-
+  t = int16_t((B5 + 8)/16)  -- (signed) short
 -- read pressure from BMP
   if type(oss)~="number" or oss<0 or oss>3 then oss=M.oss end
   REG_COMMAND = ({0x34,0x74,0xB4 ,0xF4 })[oss+1] -- 0x34+64*oss
