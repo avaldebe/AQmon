@@ -252,7 +252,7 @@ function M.read(...)
   Calculate actual temperature from uncompensated temperature.
   Returns the value in 0.01 degree Centigrade (DegC),
   an output value of "5123" equals 51.23 DegC. ]]
-  local v1,v2,tfine
+  local v1,v2,v3,tfine
   t  = t/8 - cal.T1*2
   v1 = bit.arshift(t*cal.T2,11)
   v2 = bit.rshift((t/2)*(t/2),12)
@@ -266,8 +266,8 @@ function M.read(...)
   v1 = tfine/2 - 64000
   v2 = bit.rshift((v1/4)*(v1/4),11)
   v2 = v2*cal.P6 + v1*cal.P5*2
-  v1 = cal.P3*bit.rshift((v1/4)*(v1/4),13)/8
-     + bit.arshift(cal.P2*v1/2,18) + 32768
+  v3 = bit.rshift((v1/4)*(v1/4),13)
+  v1 = bit.arshift(cal.P3*v3/8+cal.P2*v1/2,18) + 32768
   v1 = bit.arshift(v1*cal.P1,15)
   if v1==0 then
     p = nil
