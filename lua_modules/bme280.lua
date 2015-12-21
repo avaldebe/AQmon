@@ -54,23 +54,36 @@ local function config(...)
 -- ensure module is initialized
   assert(init,('Need %s.init(...) before %s.config(...)'):format(M.name,M.name))
 
+  local REG_COMMAND
 -- sampling: normal/continous mode (M.mode:3)
   if M.mode==0x03 then
-  -- config writeable only in sleep mode
-    local REG_COMMAND=0x00 -- sleep mode
-    i2c.start(id)
-    i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.write(id,0xF4,REG_COMMAND)  -- REG_CONTROL_MEAS
-    i2c.stop(id)
   -- Continious sampling setup (if M.mode==0x03), see DS 7.4.6.
   -- dt: sample every dt; dt=1000ms (5<<5).
   -- IIR: data=(data_new+(IIR-1)*data_old)/IIR; IIR=4 (2<<2).
   -- spi3w: enhable 3-wire SPI interface; na (0<<1).
-    REG_COMMAND=0xA8 -- 5*2^5+2*2^2+0*2^1
+  --REG_COMMAND=0xA8 -- 5*2^5+2*2^2+0*2^1
+    REG_COMMAND=0xA0 -- 5*2^5+0*2^2+0*2^1 IRR disabled
+  -- request REG_CONFIG 0xF5
     i2c.start(id)
     i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.write(id,0xF5,REG_COMMAND)  -- REG_CONFIG
+    i2c.write(id,0xF5)  -- REG_CONFIG
     i2c.stop(id)
+  -- read REG_CONFIG 0xF5
+    i2c.start(id)
+    i2c.address(id,ADDR,i2c.RECEIVER)
+    local c = i2c.read(id,1)  -- 1byte
+    i2c.stop(id)
+  -- REG_CONFIG writeable only in sleep mode, update only if needed
+    if REG_COMMAND~=c:byte() then
+      i2c.start(id)
+      i2c.address(id,ADDR,i2c.TRANSMITTER)
+      i2c.write(id,0xF4,0x00)  -- REG_CONTROL_MEAS,sleep mode
+      i2c.stop(id)
+      i2c.start(id)
+      i2c.address(id,ADDR,i2c.TRANSMITTER)
+      i2c.write(id,0xF5,REG_COMMAND)  -- REG_CONFIG
+      i2c.stop(id)
+    end
   end
 
 -- oversampling: all modes
@@ -79,7 +92,7 @@ local function config(...)
   if type(oss_h)~="number" or oss_h<1 or oss_h>5 then oss_h=M.oss end
   if type(oss_p)~="number" or oss_p<1 or oss_p>5 then oss_p=M.oss end
 -- H oversampling 2^(M.oss_h-1):
-  local REG_COMMAND=bit.band(oss_h,0x07)
+  REG_COMMAND=bit.band(oss_h,0x07)
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
   i2c.write(id,0xF2,REG_COMMAND)  -- REG_CONTROL_HUM
