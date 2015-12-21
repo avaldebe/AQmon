@@ -43,9 +43,10 @@ local ADDR = {0x76,0x77}
 local cal={} -- T1,..,T3,P1,..,P9,H1,..,H6
 
 local function int16_t(uint,nbits)
--- first negative number uint8_t (unsigned char ): 2^7
--- first negative number uint16_t(unsigned short): 2^15
--- first negative number uint32_t(unsigned long ): 2^31
+-- first negative number
+  -- uint8_t (unsigned char ): 2^7
+  -- uint16_t(unsigned short): 2^15
+  -- uint32_t(unsigned long ): 2^31
   local first_neg=({[8]=0x80,[16]=0x8000})[nbits or 16]
   return uint-bit.band(uint,first_neg)*2
 end
@@ -57,23 +58,36 @@ local function config(...)
 -- ensure module is initialized
   assert(init,('Need %s.init(...) before %s.config(...)'):format(M.name,M.name))
 
+  local REG_COMMAND
 -- sampling: normal/continous mode (M.mode:3)
   if M.mode==0x03 then
-  -- config writeable only in sleep mode
-    local REG_COMMAND=0x00 -- sleep mode
-    i2c.start(id)
-    i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.write(id,0xF4,REG_COMMAND)  -- REG_CONTROL_MEAS
-    i2c.stop(id)
   -- Continious sampling setup (if M.mode==0x03), see DS 7.4.6.
   -- dt: sample every dt; dt=1000ms (5<<5).
   -- IIR: data=(data_new+(IIR-1)*data_old)/IIR; IIR=4 (2<<2).
   -- spi3w: enhable 3-wire SPI interface; na (0<<1).
-    REG_COMMAND=0xA8 -- 5*2^5+2*2^2+0*2^1
+  --REG_COMMAND=0xA8 -- 5*2^5+2*2^2+0*2^1
+    REG_COMMAND=0xA0 -- 5*2^5+0*2^2+0*2^1 IRR disabled
+  -- request REG_CONFIG 0xF5
     i2c.start(id)
     i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.write(id,0xF5,REG_COMMAND)  -- REG_CONFIG
+    i2c.write(id,0xF5)  -- REG_CONFIG
     i2c.stop(id)
+  -- read REG_CONFIG 0xF5
+    i2c.start(id)
+    i2c.address(id,ADDR,i2c.RECEIVER)
+    local c = i2c.read(id,1)  -- 1byte
+    i2c.stop(id)
+  -- REG_CONFIG writeable only in sleep mode, update only if needed
+    if REG_COMMAND~=c:byte() then
+      i2c.start(id)
+      i2c.address(id,ADDR,i2c.TRANSMITTER)
+      i2c.write(id,0xF4,0x00)  -- REG_CONTROL_MEAS,sleep mode
+      i2c.stop(id)
+      i2c.start(id)
+      i2c.address(id,ADDR,i2c.TRANSMITTER)
+      i2c.write(id,0xF5,REG_COMMAND)  -- REG_CONFIG
+      i2c.stop(id)
+    end
   end
 
 -- oversampling: all modes
@@ -82,7 +96,7 @@ local function config(...)
   if type(oss_h)~="number" or oss_h<1 or oss_h>5 then oss_h=M.oss end
   if type(oss_p)~="number" or oss_p<1 or oss_p>5 then oss_p=M.oss end
 -- H oversampling 2^(M.oss_h-1):
-  local REG_COMMAND=bit.band(oss_h,0x07)
+  REG_COMMAND=bit.band(oss_h,0x07)
   i2c.start(id)
   i2c.address(id,ADDR,i2c.TRANSMITTER)
   i2c.write(id,0xF2,REG_COMMAND)  -- REG_CONTROL_HUM
@@ -103,9 +117,9 @@ local function config(...)
   -- t_pres,max= 2.3*2^oss_p + 0.575 [ms]
   -- t_rhum,max= 2.3*2^oss_h + 0.575 [ms]
 -- then, t_meas,max=2.4+2.3*(2^oss_t+2^oss_h+2^oss_p) [ms]
-    local WAIT=2400+2300*(bit.lshift(1,oss_t)
-                         +bit.lshift(1,oss_h)
-                         +bit.lshift(1,oss_p)) -- 9.3,..,112.8 ms
+    local WAIT=2400+2300*(bit.bit(oss_t)
+                         +bit.bit(oss_h)
+                         +bit.bit(oss_p)) -- 9.3,..,112.8 ms
     tmr.delay(WAIT)
   end
 end
@@ -188,24 +202,26 @@ function M.init(sda,scl,volatile,...)
       c = c..i2c.read(id,7) -- calib26 .. calib32
       i2c.stop(id)
     -- unpack CALIBRATION: T1,..,T3,P1,..,P9,H1,..,H7
-      cal.T1=        c:byte( 1)   +c:byte( 2)*256
-      cal.T2=int16_t(c:byte( 3)   +c:byte( 4)*256)
-      cal.T3=int16_t(c:byte( 5)   +c:byte( 6)*256)
-      cal.P1=        c:byte( 7)   +c:byte( 8)*256
-      cal.P2=int16_t(c:byte( 9)   +c:byte(10)*256)
-      cal.P3=int16_t(c:byte(11)   +c:byte(12)*256)
-      cal.P4=int16_t(c:byte(13)   +c:byte(14)*256)
-      cal.P5=int16_t(c:byte(15)   +c:byte(16)*256)
-      cal.P6=int16_t(c:byte(17)   +c:byte(18)*256)
-      cal.P7=int16_t(c:byte(19)   +c:byte(20)*256)
-      cal.P8=int16_t(c:byte(21)   +c:byte(22)*256)
-      cal.P9=int16_t(c:byte(23)   +c:byte(24)*256)
-      cal.H1=        c:byte(25)
-      cal.H2=int16_t(c:byte(26)   +c:byte(27)*256)
-      cal.H3=        c:byte(28)
-      cal.H4=int16_t(c:byte(29)*16+c:byte(30)%16 )
-      cal.H5=int16_t(c:byte(31)*16+c:byte(30)/16 )
-      cal.H6=int16_t(c:byte(32),8)
+      cal.T1=        c:byte( 1)+c:byte( 2)*256  -- 0x88,0x89; unsigned short
+      cal.T2=int16_t(c:byte( 3)+c:byte( 4)*256) -- 0x8A,0x8B; (signed) short
+      cal.T3=int16_t(c:byte( 5)+c:byte( 6)*256) -- 0x8C,0x8D; (signed) short
+      cal.P1=        c:byte( 7)+c:byte( 8)*256  -- 0x8E,0x8F; unsigned short
+      cal.P2=int16_t(c:byte( 9)+c:byte(10)*256) -- 0x90,0x91; (signed) short
+      cal.P3=int16_t(c:byte(11)+c:byte(12)*256) -- 0x92,0x93; (signed) short
+      cal.P4=int16_t(c:byte(13)+c:byte(14)*256) -- 0x94,0x95; (signed) short
+      cal.P5=int16_t(c:byte(15)+c:byte(16)*256) -- 0x96,0x97; (signed) short
+      cal.P6=int16_t(c:byte(17)+c:byte(18)*256) -- 0x98,0x99; (signed) short
+      cal.P7=int16_t(c:byte(19)+c:byte(20)*256) -- 0x9A,0x9B; (signed) short
+      cal.P8=int16_t(c:byte(21)+c:byte(22)*256) -- 0x9C,0x9D; (signed) short
+      cal.P9=int16_t(c:byte(23)+c:byte(24)*256) -- 0x9E,0x9F; (signed) short
+      cal.H1=        c:byte(26)                 -- 0xA1     ; unsigned char
+      cal.H2=int16_t(c:byte(27)+c:byte(28)*256) -- 0xE1,0xE2; (signed) short
+      cal.H3=        c:byte(29)                 -- 0xE3     ; unsigned char
+      cal.H4=bit.band(c:byte(31),0x0F)          -- 0xE5[3:0],...
+      cal.H4=int16_t(cal.H4+c:byte(30)*16)      --  ...,0xE4; (signed) short
+      cal.H5=bit.rshift(c:byte(31),4)           -- 0xE5[7:4],...
+      cal.H5=int16_t(cal.H5+c:byte(32)*16)      --  ...,0xE6; (signed) short
+      cal.H6=int16_t(c:byte(33),8)              -- 0xE1,0xE2; (signed) char
     end
     -- M.init suceeded
     init=found
@@ -247,7 +263,7 @@ function M.read(...)
   Calculate actual temperature from uncompensated temperature.
   Returns the value in 0.01 degree Centigrade (DegC),
   an output value of "5123" equals 51.23 DegC. ]]
-  local v1,v2,tfine
+  local v1,v2,v3,tfine
   t  = t/8 - cal.T1*2
   v1 = bit.arshift(t*cal.T2,11)
   v2 = bit.rshift((t/2)*(t/2),12)
@@ -260,9 +276,10 @@ function M.read(...)
   and output value of "96386" equals 96386 Pa = 963.86 hPa. ]]
   v1 = tfine/2 - 64000
   v2 = bit.rshift((v1/4)*(v1/4),11)
+  v3 = v2/4
   v2 = v2*cal.P6 + v1*cal.P5*2
-  v1 = cal.P3*bit.rshift((v1/4)*(v1/4),13)/8
-     + bit.arshift(cal.P2*v1/2,18) + 32768
+--v3 = bit.rshift((v1/4)*(v1/4),13)
+  v1 = bit.arshift(v3*cal.P3/8+v1*cal.P2/2,18) + 32768
   v1 = bit.arshift(v1*cal.P1,15)
   if v1==0 then
     p = nil
