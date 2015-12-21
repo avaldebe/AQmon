@@ -41,9 +41,10 @@ local ADDR = {0x76,0x77} -- BME280 have 2 possible addresses
 local cal={} -- T1,..,T3,P1,..,P9,H1,..,H6
 
 local function int16_t(uint,nbits)
--- first negative number uint8_t (unsigned char ): 2^7
--- first negative number uint16_t(unsigned short): 2^15
--- first negative number uint32_t(unsigned long ): 2^31
+-- first negative number
+  -- uint8_t (unsigned char ): 2^7
+  -- uint16_t(unsigned short): 2^15
+  -- uint32_t(unsigned long ): 2^31
   local first_neg=({[8]=0x80,[16]=0x8000})[nbits or 16]
   return uint-bit.band(uint,first_neg)*2
 end
@@ -177,24 +178,26 @@ function M.init(sda,scl,volatile,...)
       i2c.stop(id)
     -- unpack CALIBRATION: T1,..,T3,P1,..,P9,H1,..,H7
 
-      cal.T1=        c:byte( 1)   +c:byte( 2)*256
-      cal.T2=int16_t(c:byte( 3)   +c:byte( 4)*256)
-      cal.T3=int16_t(c:byte( 5)   +c:byte( 6)*256)
-      cal.P1=        c:byte( 7)   +c:byte( 8)*256
-      cal.P2=int16_t(c:byte( 9)   +c:byte(10)*256)
-      cal.P3=int16_t(c:byte(11)   +c:byte(12)*256)
-      cal.P4=int16_t(c:byte(13)   +c:byte(14)*256)
-      cal.P5=int16_t(c:byte(15)   +c:byte(16)*256)
-      cal.P6=int16_t(c:byte(17)   +c:byte(18)*256)
-      cal.P7=int16_t(c:byte(19)   +c:byte(20)*256)
-      cal.P8=int16_t(c:byte(21)   +c:byte(22)*256)
-      cal.P9=int16_t(c:byte(23)   +c:byte(24)*256)
-      cal.H1=        c:byte(25)
-      cal.H2=int16_t(c:byte(26)   +c:byte(27)*256)
-      cal.H3=        c:byte(28)
-      cal.H4=int16_t(c:byte(29)*16+c:byte(30)%16 )
-      cal.H5=int16_t(c:byte(31)*16+c:byte(30)/16 )
-      cal.H6=int16_t(c:byte(32),8)
+      cal.T1=        c:byte( 1)+c:byte( 2)*256  -- 0x88,0x89; unsigned short
+      cal.T2=int16_t(c:byte( 3)+c:byte( 4)*256) -- 0x8A,0x8B; (signed) short
+      cal.T3=int16_t(c:byte( 5)+c:byte( 6)*256) -- 0x8C,0x8D; (signed) short
+      cal.P1=        c:byte( 7)+c:byte( 8)*256  -- 0x8E,0x8F; unsigned short
+      cal.P2=int16_t(c:byte( 9)+c:byte(10)*256) -- 0x90,0x91; (signed) short
+      cal.P3=int16_t(c:byte(11)+c:byte(12)*256) -- 0x92,0x93; (signed) short
+      cal.P4=int16_t(c:byte(13)+c:byte(14)*256) -- 0x94,0x95; (signed) short
+      cal.P5=int16_t(c:byte(15)+c:byte(16)*256) -- 0x96,0x97; (signed) short
+      cal.P6=int16_t(c:byte(17)+c:byte(18)*256) -- 0x98,0x99; (signed) short
+      cal.P7=int16_t(c:byte(19)+c:byte(20)*256) -- 0x9A,0x9B; (signed) short
+      cal.P8=int16_t(c:byte(21)+c:byte(22)*256) -- 0x9C,0x9D; (signed) short
+      cal.P9=int16_t(c:byte(23)+c:byte(24)*256) -- 0x9E,0x9F; (signed) short
+      cal.H1=        c:byte(26)                 -- 0xA1     ; unsigned char
+      cal.H2=int16_t(c:byte(27)+c:byte(28)*256) -- 0xE1,0xE2; (signed) short
+      cal.H3=        c:byte(29)                 -- 0xE3     ; unsigned char
+      cal.H4=bit.band(c:byte(31),0x0F)          -- 0xE5[3:0],...
+      cal.H4=int16_t(cal.H4+c:byte(30)*16)      --  ...,0xE4; (signed) short
+      cal.H5=bit.rshift(c:byte(31),4)           -- 0xE5[7:4],...
+      cal.H5=int16_t(cal.H5+c:byte(32)*16)      --  ...,0xE6; (signed) short
+      cal.H6=int16_t(c:byte(33),8)              -- 0xE1,0xE2; (signed) char
     end
     -- M.init suceeded
     init=found
