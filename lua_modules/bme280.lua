@@ -100,9 +100,9 @@ local function config(...)
   -- t_pres,max= 2.3*2^oss_p + 0.575 [ms]
   -- t_rhum,max= 2.3*2^oss_h + 0.575 [ms]
 -- then, t_meas,max=2.4+2.3*(2^oss_t+2^oss_h+2^oss_p) [ms]
-    local WAIT=2400+2300*(bit.lshift(1,oss_t)
-                         +bit.lshift(1,oss_h)
-                         +bit.lshift(1,oss_p)) -- 9.3,..,112.8 ms
+    local WAIT=2400+2300*(bit.bit(oss_t)
+                         +bit.bit(oss_h)
+                         +bit.bit(oss_p)) -- 9.3,..,112.8 ms
     tmr.delay(WAIT)
   end
 end
