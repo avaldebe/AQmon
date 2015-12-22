@@ -44,6 +44,7 @@ while (($#)); do
   *_test.lua)# test scripts
     luatool.py $TRANSPORT -df $opt -t test.lua;;
   *.lua)     # other scipts
+    luatool.py $TRANSPORT --delete ${opt%.*}.lc
     luatool.py $TRANSPORT -f $opt;;
   esac && shift
   trap - SIGHUP SIGINT SIGTERM
