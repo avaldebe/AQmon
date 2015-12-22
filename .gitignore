@@ -1,8 +1,12 @@
-Documents/AM2302_Aosong.pdf
-Documents/AM2303_Aosong.pdf
+Documents/AM230?_Aosong.pdf
 Documents/GY-65_pinout.jpg
 lua_modules/app.lua
 lua_modules/hub.lua
 lua_modules/*test.lua
 lua_modules/*_v*.lua
-nodemcu-firmware*/
+lua_modules/script?.lua
+nodemcu-firmware*
+bin/*AT*Firmware.bin
+bin/blank.bin
+bin/esp_init_data_default.bin
+bin/nodemcu_*_0.9.6-dev_*.bin
