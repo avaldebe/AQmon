@@ -53,9 +53,10 @@ function f7p2(v)
   if v==nil then
     return ('%7s'):format('null')
   elseif (1/2)==0 then  -- no floating point operations
-    return ('%4d.%02d'):format(v/100,(v>=0 and v or -v)%100)
+    v=(v>=0 and '%03d' or '%04d'):format(v)
+    return ('%4s.%2s'):format(v:sub(1,-3),v:sub(-2))
   else                  -- use floating point fomatting
-    return ('%7.2f'):format(v)
+    return ('%7.2f'):format(v/100)
   end
 end
 
@@ -84,9 +85,10 @@ function f7p2(v)
   if v==nil then
     return ('%7s'):format('null')
   elseif (1/2)==0 then  -- no floating point operations
-    return ('%4d.%02d'):format(v/100,(v>=0 and v or -v)%100)
+    v=(v>=0 and '%03d' or '%04d'):format(v)
+    return ('%4s.%2s'):format(v:sub(1,-3),v:sub(-2))
   else                  -- use floating point fomatting
-    return ('%7.2f'):format(v)
+    return ('%7.2f'):format(v/100)
   end
 end
 
@@ -115,9 +117,10 @@ function f7p2(v)
   if v==nil then
     return ('%7s'):format('null')
   elseif (1/2)==0 then  -- no floating point operations
-    return ('%4d.%02d'):format(v/100,(v>=0 and v or -v)%100)
+    v=(v>=0 and '%03d' or '%04d'):format(v)
+    return ('%4s.%2s'):format(v:sub(1,-3),v:sub(-2))
   else                  -- use floating point fomatting
-    return ('%7.2f'):format(v)
+    return ('%7.2f'):format(v/100)
   end
 end
 

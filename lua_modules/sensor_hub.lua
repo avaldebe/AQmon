@@ -44,7 +44,7 @@ function M.format(vars,message,squeese)
           v=(v>=0 and '%03d' or '%04d'):format(v)
           M[k]=('%4s.%2s'):format(v:sub(1,-3),v:sub(-2))
         else              -- use floating point fomatting
-          M[k]=('%7.2f'):format(v)
+          M[k]=('%7.2f'):format(v/100)
         end
       elseif k=='upTime' then                 -- days:hh:mm:ss
         M[k]=('%02d:%02d:%02d:%02d')
