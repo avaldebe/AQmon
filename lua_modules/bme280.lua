@@ -337,14 +337,15 @@ function M.read(...)
   v2 = bit.rshift(v1,15)
   v3 = bit.rshift(v2*v2,7)
   v1 = v1 - bit.rshift(v3*cal.H1,4)
--- v1 between 0 and 100*2^22
+-- v1 between 0 and 100*2^22 represents h between 0 and 100 %rH
   if v1 < 0 then
-    v1 = 0
+    h = 0                   --   0 %rH
   elseif v1 > 0x19000000 then
-    v1 = 0x19000000
+    h = 10000               -- 100 %rH
+  else
+    h = bit.rshift(v1,12)   -- Q22.10, ie 42313 means 42313/1024=41.321 %rH
+    h = bit.rshift(h*25,8)  -- 0.01 %, ie 4132.1 means 41.321 %rH
   end
-  h = bit.rshift(v1,12)   -- Q22.10, ie 42313 means 42313/1024=41.321 %rH
-  h = bit.rshift(h*25,8)  -- 0.01 C, ie 4132.1 means 41.321 %rH
 
 -- expose results
   M.temperature=t -- integer value of temperature [0.01 C]
