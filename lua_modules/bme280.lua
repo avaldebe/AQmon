@@ -304,43 +304,42 @@ function M.read(...)
   Returns the value in Pascal (Pa),
   and output value of "96386" equals 96386 Pa = 963.86 hPa. ]]
   v1 = tfine/2 - 64000
-  v2 = bit.rshift((v1/4)*(v1/4),11)
+  v2 = bit.rshift(v1*v1,15)
   v3 = v2/4
   v2 = v2*cal.P6 + v1*cal.P5*2
---v3 = bit.rshift((v1/4)*(v1/4),13)
-  v1 = bit.arshift(v3*cal.P3/8+v1*cal.P2/2,18) + 32768
-  v1 = bit.arshift(v1*cal.P1,15)
-  if v1==0 then
+  v3 = bit.arshift(v3*cal.P3/4+v1*cal.P2,19) + 32768
+  v1 = bit.rshift(v3*cal.P1,15)
+  if v1==0 then -- p/0 will lua-panic
     p = nil
   else
     v2 = v2/4 + bit.lshift(cal.P4,16)
-    v2 = bit.arshift(v2,12)
-    p = (1048576 - p - v2)*3125
-    if p*2>=0 then
+    v3 = bit.arshift(v2,12)
+    p = (1048576 - p - v3)*3125
+    if p*2>0 then -- avoid overflow (signed) int32
       p = p*2/v1
     else
       p = p/v1*2
     end
---  v1 = bit.rshift((p/8)*(p/8),13)
     v1 = bit.rshift(p*p,19)
-    v1 = bit.arshift(v1*cal.P9,12)
---  v2 = bit.arshift(p/4*cal.P8,13)
-    v2 = bit.arshift(p*cal.P8,15)
-    p = p + (v1 + v2 + cal.P7)/16
+    v2 = bit.arshift(v1*cal.P9,12)
+    v3 = bit.arshift(p*cal.P8,15)
+    p = p + bit.arshift(v2 + v3 + cal.P7,4)
   end
 
 --[[ Humidity: Adapted from bme280_compensate_humidity_int32.
   Calculte actual humidity from uncompensated humidity.
   Returns the value in 0.01 %rH.
-  An output value of 4132.1 represents 41.321 %rH ]]
+  An output value of "4132.1" represents 41.321 %rH ]]
   v1 = tfine - 76800
-  v2 = bit.arshift(v1*cal.H6,10)
-  v2 = v2*bit.arshift(v1*cal.H3,11) + 32768
-  v2 =(bit.arshift(v2,10) + 2097152)*cal.H2 + 8192
+  v2 = bit.rshift(v1*cal.H6,10)
+  v3 = bit.rshift(v1*cal.H3,11) + 32768
   v1 = bit.lshift(h,14) - bit.lshift(cal.H4,20) - cal.H5*v1 + 16384
-  v1 = bit.arshift(v1,15)*bit.arshift(v2,14)
-  v2 = bit.arshift(v1,15)
-  v1 = v1 - bit.rshift(v2*v2,7)*cal.H1/16
+  v2 = bit.rshift(v2*v3,10) + 2097152
+  v3 = v2*cal.H2 + 8192
+  v1 = bit.rshift(v1,15)*bit.rshift(v3,14)
+  v2 = bit.rshift(v1,15)
+  v3 = bit.rshift(v2*v2,7)
+  v1 = v1 - bit.rshift(v3*cal.H1,4)
 -- v1 between 0 and 100*2^22
   if v1 < 0 then
     v1 = 0
