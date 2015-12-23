@@ -295,6 +295,9 @@ function M.read(...)
   v2 = bit.rshift((t/2)*(t/2),12)
   tfine = v1 + bit.arshift(v2*cal.T3,14)
   t = bit.arshift(tfine*5 + 128,8)
+  if M.verbose==true then
+    print(('%s: tfine=%d.'):format(M.name,tfine))
+  end
 
 --[[ Pressure: Adapted from bme280_compensate_pressure_int32.
   Calculate actual pressure from uncompensated pressure.
@@ -318,9 +321,11 @@ function M.read(...)
     else
       p = p/v1*2
     end
-    v1 = bit.rshift((p/8)*(p/8),13)
+--  v1 = bit.rshift((p/8)*(p/8),13)
+    v1 = bit.rshift(p*p,19)
     v1 = bit.arshift(v1*cal.P9,12)
-    v2 = bit.arshift(p/4*cal.P8,13)
+--  v2 = bit.arshift(p/4*cal.P8,13)
+    v2 = bit.arshift(p*cal.P8,15)
     p = p + (v1 + v2 + cal.P7)/16
   end
 
