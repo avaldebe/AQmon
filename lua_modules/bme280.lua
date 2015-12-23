@@ -246,7 +246,7 @@ function M.read(...)
   local v1,v2,v3,tfine
   t  = t/8 - cal.T1*2
   v1 = bit.arshift(t*cal.T2,11)
-  v2 = bit.rshift((t/2)*(t/2),12)
+  v2 = bit.rshift(t*t,14)
   tfine = v1 + bit.arshift(v2*cal.T3,14)
   t = bit.arshift(tfine*5 + 128,8)
   if M.verbose==true then
