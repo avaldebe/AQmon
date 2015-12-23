@@ -329,13 +329,15 @@ function M.read(...)
   Returns the value in 0.01 %rH.
   An output value of 4132.1 represents 41.321 %rH ]]
   v1 = tfine - 76800
-  v2 = bit.arshift(v1*cal.H6,10)
-  v2 = v2*bit.arshift(v1*cal.H3,11) + 32768
-  v2 =(bit.arshift(v2,10) + 2097152)*cal.H2 + 8192
+  v2 = bit.rshift(v1*cal.H6,10)
+  v3 = bit.rshift(v1*cal.H3,11) + 32768
   v1 = bit.lshift(h,14) - bit.lshift(cal.H4,20) - cal.H5*v1 + 16384
-  v1 = bit.arshift(v1,15)*bit.arshift(v2,14)
-  v2 = bit.arshift(v1,15)
-  v1 = v1 - bit.rshift(v2*v2,7)*cal.H1/16
+  v2 = bit.rshift(v2*v3,10) + 2097152
+  v3 = v2*cal.H2 + 8192
+  v1 = bit.rshift(v1,15)*bit.rshift(v3,14)
+  v2 = bit.rshift(v1,15)
+  v3 = bit.rshift(v2*v2,7)
+  v1 = v1 - bit.rshift(v3*cal.H1,4)
 -- v1 between 0 and 100*2^22
   if v1 < 0 then
     v1 = 0
