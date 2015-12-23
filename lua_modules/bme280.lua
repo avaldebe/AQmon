@@ -301,27 +301,26 @@ function M.read(...)
   Returns the value in Pascal (Pa),
   and output value of "96386" equals 96386 Pa = 963.86 hPa. ]]
   v1 = tfine/2 - 64000
-  v2 = bit.rshift((v1/4)*(v1/4),11)
+  v2 = bit.rshift(v1*v1,15)
   v3 = v2/4
   v2 = v2*cal.P6 + v1*cal.P5*2
---v3 = bit.rshift((v1/4)*(v1/4),13)
-  v1 = bit.arshift(v3*cal.P3/8+v1*cal.P2/2,18) + 32768
-  v1 = bit.arshift(v1*cal.P1,15)
-  if v1==0 then
+  v1 = bit.arshift(v3*cal.P3/4+v1*cal.P2,19) + 32768
+  if v1<0x8000 then -- v1>>15 will be 0 and p/0 will panic
     p = nil
   else
+    v1 = bit.rshift(v1*cal.P1,15)
     v2 = v2/4 + bit.lshift(cal.P4,16)
-    v2 = bit.arshift(v2,12)
-    p = (1048576 - p - v2)*3125
+    v3 = bit.arshift(v2,12)
+    p = (1048576 - p - v3)*3125
     if p*2>=0 then
       p = p*2/v1
     else
       p = p/v1*2
     end
-    v1 = bit.rshift((p/8)*(p/8),13)
-    v1 = bit.arshift(v1*cal.P9,12)
-    v2 = bit.arshift(p/4*cal.P8,13)
-    p = p + (v1 + v2 + cal.P7)/16
+    v1 = bit.rshift(p*p,19)
+    v2 = bit.arshift(v1*cal.P9,12)
+    v3 = bit.arshift(p*cal.P8,15)
+    p = p + bit.arshift(v2 + v3 + cal.P7,4)
   end
 
 --[[ Humidity: Adapted from bme280_compensate_humidity_int32.
