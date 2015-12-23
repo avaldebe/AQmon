@@ -304,15 +304,15 @@ function M.read(...)
   v2 = bit.rshift(v1*v1,15)
   v3 = v2/4
   v2 = v2*cal.P6 + v1*cal.P5*2
-  v1 = bit.arshift(v3*cal.P3/4+v1*cal.P2,19) + 32768
-  if v1<0x8000 then -- v1>>15 will be 0 and p/0 will panic
+  v3 = bit.arshift(v3*cal.P3/4+v1*cal.P2,19) + 32768
+  v1 = bit.rshift(v3*cal.P1,15)
+  if v1==0 then -- p/0 will lua-panic
     p = nil
   else
-    v1 = bit.rshift(v1*cal.P1,15)
     v2 = v2/4 + bit.lshift(cal.P4,16)
     v3 = bit.arshift(v2,12)
     p = (1048576 - p - v3)*3125
-    if p*2>=0 then
+    if p*2>0 then -- avoid overflow (signed) int32
       p = p*2/v1
     else
       p = p/v1*2
@@ -326,7 +326,7 @@ function M.read(...)
 --[[ Humidity: Adapted from bme280_compensate_humidity_int32.
   Calculte actual humidity from uncompensated humidity.
   Returns the value in 0.01 %rH.
-  An output value of 4132.1 represents 41.321 %rH ]]
+  An output value of "4132.1" represents 41.321 %rH ]]
   v1 = tfine - 76800
   v2 = bit.rshift(v1*cal.H6,10)
   v3 = bit.rshift(v1*cal.H3,11) + 32768
