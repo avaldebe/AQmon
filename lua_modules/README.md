@@ -14,7 +14,8 @@ Lua modules for [AQmon][] project.<br/>
 - `bmp180.lua`: BMP085 / BMP180 sensors.
 - `am2321.lua`: AM2320 / AM2321 sensors.
 - `bme280.lua`: BME280 sensor, can replace BMPxxx and AM232x sensors.
-- `pms3003.lua`: PMS1003 / PMS2003 / PMS3003 sensors.
+- `pms3003.lua`: PMS3003 (tested) sensors and
+                 PMS1003 / PMS2003 / PMS5003 / PMS7003 (untested) sensors via UART.
 - `sensor_hub.lua`: Read all sensors above.
 
 ### I-Net modules
