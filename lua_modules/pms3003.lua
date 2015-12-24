@@ -1,6 +1,8 @@
 --[[
 pms3003.lua for ESP8266 with nodemcu-firmware
-  Read Particulated Matter (PM) concentrations on air from a PMS3003 sensor.
+  Read Particulated Matter (PM) concentrations on air from a
+  PMS3003 (aka G3) sensor from http://www.plantower.com/.
+  It can also read from PMS1003 (aka G1) and PMS2003 (aka G2) sensors (untested).
   More info at  https://github.com/avaldebe/AQmon
 
 Written by Álvaro Valdebenito.
@@ -14,7 +16,8 @@ Sampling:
   SET=H (hardware default) continious sampling, SET=L standby.
 
 Data format:
-  The PMS3003 write UART (3.3V TTL) messages 4+20 bytes long.
+  The PMS3003 (and PMS2003) write UART (3.3V TTL) messages 4+20 bytes long,
+  PMS1003 messages are 4+28 bytes long.
 Header: 4 bytes,  2 pairs of bytes (MSB,LSB)
   bytes  1,  2: Begin message (hex:424D, ASCII 'BM')
   bytes  3,  4: Message lengh (hex:0014, decimal 20)
