@@ -263,9 +263,9 @@ function M.read(...)
   and output value of "96386" equals 96386 Pa = 963.86 hPa. ]]
   v1 = tfine - 128000
   v2 = bit.rshift((v1/8)*(v1/8),12)
-  v3 = (v2/4*P[3]/8 + v1*P[2]/4)/262144
-  v2 = (v2*P[6] + v1*P[5])/4 + P[4]*65536
-  v1 = (v3 + 32768)*P[1]/32768
+  v3 = bit.rshift(v2/4*P[3]/2 + v1*P[2],20) + 32768
+  v2 = (v2*P[6] + v1*P[5])/4 + bit.lshift(P[4],16)
+  v1 = bit.rshift(v3*P[1],15)
   if HACK_RAW then print("p,v1,v2:",p,v1,v2) end
   if v1==0 then -- p/0 will lua-panic
     p = nil
