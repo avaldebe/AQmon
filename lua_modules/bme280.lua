@@ -263,9 +263,10 @@ function M.read(...)
   and output value of "96386" equals 96386 Pa = 963.86 hPa. ]]
   v1 = tfine - 128000
   v2 = bit.rshift((v1/8)*(v1/8),12)
-  v3 = bit.rshift(v2/4*P[3]/2 + v1*P[2],20) + 32768
+  v3 = bit.rshift(v2*P[3]/8 + v1*P[2],20) + 32768
   v2 = (v2*P[6] + v1*P[5])/4 + bit.lshift(P[4],16)
   v1 = bit.rshift(v3*P[1],15)
+  v3 = nil
   if HACK_RAW then print("p,v1,v2:",p,v1,v2) end
   if v1==0 then -- p/0 will lua-panic
     p = nil
@@ -279,7 +280,7 @@ function M.read(...)
   if HACK_RAW then print("p,v1,v2:",p,v1,v2) end
     v1 = bit.rshift((p/8)*(p/8),13)
     v1 = bit.arshift(v1*P[9],12)
-    v2 = bit.arshift(p/4*P[8],13)
+    v2 = bit.arshift(p*P[8],15)
     p = p + bit.arshift(v1 + v2 + P[7],4)
   end
   if HACK_RAW then print("p,v1,v2:",p,v1,v2) end
@@ -289,15 +290,17 @@ function M.read(...)
   Returns the value in 0.01 %rH.
   An output value of "4132.1" represents 41.321 %rH ]]
   v1 = tfine - 76800
-  v2 = bit.rshift(v1*H[6],10)
-  v3 = bit.rshift(v1*H[3],11) + 32768
-  v1 = bit.lshift(h,14) - bit.lshift(H[4],20) - H[5]*v1 + 16384
-  v2 = bit.rshift(v2*v3,10) + 2097152
-  v3 = v2*H[2] + 8192
-  v1 = bit.rshift(v1,15)*bit.rshift(v3,14)
+
+  v2 = bit.rshift(v1*H[6],10)*(bit.rshift(v1*H[3],11) + 32768)
+  v1 = bit.lshift(h,14) - bit.lshift(H[4],20) - H[5]*v1
+  v2 = bit.rshift(v2,10) + 2097152
+-- Re-calibrate: H2*=2
+--v1 = bit.rshift(v1 + 16384,15)*bit.rshift(v2*H[2] + 8192,14)
+  v1 = bit.rshift(v1 + 16384,15)*bit.rshift(v2*H[2]*2+8192,14)
+
   v2 = bit.rshift(v1,15)
-  v3 = bit.rshift(v2*v2,7)
-  v1 = v1 - bit.rshift(v3*H[1],4)
+  v2 = bit.rshift(v2*v2,7)
+  v1 = v1 - bit.rshift(v2*H[1],4)
 -- v1 between 0 and 100*2^22
   if v1 < 0 then
     v1 = 0
