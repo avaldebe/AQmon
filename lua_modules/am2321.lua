@@ -1,6 +1,7 @@
 --[[
 am2321.lua for ESP8266 with nodemcu-firmware
-  Read temperature and relative humidity from AM2320/AM2321 sensors
+  Read temperature and relative humidity from AM2320/AM2321 sensors (tested),
+  and AM2315/AM2322 sensors (untested).
   More info at  https://github.com/avaldebe/AQmon
 
 Written by Álvaro Valdebenito,
@@ -13,7 +14,7 @@ MIT license, http://opensource.org/licenses/MIT
 
 local M={
   name=...,       -- module name, upvalue from require('module-name')
-  model=nil,      -- sensor model: AM232x
+  model=nil,      -- sensor model: AM23xx
   temperature=nil,-- integer value of temperature [0.01 C]
   humidity   =nil -- integer value of rel.humidity[0.01 %]
 }
@@ -80,8 +81,9 @@ function M.init(sda,scl,volatile)
     -- MODEL: AM2320 2320, AM2321 2321
       found=crc_check(c)
       if found then
-        local m=c:byte(3)*256+c:byte(4) -- my AM2320 responds 0
-        M.model=({[0]='AM232x',[2320]='AM2320',[2321]='AM2321'})[m]
+        local m=c:byte(3)*256+c:byte(4)
+        M.model=({[0]='AM23xx',-- my AM2320 responds 0
+          [2315]='AM2315',[2320]='AM2320',[2321]='AM2321',[2322]='AM2322'})[m]
         found=(M.model~=nil)
       end
     end
@@ -90,7 +92,7 @@ function M.init(sda,scl,volatile)
     init=found
   end
 
--- M.init suceeded if an AM2320/AM2321 is found on SDA,SCL
+-- M.init suceeded if an AM23?? was found on SDA,SCL
   return init
 end
 
