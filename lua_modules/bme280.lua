@@ -28,6 +28,7 @@ local M={
   name=...,       -- module name, upvalue from require('module-name')
   model=nil,      -- sensor model: BME280
   verbose=nil,    -- verbose output
+  debug=nil,      -- additional ckecks
   oss=0x01,       -- default oversamplig: 0=skip, 1=x1 .. 5=x16
   mode=0x03,      -- default sampling: 0=sleep, 1&2=forced(on demand), 3:normal(continious)
   temperature=nil,-- integer value of temperature [10*C]
@@ -61,13 +62,15 @@ local function i2c_write(addr,...)
   return c -- device found?
 end
 local function i2c_read(addr,reg,nbyte)
-  local c
-  if i2c_write(addr,reg) then
-    i2c.start(0)
-    i2c.address(0,addr,i2c.RECEIVER)
-    c = i2c.read(0,nbyte)
-    i2c.stop(0)
-  end
+  local c = i2c_write(addr,reg)
+  assert(not M.debug or c,
+    ('Failed write REG=0x%02X to device ADDR=0x%02X'):format(reg,addr))
+  i2c.start(0)
+  i2c.address(0,addr,i2c.RECEIVER)
+  c = i2c.read(0,nbyte)
+  i2c.stop(0)
+  assert(not M.debug or c:len()==nbyte,
+    ('Failed read REG=0x%02X from device ADDR=0x%02X'):format(reg,addr))
   return c
 end
 
@@ -164,7 +167,7 @@ function M.init(SDA,SCL,volatile,...)
       c = i2c_read(ADDR,0x88,24) -- calib00 0x88 .. calib23 0x9F
         ..i2c_read(ADDR,0xA1, 1) -- calib25 0xA1
         ..i2c_read(ADDR,0xE1, 7) -- calib26 0xE1 .. calib32 0xE7
-      if M.verbose==true then
+      if M.debug==true then
         print(('%s:'):format(M.name))
         local i
         for i=1,24 do
@@ -176,7 +179,7 @@ function M.init(SDA,SCL,volatile,...)
             :format(i,0xA1,i,c:byte(i)))
         for i=26,32 do
           print(('--calib%02d=0x%02X:c:byte(%02d)=0x%02X')
-            :format(i,0xE1+i-26,i+1,c:byte(i+1)))
+            :format(i,0xE1+i-26,i,c:byte(i)))
         end
       end
     -- unpack CALIBRATION: T1,..,T3,P1,..,P9,H1,..,H7
@@ -206,10 +209,10 @@ function M.init(SDA,SCL,volatile,...)
     init=found
   end
   if init and M.verbose==true then
-    print(('%s: cal.coeff.\n--T={%s}.\n--P={%s}.\n--H={%s}.'):format(M.name,
-      (('{1},{2},{3}'):gsub('{(.-)}',T)),
-      (('{1},{2},{3},{4},{5},{6},{7}'):gsub('{(.-)}',P)),
-      (('{1},{2},{3},{4},{5},{6}'):gsub('{(.-)}',H))))
+    print(('%s: cal.coeff.'):format(M.name))
+    print(('--T={%d,%d,%d}.'):format(unpack(T)))
+    print(('--P={%d,%d,%d,%d,%d,%d,%d,%d,%d}.'):format(unpack(P)))
+    print(('--H={%d,%d,%d,%d,%d,%d}.'):format(unpack(H)))
   end
 
 -- Sampling setup
@@ -235,6 +238,7 @@ function M.read(...)
   t=c:byte(4)*4096+c:byte(5)*16+c:byte(6)/16  --   temperature
   h=c:byte(7)* 256+c:byte(8)                  --   humidity
   c=nil
+  if HACK_RAW then p,t,h=unpack(HACK_RAW) end
   if M.verbose==true then
     print(('%s: UP=%d,UT=%d,UH=%d.'):format(M.name,p,t,h))
   end
@@ -257,25 +261,28 @@ function M.read(...)
   Calculate actual pressure from uncompensated pressure.
   Returns the value in Pascal (Pa),
   and output value of "96386" equals 96386 Pa = 963.86 hPa. ]]
-  v1 = tfine - 128000
-  v2 = bit.rshift(v1*v1,17)
-  v3 = bit.arshift(v2/4*P[3]/4+v1*P[2],19) + 32768
-  v2 = (v2*P[6] + v1*P[5])/4 + bit.lshift(P[4],16)
-  v1 = bit.rshift(v3*P[1],15)
+  v1 = (tfine - 128000)/2
+  v2 = (v1/4)*(v1/4)/2048
+  v3 = (v2/4*P[3]/8 + v1*P[2]/2)/262144
+  v2 = (v2*P[6] + v1*P[5]*2)/4 + P[4]*65536
+  v1 = (v3 + 32768)*P[1]/32768
+  if HACK_RAW then print("p,v1,v2:",p,v1,v2) end
   if v1==0 then -- p/0 will lua-panic
     p = nil
   else
-    p = (1048576 - p - bit.arshift(v2,12))*3125
+    p = (1048576 - p - v2/4096)*3125
     if p*2>0 then -- avoid overflow (signed) int32
       p = p*2/v1
     else
       p = p/v1*2
     end
-    v1 = bit.rshift(p*p,19)
-    v2 = bit.arshift(v1*P[9],12)
-    v3 = bit.arshift(p*P[8],15)
-    p = p + bit.arshift(v2 + v3 + P[7],4)
+  if HACK_RAW then print("p,v1,v2:",p,v1,v2) end
+    v1 = bit.rshift((p/8)*(p/8),13)
+    v1 = bit.arshift(v1*P[9],12)
+    v2 = bit.arshift(p/4*P[8],13)
+    p = p + bit.arshift(v1 + v2 + P[7],4)
   end
+  if HACK_RAW then print("p,v1,v2:",p,v1,v2) end
 
 --[[ Humidity: Adapted from bme280_compensate_humidity_int32.
   Calculte actual humidity from uncompensated humidity.
