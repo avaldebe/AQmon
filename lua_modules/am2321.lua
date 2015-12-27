@@ -82,7 +82,7 @@ function M.init(sda,scl,volatile)
       found=crc_check(c)
       if found then
         local m=c:byte(3)*256+c:byte(4)
-        M.model=({[0]='AM23xx',-- my AM2320 responds 0
+        M.model=({[0]='AM23xx', -- my AM2320 responds 0
           [2315]='AM2315',[2320]='AM2320',[2321]='AM2321',[2322]='AM2322'})[m]
         found=(M.model~=nil)
       end

@@ -238,7 +238,6 @@ function M.read(...)
   t=c:byte(4)*4096+c:byte(5)*16+c:byte(6)/16  --   temperature
   h=c:byte(7)* 256+c:byte(8)                  --   humidity
   c=nil
-  if HACK_RAW then p,t,h=unpack(HACK_RAW) end
   if M.verbose==true then
     print(('%s: UP=%d,UT=%d,UH=%d.'):format(M.name,p,t,h))
   end
@@ -267,7 +266,6 @@ function M.read(...)
   v2 = (v2*P[6] + v1*P[5])/4 + bit.lshift(P[4],16)
   v1 = bit.rshift(v3*P[1],15)
   v3 = nil
-  if HACK_RAW then print("p,v1,v2:",p,v1,v2) end
   if v1==0 then -- p/0 will lua-panic
     p = nil
   else
@@ -277,13 +275,11 @@ function M.read(...)
     else
       p = p/v1*2
     end
-  if HACK_RAW then print("p,v1,v2:",p,v1,v2) end
     v1 = bit.rshift((p/8)*(p/8),13)
     v1 = bit.arshift(v1*P[9],12)
     v2 = bit.arshift(p*P[8],15)
     p = p + bit.arshift(v1 + v2 + P[7],4)
   end
-  if HACK_RAW then print("p,v1,v2:",p,v1,v2) end
 
 --[[ Humidity: Adapted from bme280_compensate_humidity_int32.
   Calculte actual humidity from uncompensated humidity.
