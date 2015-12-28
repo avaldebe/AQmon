@@ -51,8 +51,27 @@ local function int16_t(uint,nbits)
   return uint-bit.band(uint,first_neg)*2
 end
 
+-- i2c helper functions
+local function i2c_write(addr,...)
+  local c
+  i2c.start(0)
+  c = i2c.address(0,addr,i2c.TRANSMITTER)
+  if arg.n>0 and c then i2c.write(0,unpack(arg)) end
+  i2c.stop(0)
+  return c -- device found?
+end
+local function i2c_read(addr,reg,nbyte)
+  local c
+  if i2c_write(addr,reg) then
+    i2c.start(0)
+    i2c.address(0,addr,i2c.RECEIVER)
+    c = i2c.read(0,nbyte)
+    i2c.stop(0)
+  end
+  return c
+end
+
 -- sampling configuration
-local id=0
 local init=false
 local function config(...)
 -- ensure module is initialized
@@ -67,48 +86,24 @@ local function config(...)
   -- spi3w: enhable 3-wire SPI interface; na (0<<1).
   --REG_COMMAND=0xA8 -- 5*2^5+2*2^2+0*2^1
     REG_COMMAND=0xA0 -- 5*2^5+0*2^2+0*2^1 IRR disabled
-  -- request REG_CONFIG 0xF5
-    i2c.start(id)
-    i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.write(id,0xF5)  -- REG_CONFIG
-    i2c.stop(id)
-  -- read REG_CONFIG 0xF5
-    i2c.start(id)
-    i2c.address(id,ADDR,i2c.RECEIVER)
-    local c = i2c.read(id,1)  -- 1byte
-    i2c.stop(id)
-  -- REG_CONFIG writeable only in sleep mode, update only if needed
+  -- REG_CONFIG 0xF5 swriteable only in sleep mode, update only if needed
+    local c = i2c_read(ADDR,0xF5,1)
     if REG_COMMAND~=c:byte() then
-      i2c.start(id)
-      i2c.address(id,ADDR,i2c.TRANSMITTER)
-      i2c.write(id,0xF4,0x00)  -- REG_CONTROL_MEAS,sleep mode
-      i2c.stop(id)
-      i2c.start(id)
-      i2c.address(id,ADDR,i2c.TRANSMITTER)
-      i2c.write(id,0xF5,REG_COMMAND)  -- REG_CONFIG
-      i2c.stop(id)
+      i2c_write(ADDR,0xF4,        -- REG_CONTROL_MEAS,REG_CONFIG
+                0x00,REG_COMMAND) -- sleep mode      ,config
     end
   end
 
 -- oversampling: all modes
   local oss_t,oss_h,oss_p=...
-  if type(oss_t)~="number" or oss_t<1 or oss_t>5 then oss_t=M.oss end
-  if type(oss_h)~="number" or oss_h<1 or oss_h>5 then oss_h=M.oss end
-  if type(oss_p)~="number" or oss_p<1 or oss_p>5 then oss_p=M.oss end
 -- H oversampling 2^(M.oss_h-1):
-  REG_COMMAND=bit.band(oss_h,0x07)
-  i2c.start(id)
-  i2c.address(id,ADDR,i2c.TRANSMITTER)
-  i2c.write(id,0xF2,REG_COMMAND)  -- REG_CONTROL_HUM
-  i2c.stop(id)
+  i2c_write(ADDR,0xF2,  -- REG_CONTROL_HUM
+            bit.band(oss_h or M.oss,0x07))
 -- T oversampling 2^(M.oss_t-1), P oversampling 2^(M.oss_p-1),  mode M.mode
-  REG_COMMAND=bit.band(oss_t,0x07)*32
-             +bit.band(oss_p,0x07)*4
-             +bit.band(M.mode,0x03)
-  i2c.start(id)
-  i2c.address(id,ADDR,i2c.TRANSMITTER)
-  i2c.write(id,0xF4,REG_COMMAND)  -- REG_CONTROL_MEAS
-  i2c.stop(id)
+  i2c_write(ADDR,0xF4,  -- REG_CONTROL_MEAS
+            bit.band(oss_t or M.oss,0x07)*32
+           +bit.band(oss_p or M.oss,0x07)*4
+           +bit.band(M.mode,0x03))
 
 -- oversampling delay: forced/on-demmand mode (M.mode:1|2), see DS 11.1
   if M.mode==0x01 or M.mode==0x02 then
@@ -117,26 +112,22 @@ local function config(...)
   -- t_pres,max= 2.3*2^oss_p + 0.575 [ms]
   -- t_rhum,max= 2.3*2^oss_h + 0.575 [ms]
 -- then, t_meas,max=2.4+2.3*(2^oss_t+2^oss_h+2^oss_p) [ms]
-    local WAIT=2400+2300*(bit.bit(oss_t)
-                         +bit.bit(oss_h)
-                         +bit.bit(oss_p)) -- 9.3,..,112.8 ms
+    local WAIT=2400+2300*(bit.bit(oss_t or M.oss)
+                         +bit.bit(oss_h or M.oss)
+                         +bit.bit(oss_p or M.oss)) -- 9.3,..,112.8 ms
     tmr.delay(WAIT)
   end
 end
 
 -- initialize module
-local SDA,SCL -- buffer device pinout
-function M.init(sda,scl,volatile,...)
+function M.init(SDA,SCL,volatile,...)
 -- volatile module
-   if volatile==true then
+  if volatile==true then
     _G[M.name],package.loaded[M.name]=nil,nil
   end
 
--- buffer pin set-up
-  if (sda and sda~=SDA) or (scl and scl~=SCL) then
-    SDA,SCL=sda,scl
-    i2c.setup(id,SDA,SCL,i2c.SLOW)
-  end
+-- init i2c bus
+  i2c.setup(0,SDA,SCL,i2c.SLOW)
 
 -- M.init suceeded after/when read calibration coeff.
   init=(next(cal)~=nil)
@@ -145,9 +136,7 @@ function M.init(sda,scl,volatile,...)
     local found,c
 -- verify device address
     for c=1,#ADDR do
-      i2c.start(id)
-      found=i2c.address(id,ADDR[c],i2c.TRANSMITTER)
-      i2c.stop(id)
+      found=i2c_write(ADDR[c])
       if found then
         ADDR=ADDR[c]
         break
@@ -160,16 +149,7 @@ function M.init(sda,scl,volatile,...)
     end
 -- verify device ID
     if found then
-    -- request REG_CHIPID 0xD0
-      i2c.start(id)
-      i2c.address(id,ADDR,i2c.TRANSMITTER)
-      i2c.write(id,0xD0)  -- REG_CHIPID
-      i2c.stop(id)
-    -- read REG_CHIPID 0xD0
-      i2c.start(id)
-      i2c.address(id,ADDR,i2c.RECEIVER)
-      c = i2c.read(id,1)  -- ID:1byte
-      i2c.stop(id)
+      c = i2c_read(ADDR,0xD0,1) -- REG_CHIPID
     -- CHIPID: BMP085/BMP180 0x55, BMP280 0x58, BME280 0x60
       M.model=({[0x55]='BMP180',[0x58]='BMP280',[0x60]='BME280'})[c:byte()]
       found=(M.model=='BME280')
@@ -181,38 +161,19 @@ function M.init(sda,scl,volatile,...)
     end
 -- read calibration coeff.
     if found then
+      c = i2c_read(ADDR,0x88,24) -- calib00 0x88 .. calib23 0x9F
+        ..i2c_read(ADDR,0xA1, 1) -- calib25 0xA1
+        ..i2c_read(ADDR,0xE1, 7) -- calib26 0xE1 .. calib32 0xE7
       if M.verbose==true then
         print(('%s:'):format(M.name))
-      end
-    -- request calib00 0x08 .. calib25 0xA1
-      i2c.start(id)
-      i2c.address(id,ADDR,i2c.TRANSMITTER)
-      i2c.write(id,0x88) -- calib00: REG_DIG_T1
-      i2c.stop(id)
-    -- read calib00 0x08 .. calib25 0xA1
-      i2c.start(id)
-      i2c.address(id,ADDR,i2c.RECEIVER)
-      c = i2c.read(id,26) -- calib00 .. calib25
-      i2c.stop(id)
-      if M.verbose==true then
         local i
-        for i=0,25 do
+        for i=1,24 do
           print(('--calib%02d=0x%02X:c:byte(%02d)=0x%02X')
-            :format(i,0x88+i,i+1,c:byte(i+1)))
+            :format(i-1,0x88+i-1,i,c:byte(i)))
         end
-      end
-    -- request calib26 0xE1 .. calib32 0xE7
-      i2c.start(id)
-      i2c.address(id,ADDR,i2c.TRANSMITTER)
-      i2c.write(id,0xE1) -- calib26: REG_DIG_H2
-      i2c.stop(id)
-    -- read calib26 0xE1 .. calib32 0xE7
-      i2c.start(id)
-      i2c.address(id,ADDR,i2c.RECEIVER)
-      c = c..i2c.read(id,7) -- calib26 .. calib32
-      i2c.stop(id)
-      if M.verbose==true then
-        local i
+        i=25
+          print(('--calib%02d=0x%02X:c:byte(%02d)=0x%02X')
+            :format(i,0xA1,i,c:byte(i)))
         for i=26,32 do
           print(('--calib%02d=0x%02X:c:byte(%02d)=0x%02X')
             :format(i,0xE1+i-26,i+1,c:byte(i+1)))
@@ -231,14 +192,15 @@ function M.init(sda,scl,volatile,...)
       cal.P7=int16_t(c:byte(19)+c:byte(20)*256) -- 0x9A,0x9B; (signed) short
       cal.P8=int16_t(c:byte(21)+c:byte(22)*256) -- 0x9C,0x9D; (signed) short
       cal.P9=int16_t(c:byte(23)+c:byte(24)*256) -- 0x9E,0x9F; (signed) short
-      cal.H1=        c:byte(26)                 -- 0xA1     ; unsigned char
-      cal.H2=int16_t(c:byte(27)+c:byte(28)*256) -- 0xE1,0xE2; (signed) short
-      cal.H3=        c:byte(29)                 -- 0xE3     ; unsigned char
-      cal.H4=bit.band(c:byte(31),0x0F)          -- 0xE5[3:0],...
-      cal.H4=int16_t(cal.H4+c:byte(30)*16)      --  ...,0xE4; (signed) short
-      cal.H5=bit.rshift(c:byte(31),4)           -- 0xE5[7:4],...
-      cal.H5=int16_t(cal.H5+c:byte(32)*16)      --  ...,0xE6; (signed) short
-      cal.H6=int16_t(c:byte(33),8)              -- 0xE7     ; (signed) char
+      cal.H1=        c:byte(25)                 -- 0xA1     ; unsigned char
+      cal.H2=int16_t(c:byte(26)+c:byte(27)*256) -- 0xE1,0xE2; (signed) short
+      cal.H3=        c:byte(28)                 -- 0xE3     ; unsigned char
+      cal.H4=bit.band(c:byte(30),0x0F)          -- 0xE5[3:0],...
+      cal.H4=int16_t(cal.H4+c:byte(29)*16)      --  ...,0xE4; (signed) short
+      cal.H5=bit.rshift(c:byte(30),4)           -- 0xE5[7:4],...
+      cal.H5=int16_t(cal.H5+c:byte(31)*16)      --  ...,0xE6; (signed) short
+      cal.H6=int16_t(c:byte(32),8)              -- 0xE7     ; (signed) char
+      c=nil
     end
     -- M.init suceeded
     init=found
@@ -266,21 +228,13 @@ function M.read(...)
 -- oversampling: forced/on-demmand mode (M.mode:1|2)
   if M.mode==0x01 or M.mode==0x02 then config(...) end
 
--- request REG_PRESSURE_MSB 0xF7 .. REG_HUMIDITY_LSB 0xFE
-  i2c.start(id)
-  i2c.address(id,ADDR,i2c.TRANSMITTER)
-  i2c.write(id,0xF7) -- REG_PRESSURE_MSB
-  i2c.stop(id)
--- read REG_PRESSURE_MSB 0xF7 .. REG_HUMIDITY_LSB 0xFE
-  i2c.start(id)
-  i2c.address(id,ADDR,i2c.RECEIVER)
-  local c = i2c.read(id,8) -- p:3byte,t:3byte,h:byte
-  i2c.stop(id)
--- unpack RAW DATA
+-- RAW DATA
+  local c = i2c_read(ADDR,0xF7,8) -- REG_PRESSURE_MSB 0xF7 .. REG_HUMIDITY_LSB 0xFE
   local p,t,h                                 -- uncompensated
   p=c:byte(1)*4096+c:byte(2)*16+c:byte(3)/16  --   pressure
   t=c:byte(4)*4096+c:byte(5)*16+c:byte(6)/16  --   temperature
   h=c:byte(7)* 256+c:byte(8)                  --   humidity
+  c=nil
   if M.verbose==true then
     print(('%s: UP=%d,UT=%d,UH=%d.'):format(M.name,p,t,h))
   end
@@ -295,6 +249,9 @@ function M.read(...)
   v2 = bit.rshift((t/2)*(t/2),12)
   tfine = v1 + bit.arshift(v2*cal.T3,14)
   t = bit.arshift(tfine*5 + 128,8)
+  if M.verbose==true then
+    print(('%s: tfine=%d.'):format(M.name,tfine))
+  end
 
 --[[ Pressure: Adapted from bme280_compensate_pressure_int32.
   Calculate actual pressure from uncompensated pressure.
