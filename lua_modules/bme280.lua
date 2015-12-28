@@ -87,8 +87,8 @@ local function config(...)
   -- dt: sample every dt; dt=1000ms (5<<5).
   -- IIR: data=(data_new+(IIR-1)*data_old)/IIR; IIR=4 (2<<2).
   -- spi3w: enhable 3-wire SPI interface; na (0<<1).
-  --REG_COMMAND=0xA8 -- 5*2^5+2*2^2+0*2^1
-    REG_COMMAND=0xA0 -- 5*2^5+0*2^2+0*2^1 IRR disabled
+    REG_COMMAND=0xA8 -- 5*2^5+2*2^2+0*2^1
+  --REG_COMMAND=0xA0 -- 5*2^5+0*2^2+0*2^1 IIR disabled
   -- REG_CONFIG 0xF5 swriteable only in sleep mode, update only if needed
     local c = i2c_read(ADDR,0xF5,1)
     if REG_COMMAND~=c:byte() then
@@ -286,14 +286,15 @@ function M.read(...)
   Returns the value in 0.01 %rH.
   An output value of "4132.1" represents 41.321 %rH ]]
   v1 = tfine - 76800
-
   v2 = bit.rshift(v1*H[6],10)*(bit.rshift(v1*H[3],11) + 32768)
   v1 = bit.lshift(h,14) - bit.lshift(H[4],20) - H[5]*v1
   v2 = bit.rshift(v2,10) + 2097152
--- Re-calibrate: H2*=2
---v1 = bit.rshift(v1 + 16384,15)*bit.rshift(v2*H[2] + 8192,14)
-  v1 = bit.rshift(v1 + 16384,15)*bit.rshift(v2*H[2]*2+8192,14)
-
+-- Whit this line (based on orig lib) h~=observed rel.hum./2
+--v1 = bit.rshift(v1 +16384,15)*bit.rshift(v2*H[2] + 8192,14)
+-- Hack, gets within 5%rH observed rel.hum.
+--v1 = bit.rshift(v1 +16384,15)*bit.rshift(v2*H[2]*2+8192,14)
+-- Likely fix, as the orig code dops the last bit of adc_h
+  v1 = bit.rshift(v1 + 8192,14)*bit.rshift(v2*H[2] + 8192,14)
   v2 = bit.rshift(v1,15)
   v2 = bit.rshift(v2*v2,7)
   v1 = v1 - bit.rshift(v2*H[1],4)
