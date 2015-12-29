@@ -3,7 +3,7 @@ Tested [nodemcu-firmware] for [AQmon][] project
 
 - Stock [0.9.6 20150704][] integer version.
 - Custom 1.4.0 20151006    integer version, inluding modules:
-  ADC, BIT, CJSON, ENDUSER_SETUP,
+  ADC, BIT, CJSON, BMP085, DHT, ENDUSER_SETUP,
   FILE, GPIO, I2C, MQTT, NET, NODE,
   PWM, RC, RTCFIFO, RTCMEM, RTCTIME,
   SNTP, SPI, TMR, UART & WIFI

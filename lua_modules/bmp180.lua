@@ -17,6 +17,7 @@ MIT license, http://opensource.org/licenses/MIT
 
 local M={
   name=...,       -- module name, upvalue from require('module-name')
+  verbose=nil,    -- verbose output
   oss=1,          -- default pressure oversamplig: 0 .. 3
   model=nil,      -- sensor model: BMP180
   temperature=nil,-- integer value of temperature [0.01 C]
@@ -88,17 +89,22 @@ function M.init(sda,scl,volatile)
       c = i2c.read(id,22)
       i2c.stop(id)
     -- unpack CALIBRATION
-      cal.AC1=int16_t(c:byte( 1)*256+c:byte( 2))  -- (signed) short
-      cal.AC2=int16_t(c:byte( 3)*256+c:byte( 4))  -- (signed) short
-      cal.AC3=int16_t(c:byte( 5)*256+c:byte( 6))  -- (signed) short
-      cal.AC4=        c:byte( 7)*256+c:byte( 8)   -- unsigned short
-      cal.AC5=        c:byte( 9)*256+c:byte(10)   -- unsigned short
-      cal.AC6=        c:byte(11)*256+c:byte(12)   -- unsigned short
-      cal.B1 =int16_t(c:byte(13)*256+c:byte(14))  -- (signed) short
-      cal.B2 =int16_t(c:byte(15)*256+c:byte(16))  -- (signed) short
-      cal.MB =int16_t(c:byte(17)*256+c:byte(18))  -- (signed) short
-      cal.MC =int16_t(c:byte(19)*256+c:byte(20))  -- (signed) short
-      cal.MD =int16_t(c:byte(21)*256+c:byte(22))  -- (signed) short
+      cal.AC1=int16_t(c:byte( 1)*256+c:byte( 2))  -- 0xAA,0xAB; (signed) short
+      cal.AC2=int16_t(c:byte( 3)*256+c:byte( 4))  -- 0xAC,0xAD; (signed) short
+      cal.AC3=int16_t(c:byte( 5)*256+c:byte( 6))  -- 0xAE,0xAF; (signed) short
+      cal.AC4=        c:byte( 7)*256+c:byte( 8)   -- 0xB0,0xB1; unsigned short
+      cal.AC5=        c:byte( 9)*256+c:byte(10)   -- 0xB2,0xB3; unsigned short
+      cal.AC6=        c:byte(11)*256+c:byte(12)   -- 0xB4,0xB5; unsigned short
+      cal.B1 =int16_t(c:byte(13)*256+c:byte(14))  -- 0xB6,0xB7; (signed) short
+      cal.B2 =int16_t(c:byte(15)*256+c:byte(16))  -- 0xB8,0xB9; (signed) short
+      cal.MB =int16_t(c:byte(17)*256+c:byte(18))  -- 0xBA,0xBB; (signed) short
+      cal.MC =int16_t(c:byte(19)*256+c:byte(20))  -- 0xBC,0xBD; (signed) short
+      cal.MD =int16_t(c:byte(21)*256+c:byte(22))  -- 0xBE,0xBF; (signed) short
+      if M.verbose==true then
+        print(('--ACx={%d,%d,%d,%d,%d,%d}'):format(cal.AC1,cal.AC2,cal.AC3,cal.AC4,cal.AC5,cal.AC6))
+        print(('--Bx={%d,%d}'):format(cal.B1,cal.B2))
+        print(('--Mx={%d,%d,%d}'):format(cal.MB,cal.MC,cal.MD))
+      end
     end
     -- M.init suceeded
     init=found
@@ -138,11 +144,16 @@ function M.read(oss)
   c = i2c.read(id,2)
   i2c.stop(id)
 -- unpack TEMPERATURE
-  UT = c:byte(1)*265+c:byte(2)
+  UT = c:byte(1)*256+c:byte(2)
+  if M.verbose==true then
+    print(('%s=%d 0xF4=0x%02X; 0xF6..0xF7=0x%02X%02X')
+      :format('UT',UT,REG_COMMAND,c:byte(1),c:byte(2)))
+  end
   X1 = bit.arshift((UT - cal.AC6)*cal.AC5,15)
   X2 = bit.lshift(cal.MC,11)/(X1 + cal.MD)
   B5 = X1 + X2
   t = int16_t((B5 + 8)/16)  -- (signed) short
+  if M.verbose==true then print('UT,X1,X2,t:',UT,X1,X2,t) end
 
 -- read pressure from BMP
   if type(oss)~="number" or oss<0 or oss>3 then oss=M.oss end
@@ -167,6 +178,10 @@ function M.read(oss)
 -- unpack PRESSURE
   UP = c:byte(1)*65536+c:byte(2)*256+c:byte(3)
   UP = bit.rshift(UP,8-oss)
+  if M.verbose==true then
+    print(('%s=%d 0xF4=0x%02X; 0xF6..0xF8=0x%02X%02X%02X')
+      :format('UP',UP,REG_COMMAND,c:byte(1),c:byte(2),c:byte(3)))
+  end
   B6 = B5 - 4000
   X1 = bit.rshift(B6*B6,12)
   X1 = bit.arshift(X1*cal.B2 ,11)
