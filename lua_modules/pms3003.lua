@@ -17,11 +17,11 @@ Sampling:
   SET=H(>2.7V; hardware default) continious sampling, SET=L(<0.8V) standby.
 
 Data format:
-  The PMS1003 write UART (3.3V TTL) messages 4+32 bytes long.
+  The PMS1003 write UART (3.3V TTL) messages 4+28 bytes long.
   The PMS2003 write UART (3.3V TTL) messages 4+20 bytes long.
   The PMS3003 write UART (3.3V TTL) messages 4+20 bytes long.
-  The PMS5003 write UART (3.3V TTL) messages 4+32 bytes long.
-  The PMS7003 write UART (3.3V TTL) messages 4+32 bytes long.
+  The PMS5003 write UART (3.3V TTL) messages 4+28 bytes long.
+  The PMS7003 write UART (3.3V TTL) messages 4+28 bytes long.
 Header: 4 bytes,  2 pairs of bytes (MSB,LSB)
   bytes  1,  2: Begin message (hex:424D, ASCII 'BM')
   bytes  3,  4: Message lengh (hex:0014, decimal 20)
