@@ -16,24 +16,19 @@ Sampling:
 - pin3 (SET) of the PMS3003 controles operation mode.
   SET=H(>2.7V; hardware default) continious sampling, SET=L(<0.8V) standby.
 
-Data format:
-  The PMS1003 write UART (3.3V TTL) messages 4+28 bytes long.
-  The PMS2003 write UART (3.3V TTL) messages 4+20 bytes long.
-  The PMS3003 write UART (3.3V TTL) messages 4+20 bytes long.
-  The PMS5003 write UART (3.3V TTL) messages 4+28 bytes long.
-  The PMS7003 write UART (3.3V TTL) messages 4+28 bytes long.
-Header: 4 bytes,  2 pairs of bytes (MSB,LSB)
-  bytes  1,  2: Begin message (hex:424D, ASCII 'BM')
-  bytes  3,  4: Message lengh (hex:0014, decimal 20)
-Body:  20 bytes, 10 pairs of bytes (MSB,LSB)
-  bytes  5,  6: MSB,LSB of PM 1.0 [ug/m3] (TSI standard)
-  bytes  7,  8: MSB,LSB of PM 2.5 [ug/m3] (TSI standard)
-  bytes  9, 10: MSB,LSB of PM 10. [ug/m3] (TSI standard)
-  bytes 11, 12: MSB,LSB of PM 1.0 [ug/m3] (std. atmosphere)
-  bytes 13, 14: MSB,LSB of PM 2.5 [ug/m3] (std. atmosphere)
-  bytes 15, 16: MSB,LSB of PM 10. [ug/m3] (std. atmosphere)
-  bytes 17..22: no idea what they are.
-  bytes 23..24: cksum=byte01+..+byte22.
+Module output;
+- Particulate Mater (PM):
+  - All PMSx003 sensors.
+  - pm01: PM ug/m3 from particles with diameter <= 1.0 um.
+  - pm25: PM ug/m3 from particles with diameter <= 2.5 um.
+  - pm10: PM ug/m3 from particles with diameter <= 10. um.
+- Particle (number) Size Distribution (PSD): 
+  - Only from PMS1003, PMS5003 and PMS7003 sensors.
+  - psd[1]: #particles/100cm3 with 0.3 um < diam <= 0.5 um.
+  - psd[2]: #particles/100cm3 with 0.5 um < diam <= 1.0 um.
+  - psd[3]: #particles/100cm3 with 1.0 um < diam <= 2.5 um.
+  - psd[4]: #particles/100cm3 with 2.5 um < diam <= 5.0 um.
+  - psd[5]: #particles/100cm3 with 5.0 um < diam <= 10. um.
 ]]
 
 local M={
@@ -45,16 +40,51 @@ local M={
   debug=nil,  -- additional ckecks
   pm01=nil,   -- integer value of PM 1.0 [ug/m3]
   pm25=nil,   -- integer value of PM 2.5 [ug/m3]
-  pm10=nil    -- integer value of PM 10. [ug/m3]
+  pm10=nil,   -- integer value of PM 10. [ug/m3]
+  psd=nil     -- particle (number) size distribution [#/100cm3]
 }
 _G[M.name]=M
 
+--[[ Sensor data format
+PMS2003, PMS3003: 
+  24 byte long messages via UART 9600 8N1 (3.3V TTL).
+ MSB,LSB: Message header (4 bytes), 2 pairs of bytes (MSB,LSB)
+   1,  2: Begin message       (hex:424D, ASCII 'BM')
+   3,  4: Message body length (hex:0014, decimal 20)
+ MSB,LSB: Message body (28 bytes), 14 pairs of bytes (MSB,LSB)
+   5,  6: PM 1.0 [ug/m3] (TSI standard)
+   7,  8: PM 2.5 [ug/m3] (TSI standard)
+   9, 10: PM 10. [ug/m3] (TSI standard)
+  11, 12: PM 1.0 [ug/m3] (std. atmosphere)
+  13, 14: PM 2.5 [ug/m3] (std. atmosphere)
+  15, 16: PM 10. [ug/m3] (std. atmosphere)
+  17..22: no idea what they are.
+  23, 24: cksum=byte01+..+byte22.
+
+PMS1003, PMS5003, PMS7003:
+  32 byte long messages via UART 9600 8N1 (3.3V TTL).
+ MSB,LSB: Message header (4 bytes), 2 pairs of bytes (MSB,LSB)
+   1,  2: Begin message       (hex:424D, ASCII 'BM')
+   3,  4: Message body length (hex:001C, decimal 28)
+ MSB,LSB: Message body (28 bytes), 14 pairs of bytes (MSB,LSB)
+   5,  6: PM 1.0 [ug/m3] (TSI standard)
+   7,  8: PM 2.5 [ug/m3] (TSI standard)
+   9, 10: PM 10. [ug/m3] (TSI standard)
+  11, 12: PM 1.0 [ug/m3] (std. atmosphere)
+  13, 14: PM 2.5 [ug/m3] (std. atmosphere)
+  15, 16: PM 10. [ug/m3] (std. atmosphere)
+  17, 18: num. particles with diameter > 0.3 um in 100 cm3 of air
+  19, 20: num. particles with diameter > 0.5 um in 100 cm3 of air
+  21, 22: num. particles with diameter > 1.0 um in 100 cm3 of air
+  23, 24: num. particles with diameter > 2.5 um in 100 cm3 of air
+  25, 26: num. particles with diameter > 5.0 um in 100 cm3 of air
+  27, 28: num. particles with diameter > 10. um in 100 cm3 of air
+  29, 30: Reserved
+  31, 32: cksum=byte01+..+byte30.
+]]
 local function decode(data)
-  -- data beggins with the byte pair 'BM' (dec 16973).
-  -- The next byte pair (pms[1]) should be dec20,
-  -- folowed by 10 byte pairs (20 bytes).
 -- check message lenght
-  assert(not M.debug or #data==M.mlen,('%s: incomplete message.'):format(M.name))
+  assert(M.debug~=true or #data==M.mlen,('%s: incomplete message.'):format(M.name))
   local pms,cksum,mlen={},0,#data/2-1
   local n,msb,lsb
   for n=0,mlen do
@@ -66,8 +96,9 @@ local function decode(data)
         format(n,msb,lsb,pms[n],cksum))
     end
   end
-  assert(not M.debug or (pms[0]==16973 and pms[1]==20 and #pms==mlen),
+  assert(M.debug~=true or (pms[0]==16973 and pms[1]==#data-4),
     ('%s: wrongly phrased message.'):format(M.name))
+-- Particulate Mater (PM)
   if cksum==pms[#pms] and M.stdATM~=true then
     M.pm01,M.pm25,M.pm10=pms[2],pms[3],pms[4] -- TSI standard
   elseif cksum==pms[#pms] then
@@ -78,6 +109,14 @@ local function decode(data)
   if M.verbose==true then
     print(('%s: %4s,%4s,%4s [ug/m3]')
       :format(M.name,M.pm01 or 'null',M.pm25 or 'null',M.pm10 or 'null'))
+  end
+-- Particle (number) Size Distribution (PSD)
+  if cksum==pms[#pms] and pms[1]==28 then
+    for n=1,5 do psd[n]=pms[n+8]-pms[n+7] end
+  end
+  if M.verbose==true and M.psd then
+    print(('%s: %4s,%4s,%4s,%4s,%4s [#/100cm3]')
+      :format(M.name,unpack(psd)))
   end
 end
 
