@@ -128,29 +128,38 @@ local function decode(data)
 end
 
 local pinSET=nil
+local function daq(status) -- data acquisition
+  assert(type(pinSET)=='number'),('%s: Undefined pin3 (SET)'):format(M.name))
+  local start=({started=true,paused=false,finished=false,failed=false})[status]
+  if start then
+    gpio.write(pinSET,gpio.HIGH)            -- continuous sampling mode
+  else
+    uart.on('data',0,function(data) end,0)  -- flush the uart buffer
+    gpio.write(pinSET,gpio.LOW)             -- low-power standby mode
+    uart.on('data')                         -- release uart
+  end
+  end
+  if M.verbose==true then
+    print(('%s: data acquisition %s.\n  Console %s.')
+      :format(M.name,start and status or 'n/a',start and 'enhabled' or 'dishabled'))
+  end
+end
+
 local init=false
-function M.init(pin_set,volatile,status)
+function M.init(pin_set,volatile)
 -- volatile module
   if volatile==true then
     _G[M.name],package.loaded[M.name]=nil,nil
   end
 
--- buffer pin set-up
+-- buffer pin set-up & setup data acquisition
   if type(pin_set)=='number' then
     pinSET=pin_set
     gpio.mode(pinSET,gpio.OUTPUT)
+    daq('paused')
   end
 
 -- initialization
-  if type(pinSET)=='number' then
-    uart.on('data',0,function(data) end,0)  -- flush the uart buffer
-    gpio.write(pinSET,gpio.LOW)             -- low-power standby mode
-    if M.verbose==true then
-      print(('%s: data acquisition %s.\n  Console %s.')
-        :format(M.name,type(status)=='string' and status or 'paused','enhabled'))
-    end
-    uart.on('data')                         -- release uart
-  end
   if not init then
     --sensor G1,G2,G3,n/a,G5,n/a,G7
     M.mlen=({32,24,24,nil,32,nil,32})[M.model]
@@ -178,23 +187,19 @@ function M.read(callBack)
   -- decode message
       decode(data:sub(bm,M.mlen+bm-1))
   -- restore UART & callBack
-      M.init(nil,nil,'finished')
+      daq('finished')
       if type(callBack)=='function' then callBack() end
     end
   end,0)
 
 -- start sampling: continuous sampling mode
-  if M.verbose==true then
-    print(('%s: data acquisition %s.\n  Console %s.')
-      :format(M.name,'started','dishabled'))
-  end
-  gpio.write(pinSET,gpio.HIGH)
+  daq('started')
 
 -- sampling time-out: 2s after sampling started
   tmr.alarm(4,2000,0,function()
     M.pm01,M.pm25,M.pm10,M.psd=nil,nil,nil,nil
   -- restore UART & callBack
-    M.init(nil,nil,'failed')
+    daq('failed')
     if type(callBack)=='function' then callBack() end
   end)
 end

@@ -4,9 +4,7 @@ am2321.lua for ESP8266 with nodemcu-firmware
   and AM2315/AM2322 sensors (untested).
   More info at  https://github.com/avaldebe/AQmon
 
-Written by Álvaro Valdebenito,
-  unsigned to signed conversion, eg uint16_t (unsigned short) to int16_t (short)
-    http://stackoverflow.com/questions/17152300/unsigned-to-signed-without-comparison
+Written by Álvaro Valdebenito.
 
 MIT license, http://opensource.org/licenses/MIT
 ]]
@@ -15,19 +13,21 @@ MIT license, http://opensource.org/licenses/MIT
 local M={
   name=...,       -- module name, upvalue from require('module-name')
   model=nil,      -- sensor model: AM23xx
+  addr=0x5C,      -- 7bit address AM23xx
+  debug=nil,      -- additional checks
   temperature=nil,-- integer value of temperature [0.01 C]
   humidity   =nil -- integer value of rel.humidity[0.01 %]
 }
 _G[M.name]=M
 
-local ADDR=0x5C -- 7bit address
+-- i2c helper functions
+local reg=require('i2cd')
 
 -- consistency check
 local function crc_check(c)
-  local len=c:len()
   local crc=0xFFFF
   local l,i
-  for l=1,len-2 do
+  for l=1,#c-2 do
     crc=bit.bxor(crc,c:byte(l))
     for i=1,8 do
       if bit.band(crc,1) ~= 0 then
@@ -38,52 +38,34 @@ local function crc_check(c)
       end
     end
   end
-  return crc==c:byte(len)*256+c:byte(len-1)
+  return crc==reg.int(c:sub(#c-1,#c),'uintBE')
 end
 
 -- initialize i2c
-local id=0
-local SDA,SCL -- buffer device address and pinout
 local init=false
 local last    -- wait at least 500 ms between reads
-function M.init(sda,scl,volatile)
+function M.init(SDA,SCL,volatile)
 -- volatile module
   if volatile==true then
     _G[M.name],package.loaded[M.name]=nil,nil -- volatile module
   end
 
--- buffer pin set-up
-  if (sda and sda~=SDA) or (scl and scl~=SCL) then
-    SDA,SCL=sda,scl
-    i2c.setup(id,SDA,SCL,i2c.SLOW)
-  end
+-- init i2c bus
+  reg.pedantic=M.debug
+  reg.init(SDA,SCL,true) -- 'i2cd' as volatile module, rely on local handle 'reg'
 
 -- initialization
   if not init then
--- wakeup
-    i2c.start(id)
-    i2c.address(id,ADDR,i2c.TRANSMITTER)
-    i2c.stop(id)
--- verify device address
-    i2c.start(id)
-    local found=i2c.address(id,ADDR,i2c.TRANSMITTER)
+    -- wakeup & verify device address
+    local found=reg.io(M.addr) and reg.io(M.addr)
     if found then
-    -- request MODEL_MSB 0x08 .. MODEL_LSB 0x09
-      i2c.write(id,0x03,0x08,0x02)
-    end
-    i2c.stop(id)
-    if found then
-    -- read MODEL_MSB 0x08 .. MODEL_LSB 0x09
-      i2c.start(id)
-      i2c.address(id,ADDR,i2c.RECEIVER)
-      local c=i2c.read(id,6)  -- cmd(2)+data(2)+crc(2)
-      i2c.stop(id)
-    -- MODEL: AM2320 2320, AM2321 2321
+    -- read MODEL_MSB 0x08 .. MODEL_LSB 0x09: cmd(2)+data(2)+crc(2)
+      local c=reg.io(M.addr,{0,0x03,0x08,0x02},6)
       found=crc_check(c)
       if found then
-        local m=c:byte(3)*256+c:byte(4)
+        c=reg.int(c:sub(3,4),'uintLE')
         M.model=({[0]='AM23xx', -- my AM2320 responds 0
-          [2315]='AM2315',[2320]='AM2320',[2321]='AM2321',[2322]='AM2322'})[m]
+          [2315]='AM2315',[2320]='AM2320',[2321]='AM2321',[2322]='AM2322'})[c]
         found=(M.model~=nil)
       end
     end
@@ -105,25 +87,12 @@ function M.read(wait_ms)
   if (tmr.now()-last+wait_ms*1000)>0 then
     tmr.delay(tmr.now()-last+wait_ms*1000)
   end
--- wakeup
-  i2c.start(id)
-  i2c.address(id,ADDR,i2c.TRANSMITTER)
-  i2c.stop(id)
--- request HUMIDITY_MSB 0x00 .. TEMPERATURE_LSB 0x03
-  i2c.start(id)
-  i2c.address(id,ADDR,i2c.TRANSMITTER)
-  i2c.write(id,0x03,0x00,0x04)
-  i2c.stop(id)
-  tmr.delay(1600)         -- wait at least 1.5ms
--- read HUMIDITY_MSB 0x00 .. TEMPERATURE_LSB 0x03
-  i2c.start(id)
-  i2c.address(id,ADDR,i2c.RECEIVER)
-  local c=i2c.read(id,8)  -- cmd(2)+data(4)+crc(2)
-  i2c.stop(id)
+-- wakeup & read HUMIDITY_MSB 0x00 .. TEMPERATURE_LSB 0x03: cmd(2)+data(4)+crc(2)
+  local c=reg.io(M.addr) and reg.io(M.addr,{0x03,0x00,0x04},8)
 -- expose results
   if crc_check(c) then
-    local h,t=c:byte(3)*256+c:byte(4),c:byte(5)*256+c:byte(6)
-    if bit.isset(t,15) then t=-bit.band(t,0x7fff) end
+    local h,t=reg.int(c:sub(3,4),'uintLE'),reg.int(c:sub(5,6),'uintLE')
+    if bit.isset(t,15) then t=-bit.band(t,0x7FFF) end
     M.humidity   =h*10    -- rel.humidity[0.01 %]
     M.temperature=t*10    -- temperature [0.01 C]
     last=tmr.now()        -- wait at least 500 ms between reads
