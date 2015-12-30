@@ -139,9 +139,6 @@ function M.init(pin_set,volatile,status)
   if type(pin_set)=='number' then
     pinSET=pin_set
     gpio.mode(pinSET,gpio.OUTPUT)
-    --sensor G1,G2,G3,n/a,G5,n/a,G7
-    M.mlen=({32,24,24,nil,32,nil,32})[M.model]
-    M.model=M.mlen and ('PMSx003'):gsub('x',M.model) or nil
   end
 
 -- initialization
@@ -153,6 +150,11 @@ function M.init(pin_set,volatile,status)
         :format(M.name,type(status)=='string' and status or 'paused','enhabled'))
     end
     uart.on('data')                         -- release uart
+  end
+  if not init then
+    --sensor G1,G2,G3,n/a,G5,n/a,G7
+    M.mlen=({32,24,24,nil,32,nil,32})[M.model]
+    M.model=M.mlen and ('PMSx003'):gsub('x',M.model) or nil
   end
 
 -- M.init suceeded if sensor model and message lenght are set
