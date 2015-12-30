@@ -33,8 +33,8 @@ Module output;
 
 local M={
   name=...,   -- module name, upvalue from require('module-name')
-  model=nil,  -- sensor model: PMS3003
-  mlen=24,    -- lenght of PMS3003 message
+  model=3,    -- sensor model: PMSx003 (aka Gx)
+  mlen=nil,   -- lenght of PMSx003 message
   stdATM=nil, -- use standatd atm correction instead of TSI standard
   verbose=nil,-- verbose output
   debug=nil,  -- additional ckecks
@@ -48,71 +48,78 @@ _G[M.name]=M
 --[[ Sensor data format
 PMS2003, PMS3003: 
   24 byte long messages via UART 9600 8N1 (3.3V TTL).
- MSB,LSB: Message header (4 bytes), 2 pairs of bytes (MSB,LSB)
-   1,  2: Begin message       (hex:424D, ASCII 'BM')
-   3,  4: Message body length (hex:0014, decimal 20)
- MSB,LSB: Message body (28 bytes), 14 pairs of bytes (MSB,LSB)
-   5,  6: PM 1.0 [ug/m3] (TSI standard)
-   7,  8: PM 2.5 [ug/m3] (TSI standard)
-   9, 10: PM 10. [ug/m3] (TSI standard)
-  11, 12: PM 1.0 [ug/m3] (std. atmosphere)
-  13, 14: PM 2.5 [ug/m3] (std. atmosphere)
-  15, 16: PM 10. [ug/m3] (std. atmosphere)
-  17..22: no idea what they are.
-  23, 24: cksum=byte01+..+byte22.
+DATA(MSB,LSB): Message header (4 bytes), 2 pairs of bytes (MSB,LSB)
+  -1(  1,  2): Begin message       (hex:424D, ASCII 'BM')
+   0(  3,  4): Message body length (hex:0014, decimal 20)
+DATA(MSB,LSB): Message body (28 bytes), 10 pairs of bytes (MSB,LSB)
+   1(  5,  6): PM 1.0 [ug/m3] (TSI standard)
+   2(  7,  8): PM 2.5 [ug/m3] (TSI standard)
+   3(  9, 10): PM 10. [ug/m3] (TSI standard)
+   4( 11, 12): PM 1.0 [ug/m3] (std. atmosphere)
+   5( 13, 14): PM 2.5 [ug/m3] (std. atmosphere)
+   6( 15, 16): PM 10. [ug/m3] (std. atmosphere)
+   7( 17, 18): no idea.
+   8( 19, 19): no idea.
+   9( 21, 22): no idea.
+  10( 23, 24): cksum=byte01+..+byte22
 
 PMS1003, PMS5003, PMS7003:
   32 byte long messages via UART 9600 8N1 (3.3V TTL).
- MSB,LSB: Message header (4 bytes), 2 pairs of bytes (MSB,LSB)
-   1,  2: Begin message       (hex:424D, ASCII 'BM')
-   3,  4: Message body length (hex:001C, decimal 28)
- MSB,LSB: Message body (28 bytes), 14 pairs of bytes (MSB,LSB)
-   5,  6: PM 1.0 [ug/m3] (TSI standard)
-   7,  8: PM 2.5 [ug/m3] (TSI standard)
-   9, 10: PM 10. [ug/m3] (TSI standard)
-  11, 12: PM 1.0 [ug/m3] (std. atmosphere)
-  13, 14: PM 2.5 [ug/m3] (std. atmosphere)
-  15, 16: PM 10. [ug/m3] (std. atmosphere)
-  17, 18: num. particles with diameter > 0.3 um in 100 cm3 of air
-  19, 20: num. particles with diameter > 0.5 um in 100 cm3 of air
-  21, 22: num. particles with diameter > 1.0 um in 100 cm3 of air
-  23, 24: num. particles with diameter > 2.5 um in 100 cm3 of air
-  25, 26: num. particles with diameter > 5.0 um in 100 cm3 of air
-  27, 28: num. particles with diameter > 10. um in 100 cm3 of air
-  29, 30: Reserved
-  31, 32: cksum=byte01+..+byte30.
+DATA(MSB,LSB): Message header (4 bytes), 2 pairs of bytes (MSB,LSB)
+  -1(  1,  2): Begin message       (hex:424D, ASCII 'BM')
+   0(  3,  4): Message body length (hex:001C, decimal 28)
+DATA(MSB,LSB): Message body (28 bytes), 14 pairs of bytes (MSB,LSB)
+   1(  5,  6): PM 1.0 [ug/m3] (TSI standard)
+   2(  7,  8): PM 2.5 [ug/m3] (TSI standard)
+   3(  9, 10): PM 10. [ug/m3] (TSI standard)
+   4( 11, 12): PM 1.0 [ug/m3] (std. atmosphere)
+   5( 13, 14): PM 2.5 [ug/m3] (std. atmosphere)
+   6( 15, 16): PM 10. [ug/m3] (std. atmosphere)
+   7( 17, 18): num. particles with diameter > 0.3 um in 100 cm3 of air
+   8( 19, 19): num. particles with diameter > 0.5 um in 100 cm3 of air
+   9( 21, 22): num. particles with diameter > 1.0 um in 100 cm3 of air
+  10( 23, 24): num. particles with diameter > 2.5 um in 100 cm3 of air
+  11( 25, 26): num. particles with diameter > 5.0 um in 100 cm3 of air
+  12( 27, 28): num. particles with diameter > 10. um in 100 cm3 of air
+  13( 29, 30): Reserved
+  14( 31, 32): cksum=byte01+..+byte30
 ]]
 local function decode(data)
 -- check message lenght
-  assert(M.debug~=true or #data==M.mlen,('%s: incomplete message.'):format(M.name))
-  local pms,cksum,mlen={},0,#data/2-1
+  assert(M.debug~=true or #data==M.mlen,('%s: Incomplete message.'):format(M.name))
+-- unpack message
+  local pms,cksum,blen={},0,#data/2-2
   local n,msb,lsb
-  for n=0,mlen do
-    msb,lsb=data:byte(2*n+1,2*n+2)  -- 2*char-->2*byte
-    pms[n]=msb*256+lsb               -- 2*byte-->dec
+  for n=-1,blen do
+    msb,lsb=data:byte(2*n+3,2*n+4)  -- 2*char-->2*byte
+    pms[n]=msb*0x100+lsb            -- 2*byte-->dec
     cksum=cksum+(n<mlen and msb+lsb or 0)
     if M.debug==true then
-      print(('  data#%2d byte:%3d,%3d dec:%6d cksum:%6d'):
+      print(('  data#%2d: 0x%02X%02X=%6d cksum:%6d'):
         format(n,msb,lsb,pms[n],cksum))
     end
   end
-  assert(M.debug~=true or (pms[0]==16973 and pms[1]==#data-4),
-    ('%s: wrongly phrased message.'):format(M.name))
--- Particulate Mater (PM)
-  if cksum==pms[#pms] and M.stdATM~=true then
-    M.pm01,M.pm25,M.pm10=pms[2],pms[3],pms[4] -- TSI standard
-  elseif cksum==pms[#pms] then
-    M.pm01,M.pm25,M.pm10=pms[5],pms[6],pms[7] -- stdATM
-  else
-    M.pm01,M.pm25,M.pm10=nil,nil,nil          -- cksum~=pms[#pms]
+  msb,lsb,blen,n=nil,nil,nil,nil     -- release memory
+  assert(M.debug~=true or (pms[-1]===0x424D and pms[0]==#data-4),
+    ('%s: Wrongly phrased message.'):format(M.name))
+-- particulate mater (PM)
+  if cksum==pms[#pms] and M.stdATM~=true then -- TSI standard
+    M.pm01,M.pm25,M.pm10=pms[1],pms[2],pms[3]
+  elseif cksum==pms[#pms] then                -- stdATM
+    M.pm01,M.pm25,M.pm10=pms[4],pms[5],pms[6]
+  else                                        -- failed cksum
+    M.pm01,M.pm25,M.pm10=nil,nil,nil
   end
   if M.verbose==true then
     print(('%s: %4s,%4s,%4s [ug/m3]')
       :format(M.name,M.pm01 or 'null',M.pm25 or 'null',M.pm10 or 'null'))
   end
--- Particle (number) Size Distribution (PSD)
-  if cksum==pms[#pms] and pms[1]==28 then
-    for n=1,5 do psd[n]=pms[n+8]-pms[n+7] end
+-- particle (number) size distribution (PSD)
+  if cksum==pms[#pms] and pms[0]==28 then     -- G1||G5||G7
+    psd={}
+    for n=1,5 do psd[n]=pms[n+7]-pms[n+6] end
+  else                                        -- failed cksum
+    psd=nil
   end
   if M.verbose==true and M.psd then
     print(('%s: %4s,%4s,%4s,%4s,%4s [#/100cm3]')
@@ -132,7 +139,9 @@ function M.init(pin_set,volatile,status)
   if type(pin_set)=='number' then
     pinSET=pin_set
     gpio.mode(pinSET,gpio.OUTPUT)
-    M.model=({[32]='PMS1003',[24]='PMS3003'})[M.mlen]
+    --sensor G1,G2,G3,n/a,G5,n/a,G7
+    M.mlen=({32,24,24,nil,32,nil,32})[M.model]
+    M.model=M.mlen and ('PMSx003'):gsub('x',M.model) or nil
   end
 
 -- initialization
@@ -146,8 +155,8 @@ function M.init(pin_set,volatile,status)
     uart.on('data')                         -- release uart
   end
 
--- M.init suceeded if sensor model is set
-  init=(M.model~=nil)
+-- M.init suceeded if sensor model and message lenght are set
+  init=(M.model~=nil)and(M.len~=nil)
   return init
 end
 
@@ -181,7 +190,7 @@ function M.read(callBack)
 
 -- sampling time-out: 2s after sampling started
   tmr.alarm(4,2000,0,function()
-    M.pm01,M.pm25,M.pm10=nil,nil,nil
+    M.pm01,M.pm25,M.pm10,M.psd=nil,nil,nil,nil
   -- restore UART & callBack
     M.init(nil,nil,'failed')
     if type(callBack)=='function' then callBack() end
