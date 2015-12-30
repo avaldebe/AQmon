@@ -21,7 +21,7 @@ rfcomm1 { bind no;device 20:13:06:19:21:35;channel 1;comment "HC-06"; }
 sudo rfcomm connect 1
 # or, enable automatic connection to HC-06
 sudo rfcomm bind 1
-# and disable with automatic connection to HC-06
+# and disable automatic connection to HC-06
 sudo rfcomm release 1
 ```
 
