@@ -22,7 +22,7 @@ Module output;
   - pm01: PM ug/m3 from particles with diameter <= 1.0 um.
   - pm25: PM ug/m3 from particles with diameter <= 2.5 um.
   - pm10: PM ug/m3 from particles with diameter <= 10. um.
-- Particle (number) Size Distribution (PSD): 
+- Particle (number) Size Distribution (PSD):
   - Only from PMS1003, PMS5003 and PMS7003 sensors.
   - psd[1]: #particles/100cm3 with 0.3 um < diam <= 0.5 um.
   - psd[2]: #particles/100cm3 with 0.5 um < diam <= 1.0 um.
@@ -46,7 +46,7 @@ local M={
 _G[M.name]=M
 
 --[[ Sensor data format
-PMS2003, PMS3003: 
+PMS2003, PMS3003:
   24 byte long messages via UART 9600 8N1 (3.3V TTL).
 DATA(MSB,LSB): Message header (4 bytes), 2 pairs of bytes (MSB,LSB)
   -1(  1,  2): Begin message       (hex:424D, ASCII 'BM')
@@ -100,7 +100,7 @@ local function decode(data)
     end
   end
   msb,lsb,blen,n=nil,nil,nil,nil     -- release memory
-  assert(M.debug~=true or (pms[-1]===0x424D and pms[0]==#data-4),
+  assert(M.debug~=true or (pms[-1]==0x424D and pms[0]==#data-4),
     ('%s: Wrongly phrased message.'):format(M.name))
 -- particulate mater (PM)
   if cksum==pms[#pms] and M.stdATM~=true then -- TSI standard
