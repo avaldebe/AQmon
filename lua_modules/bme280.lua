@@ -30,9 +30,9 @@ local M={
   debug=nil,      -- additional checks
   oss=0x01,       -- default oversamplig: 0=skip, 1=x1 .. 5=x16
   mode=0x03,      -- default sampling: 0=sleep, 1&2=forced(on demand), 3:normal(continious)
-  temperature=nil,-- integer value of temperature [10*C]
-  pressure   =nil,-- integer value of preassure [100*hPa]
-  humidity   =nil -- integer value of relative humidity [10*%]
+  temperature=nil,-- integer value of temperature [0.01 C]
+  pressure   =nil,-- integer value of preassure [Pa]=[0.01 hPa]
+  humidity   =nil -- integer value of rel.humidity [0.01 %]
 }
 _G[M.name]=M
 

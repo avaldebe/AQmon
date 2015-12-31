@@ -30,11 +30,37 @@ Lua modules for [AQmon][] project.<br/>
     Can have two of them on the same bus if the addresses differ.
   - AM2320 and AM2321 sensors have the same address: 0x5C.
     Can ony have one of them on the same bus.
-  - The `i2c-autoscan.lua` script can help to find connected I2C devises.
+  - Use `require('i2cd').autoscan(true)` to find connected I2C devises.
 
 [nodemcu-devkit]:   https://github.com/nodemcu/nodemcu-devkit
 
 ### Ussage example
+
+#### Unit formatting
+- `bmp180.lua`:
+  - `bmp180.temperature` integer value of temperature in 0.01 C.
+  - `bmp180.preassure`   integer value of preassure in Pa (0.01 hPa).
+- `am2321.lua`:
+  - `am2321.temperature` integer value of temperature in 0.01 C.
+  - `am2321.humidity`    integer value of relative humidity in 0.01 %rH.
+- `bme280.lua`:
+  - `bme280.temperature` integer value of temperature in 0.01 C.
+  - `bme280.preassure`   integer value of preassure in Pa (0.01 hPa).
+  - `bme280.humidity`    integer value of relative humidity in 0.01 %rH.
+
+To format the output into C/hPa/%rH, the examples will usethe flowing function:
+```lua
+function f7p2(v)
+  if v==nil then
+    return ('%7s'):format('null')
+  elseif (1/2)==0 then  -- no floating point operations
+    v=(v>=0 and '%03d' or '%04d'):format(v)
+    return ('%4s.%2s'):format(v:sub(1,-3),v:sub(-2))
+  else                  -- use floating point fomatting
+    return ('%7.2f'):format(v/100)
+  end
+end
+```
 
 #### BMP085, BMP180
 ```lua
@@ -49,23 +75,9 @@ end
 -- release memory
 bmp180,package.loaded.bmp180 = nil,nil
 
--- format and print the results
-function f7p2(v)
-  if v==nil then
-    return ('%7s'):format('null')
-  elseif (1/2)==0 then  -- no floating point operations
-    v=(v>=0 and '%03d' or '%04d'):format(v)
-    return ('%4s.%2s'):format(v:sub(1,-3),v:sub(-2))
-  else                  -- use floating point fomatting
-    return ('%7.2f'):format(v/100)
-  end
-end
-
+-- print formated results
 print(('pres:%s hPa, temp:%s C, heap:%d')
   :format(f7p2(pres),f7p2(temp),node.heap()))
-
--- release memory
-f7p2 = nil
 ```
 
 #### AM2320, AM2321
@@ -81,23 +93,9 @@ end
 -- release memory
 am2321,package.loaded.am2321 = nil,nil
 
--- format and print the results
-function f7p2(v)
-  if v==nil then
-    return ('%7s'):format('null')
-  elseif (1/2)==0 then  -- no floating point operations
-    v=(v>=0 and '%03d' or '%04d'):format(v)
-    return ('%4s.%2s'):format(v:sub(1,-3),v:sub(-2))
-  else                  -- use floating point fomatting
-    return ('%7.2f'):format(v/100)
-  end
-end
-
+-- print formated results
 print(('rhum:%s %%, temp:%s C, heap:%d')
  :format(f7p2(rhum),f7p2(temp),node.heap()))
-
--- release memory
-f7p2 = nil
 ```
 
 #### BME280
@@ -113,23 +111,9 @@ end
 -- release memory
 bme280,package.loaded.bme280 = nil,nil
 
--- format and print the results
-function f7p2(v)
-  if v==nil then
-    return ('%7s'):format('null')
-  elseif (1/2)==0 then  -- no floating point operations
-    v=(v>=0 and '%03d' or '%04d'):format(v)
-    return ('%4s.%2s'):format(v:sub(1,-3),v:sub(-2))
-  else                  -- use floating point fomatting
-    return ('%7.2f'):format(v/100)
-  end
-end
-
+-- print formated results
 print(('pres:%s hPa, temp:%s C, rhum:%s %%, heap:%d')
  :format(f7p2(pres),f7p2(temp),f7p2(rhum),node.heap()))
-
--- release memory
-f7p2 = nil
 ```
 
 #### PMS3003
