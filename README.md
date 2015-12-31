@@ -3,12 +3,11 @@ DIY Air Quality Monitor
 
 ### Controler
 
-- ESP8266: [nodemcu-devkit][] with [nodemcu-firmware][] ([0.9.6 20150704][], integer).
+- ESP8266: [nodemcu-devkit][] with [nodemcu-firmware][] (custom 1.4.0 20151006, integer).
 - Send met data to [ThingSpeak][].
 
 [nodemcu-devkit]:   https://github.com/nodemcu/nodemcu-devkit
 [nodemcu-firmware]: https://github.com/nodemcu/nodemcu-firmware
-[0.9.6 20150704]:   https://github.com/nodemcu/nodemcu-firmware/releases/tag/0.9.6-dev_20150704
 [thingspeak]:       https://thingspeak.com
 
 ### Sensors
@@ -70,9 +69,8 @@ DIY Air Quality Monitor
 
 ### ToDo
 
-- lua_modules: There is bearly enough RAM for the current modules.
-  A [nodemcu-custom-build][] for 0.9.6 could be the way forward.
-  - BME280 sensor, oversample modes.
+- lua_modules: Under 0.9.6 there is bearly enough RAM for the current modules.
+               Moved to 1.4.0 custom nodemcu-firmware.
   - MAX17043 sensor.
   - browser side makrdown with [strapdown.js][]
   - index.md: index page with thingspeak plugins and external widgets
