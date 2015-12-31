@@ -31,7 +31,8 @@ Lua modules for [AQmon][] project.<br/>
 - `rgbLED.lua`: Returns a status function for a RGB LED.
 - `hueLED.lua`: Returns a function that control a RGB LED with Hue,
                 at full Saturation and Brightness (HSV).
-- `i2c-autoscan.lua`: scan gpio pins and address and report devices found.
+- `i2cd.lua`: I2C helper functions with pedantic debug checks.
+              Use `require('i2cd').autoscan(true)` to find connected I2C devises.
 
 #### Upload from command line with [luatool.py][]
 

@@ -30,7 +30,7 @@ Lua modules for [AQmon][] project.<br/>
     Can have two of them on the same bus if the addresses differ.
   - AM2320 and AM2321 sensors have the same address: 0x5C.
     Can ony have one of them on the same bus.
-  - The `i2c-autoscan.lua` script can help to find connected I2C devises.
+  - Use `require('i2cd').autoscan(true)` to find connected I2C devises.
 
 [nodemcu-devkit]:   https://github.com/nodemcu/nodemcu-devkit
 
