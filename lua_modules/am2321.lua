@@ -16,7 +16,7 @@ local M={
   name=...,       -- module name, upvalue from require('module-name')
   model=nil,      -- sensor model: AM23xx
   temperature=nil,-- integer value of temperature [0.01 C]
-  humidity   =nil -- integer value of rel.humidity[0.01 %]
+  humidity   =nil -- integer value of rel.humidity [0.01 %]
 }
 _G[M.name]=M
 
