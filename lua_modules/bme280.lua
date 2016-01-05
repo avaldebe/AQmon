@@ -290,11 +290,11 @@ function M.read(...)
   v1 = bit.lshift(h,14) - bit.lshift(H[4],20) - H[5]*v1
   v2 = bit.rshift(v2,10) + 2097152
 -- Whit this line (based on orig lib) h~=observed rel.hum./2
---v1 = bit.rshift(v1 +16384,15)*bit.rshift(v2*H[2] + 8192,14)
+  v1 = bit.rshift(v1 +16384,15)*bit.rshift(v2*H[2] + 8192,14)
 -- Hack, gets within 5%rH observed rel.hum.
 --v1 = bit.rshift(v1 +16384,15)*bit.rshift(v2*H[2]*2+8192,14)
 -- Likely fix, as the orig code dops the last bit of adc_h
-  v1 = bit.rshift(v1 + 8192,14)*bit.rshift(v2*H[2] + 8192,14)
+--v1 = bit.rshift(v1 + 8192,14)*bit.rshift(v2*H[2] + 8192,14)
   v2 = bit.rshift(v1,15)
   v2 = bit.rshift(v2*v2,7)
   v1 = v1 - bit.rshift(v2*H[1],4)
