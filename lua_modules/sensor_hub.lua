@@ -25,14 +25,14 @@ local M={
 _G[M.name]=M
 
 -- Format module outputs
-function M.format(vars,message,squeese)
+function M:format(message,squeese)
   local k,v
   local varD4={pm01='pm01',pm25='pm25',pm10='pm10'} -- %d4 format
   local varF7={temp='temp',temperature='temp',
                rhum='rhum',humidity='rhum',
                pres='pres',pressure='pres'}         -- %7.2f format
 
-  for k,v in pairs(vars) do
+  for k,v in pairs(self) do
 -- formatted output (w/padding) from integer values
     if type(v)=='number' then
       if varD4[k]~=nil then

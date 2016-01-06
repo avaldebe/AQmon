@@ -34,17 +34,15 @@ local function speak(verbose)
     return
   end
   print('Read data')
-  require('sensors').init(pin.sda,pin.scl,pin.PMset)
+  local sensors=require('sensors').init(pin.sda,pin.scl,pin.PMset,true) -- volatile module
   sensors.verbose=verbose
   sensors.read(function()
     sensors.heap,sensors.upTime=node.heap(),tmr.time()
-    api.path=sensors.format(sensors,'status=uptime={upTime},heap={heap}'
-      ..'&field1={temp}&field2={rhum}&field3={pres}&field4={pm01}&field5={pm25}&field6={pm10}',
-      true) -- remove spaces
+    api.path=sensors:format(api.update,true) -- format sensors output,remove spaces
+              :gsub('{(.-)}',api)            -- resolve put/write key
   -- release memory
-    sensors,package.loaded.sensors=nil,nil
+    sensors=nil
     collectgarbage()
-    api.path=('update?key={put}&{path}'):gsub('{(.-)}',api)
   --api:sendData()
     require('sendData')(api,status)
     api.last=tmr.time()

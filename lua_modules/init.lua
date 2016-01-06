@@ -22,7 +22,7 @@ do
 -- override by pinout and application from 'keys' module, if module is found
   if pcall(function() require('keys') end) then
     pin=require('keys').pin
-    app=require('keys').run
+    app=require('keys').app
   end
   gpio.mode(pin.led,gpio.OUTPUT)
 

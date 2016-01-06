@@ -1,4 +1,4 @@
-local M={sta={},ap={},api={}}
+local M={sta={},ap={},api={},pin={},app='AQmon'} -- Appliation to run
 
 -- Keys for wifi.setmode(wifi.STATION) or wifi.setmode(wifi.STATIONAP)
 M.sta.SSID0='PASS0' -- pass=require('keys').sta
@@ -14,15 +14,14 @@ M.api.url='api.thingspeak.com'
 M.api.id='CHANNEL_ID'   -- api=require('keys').api
 M.api.get='Read  Key'   --'https://..api.url../channels/'..api.id..'/feed.json?key='..api.get
 M.api.put='Write Key'   --'https://..api.url../update?key='..api.put
+M.api.update='update?key={put}&status=uptime={upTime},heap={heap}'
+  ..'&field1={temp}&field2={rhum}&field3={pres}&field4={pm01}&field5={pm25}&field6={pm10}'
 M.api.freq=1            -- update frequency in minutes
 
 -- HW pin assignment
-M.pin={led=0,tact=3,          -- BUILTIN: led,tact switch (KEY_FLASH)
+M.pin={led=0,tact=3,          -- BUILTIN: led (active low),tact switch (KEY_FLASH)
        ledR=1,ledG=2,ledB=4,  -- RGB led
        sda=5,scl=6,           -- I2C bus
-       PMset=7}               -- PMS3003
-
--- Appliation to run
-M.run='AQmon'
+       PMset=7}               -- PMSx003 set (enhable) pin
 
 return M
