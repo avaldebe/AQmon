@@ -17,7 +17,12 @@ M.api.put='Write Key'   --'https://..api.url../update?key='..api.put
 M.api.freq=1            -- update frequency in minutes
 
 -- HW pin assignment
-M.pin={ledR=1,ledG=2,ledB=4,  -- RGB led
+M.pin={led=0,tact=3,          -- BUILTIN: led,tact switch (KEY_FLASH)
+       ledR=1,ledG=2,ledB=4,  -- RGB led
        sda=5,scl=6,           -- I2C bus
        PMset=7}               -- PMS3003
+
+-- Appliation to run
+M.run='AQmon'
+
 return M

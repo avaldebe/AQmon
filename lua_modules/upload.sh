@@ -26,17 +26,15 @@ while (($#)); do
     esptool.py --port $PORT --baud 115200 write_flash \
       0x7C000 ../bin/esp_init_data_default.bin \
       0x7E000 ../bin/blank.bin ;;
-# list) luatool.py -p $PORT -l;;
-  wipe)
-    luatool.py $TRANSPORT -rw;;
+# list)   luatool.py $TRANSPORT -l;;
+  reboot) luatool.py $TRANSPORT -r;;
+  wipe)   luatool.py $TRANSPORT -rw;;
   bmp180|am2321|bme280|pms3003) # sensor modules
     luatool.py $TRANSPORT -cf $opt.lua;;
   hub|hub.*|*_hub|*_hub.*)      # sensor hub module
     luatool.py $TRANSPORT -rcf ${opt%.*}.lua -t sensors.lua;;
-  keys|wifi_connect|sendData|rgbLED|hueLED)
+  AQmon|keys|wifi_connect|sendData|rgbLED|hueLED)
     luatool.py $TRANSPORT -cf $opt.lua;;
-  AQmon|AQmon.*|*_app|*_app.*)
-    luatool.py $TRANSPORT -rcf ${opt%.*}.lua -t app.lua;;
   init|init.lua)
     luatool.py $TRANSPORT -rf ${opt%.*}.lua;;
   *_v*|*_v*.lua)  # alternative versions, eg keys_v37527
