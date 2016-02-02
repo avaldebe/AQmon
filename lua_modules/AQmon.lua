@@ -66,6 +66,6 @@ tmr.alarm(0,10000,0,function() -- 10s after start
   else
     print('Press KEY_FLASH to send NOW')
     gpio.mode(3,gpio.INT)
-    gpio.trig(3,'low',function(state) speak(true) end)
+    gpio.trig(3,'down',function(state) speak(true) end)
   end
 end)
