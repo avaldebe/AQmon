@@ -109,30 +109,30 @@ function M.init(SDA,SCL,volatile,scan)
   i2c.setup(0,SDA,SCL,i2c.SLOW)
 -- scan i2c bus
   if scan==true then
+    print(('%s: Scanning SDA %d (GPIO%02d), SCL %d (GPIO%02d)')
+      :format(M.name,SDA,gpio_pin[SDA],SCL,gpio_pin[SCL]))
     local addr,try
-    for addr=0x08,0x77 do   -- 7bit addresses; skip invalid: 0x00..0x07,0x78..0x7F
-      for try=1,3 do        -- try each address 3 times
-        if M.io(addr) then  -- device responds with ACK?
-          print(('%s: Device found at address 0x%02X,')
-            ..' SDA %d (GPIO%02d), SCL %d (GPIO%02d) on try %d.')
-            :format(M.name,addr,SDA,gpio_pin[SDA],SCL,gpio_pin[SCL],try))
-          break
-        end
+    for addr=0x08,0x77 do -- 7bit addresses; skip invalid: 0x00..0x07,0x78..0x7F
+      tmr.wdclr()         -- pat the (watch)dog!
+      try=M.io(addr) and 1 or -- try each address 3 times
+          M.io(addr) and 2 or -- if device responds with ACK?
+          M.io(addr) and 3
+      if try then
+        print(('%s:   Device found at address 0x%02X on try %d')
+          :format(M.name,addr,try))
       end
     end
   end
 end
 function M.autoscan(volatile)
--- Usage: require('i2cd').io(true)
+-- Usage: require('i2cd').autoscan(true)
 --  Scan all pins and addresses and free module from memory after completetion
   print(('%s: Scanning all pins for I2C devices'):format(M.name))
   local sda,scl
   for scl=1,#gpio_pin do
     for sda=1,#gpio_pin do
-      tmr.wdclr()       -- pat the (watch)dog!
-      if sda~=scl then  -- if the pins are the same then skip this round
-        M.init(sda,scl,volatile,true)
-      end
+      -- if the pins are the same then skip this round
+      if sda~=scl then M.init(sda,scl,volatile,true) end
     end
   end
   print(('%s: Scanning completed'):format(M.name))
