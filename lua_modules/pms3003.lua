@@ -158,7 +158,7 @@ function M.init(pin_set,volatile,status)
   end
 
 -- M.init suceeded if sensor model and message lenght are set
-  init=(M.model~=nil)and(M.len~=nil)
+  init=(M.model~=nil)and(M.mlen~=nil)
   return init
 end
 
