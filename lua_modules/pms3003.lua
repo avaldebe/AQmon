@@ -88,18 +88,18 @@ local function decode(data)
 -- check message lenght
   assert(M.debug~=true or #data==M.mlen,('%s: Incomplete message.'):format(M.name))
 -- unpack message
-  local pms,cksum,blen={},0,#data/2-2
+  local pms,cksum,dlen={},0,#data/2-2
   local n,msb,lsb
-  for n=-1,blen do
+  for n=-1,dlen do
     msb,lsb=data:byte(2*n+3,2*n+4)  -- 2*char-->2*byte
     pms[n]=msb*0x100+lsb            -- 2*byte-->dec
-    cksum=cksum+(n<mlen and msb+lsb or 0)
+    cksum=cksum+(n<dlen and msb+lsb or 0)
     if M.debug==true then
       print(('  data#%2d: 0x%02X%02X=%6d cksum:%6d'):
         format(n,msb,lsb,pms[n],cksum))
     end
   end
-  msb,lsb,blen,n=nil,nil,nil,nil     -- release memory
+  msb,lsb,dlen,n=nil,nil,nil,nil     -- release memory
   assert(M.debug~=true or (pms[-1]==0x424D and pms[0]==#data-4),
     ('%s: Wrongly phrased message.'):format(M.name))
 -- particulate mater (PM)
