@@ -33,7 +33,8 @@ void loopHandler() {
 
 void setup() {
   Serial.begin(9600);
-  Serial << endl << endl;
+  Serial.printf("\n\n");
+
   Homie_setBrand("AQmon");
   Homie_setFirmware("AQmon", GIT_TAG);
   Homie.setSetupFunction(setupHandler).setLoopFunction(loopHandler);
@@ -47,7 +48,7 @@ void setup() {
   rhumNode.advertise("sensor");
   rhumNode.advertise("unit");
   rhumNode.advertise("percentage");
-  
+
   pms.init();
   // PMS3003: PM1 concentration
   pm01Node.advertise("sensor");
@@ -62,8 +63,10 @@ void setup() {
   pm10Node.advertise("unit");
   pm10Node.advertise("concentration");
 
+#ifndef LED_FB
   Homie.disableLedFeedback();
-#ifndef DEBUG
+#endif
+#ifndef LOGGER
   Homie.disableLogging();
 #endif
   Homie.setup();
@@ -83,7 +86,7 @@ void dhtSetup() {
 }
 
 void dhtLoop(){
-#ifdef DEBUG
+#ifdef LOGGER
   switch (dht.read()){
   case DHT12_OK:
     Homie.getLogger().printf("DHT12: %5.1f °C, %5.1f %%\n", dht.temperature, dht.humidity);
@@ -124,7 +127,7 @@ void pmsSetup() {
 }
 
 void pmsLoop(){
-#ifdef DEBUG
+#ifdef LOGGER
   switch (pms.read()) {
   case pms.OK:
     Homie.getLogger().printf("PMS3003: %2d, %2d, %2d [ug/m3]\n",
