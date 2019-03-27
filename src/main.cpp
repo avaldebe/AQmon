@@ -35,7 +35,7 @@ void setup() {
   Serial.begin(9600);
   Serial << endl << endl;
   Homie_setBrand("AQmon");
-  Homie_setFirmware("AQmon", GIT_REV);
+  Homie_setFirmware("AQmon", GIT_TAG);
   Homie.setSetupFunction(setupHandler).setLoopFunction(loopHandler);
 
   Wire.begin(DHT_SDA, DHT_SCL);
