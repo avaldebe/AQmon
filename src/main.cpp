@@ -49,21 +49,23 @@ void setup() {
   rhumNode.advertise("percentage");
   
   pms.init();
-  // PMSx003: PM1 concentration
+  // PMS3003: PM1 concentration
   pm01Node.advertise("sensor");
   pm01Node.advertise("unit");
   pm01Node.advertise("concentration");
-  // PMSx003: PM2.5 concentration
+  // PMS3003: PM2.5 concentration
   pm25Node.advertise("sensor");
   pm25Node.advertise("unit");
   pm25Node.advertise("concentration");
-  // PMSx003: PM10 concentration
+  // PMS3003: PM10 concentration
   pm10Node.advertise("sensor");
   pm10Node.advertise("unit");
   pm10Node.advertise("concentration");
 
   Homie.disableLedFeedback();
-//Homie.disableLogging();
+#ifndef DEBUG
+  Homie.disableLogging();
+#endif
   Homie.setup();
 }
 
@@ -81,75 +83,83 @@ void dhtSetup() {
 }
 
 void dhtLoop(){
+#ifdef DEBUG
   switch (dht.read()){
   case DHT12_OK:
+    Homie.getLogger().printf("DHT12: %5.1f °C, %5.1f %%\n", dht.temperature, dht.humidity);
     break;
   case DHT12_ERROR_CHECKSUM:
-    Homie.getLogger().printf("DTH12 checksum error\n");
+    Homie.getLogger().printf("DTH12: checksum error\n");
     return;
   case DHT12_ERROR_CONNECT:
-    Homie.getLogger().printf("DTH12 connect error\n");
+    Homie.getLogger().printf("DTH12: connect error\n");
     return;
   case DHT12_MISSING_BYTES:
-    Homie.getLogger().printf("DTH12 missing bytes\n");
+    Homie.getLogger().printf("DTH12: missing bytes\n");
     return;
   default:
-    Homie.getLogger().printf("DTH12 unknown bytes\n");
+    Homie.getLogger().printf("DTH12: unknown bytes\n");
     return;
   }
+#else
+  if (dht.read() != DHT12_OK)
+    return;
+#endif
   // DHT12: temperature (1 decimal place)
-  Homie.getLogger().printf("DHT12 temp: %5.1f °C\n",  dht.temperature);
   tempNode.setProperty("degrees").send(String(dht.temperature, 1));
   // DHT12: (relative) humidity (1 decimal place)
-  Homie.getLogger().printf("DHT12 rhum: %5.1f °C\n", dht.humidity);
   tempNode.setProperty("percentage").send(String(dht.humidity, 1));
 }
 
 void pmsSetup() {
-  // PMSx003: PM1 concentration
+  // PMS3003: PM1 concentration
   pm01Node.setProperty("sensor").send("PMS3003");
   pm01Node.setProperty("unit").send("ug/m3");
-  // PMSx003: PM2.5 concentration
+  // PMS3003: PM2.5 concentration
   pm25Node.setProperty("sensor").send("PMS3003");
   pm25Node.setProperty("unit").send("ug/m3");
-  // PMSx003: PM10 concentration
+  // PMS3003: PM10 concentration
   pm10Node.setProperty("sensor").send("PMS3003");
   pm10Node.setProperty("unit").send("ug/m3");
 }
 
 void pmsLoop(){
+#ifdef DEBUG
   switch (pms.read()) {
   case pms.OK:
+    Homie.getLogger().printf("PMS3003: %2d, %2d, %2d [ug/m3]\n",
+      pms.pm01,pms.pm25,pms.pm10);
     break;
   case pms.ERROR_TIMEOUT:
-    Homie.getLogger().printf("PMSx003 timeout error\n");
+    Homie.getLogger().printf("PMS3003: %s\n", PMS_ERROR_TIMEOUT);
     return;
   case pms.ERROR_MSG_HEADER:
-    Homie.getLogger().printf("PMSx003 incomplete message header\n");
+    Homie.getLogger().printf("PMS3003: %s\n", PMS_ERROR_MSG_HEADER);
     return;
   case pms.ERROR_MSG_BODY:
-    Homie.getLogger().printf("PMSx003 incomplete message boddy\n");
+    Homie.getLogger().printf("PMS3003: %s\n", PMS_ERROR_MSG_BODY);
     return;
   case pms.ERROR_MSG_START:
-    Homie.getLogger().printf("PMSx003 wrong message start\n");
+    Homie.getLogger().printf("PMS3003: %s\n", PMS_ERROR_MSG_START);
     return;
   case pms.ERROR_MSG_LENGHT:
-    Homie.getLogger().printf("PMSx003 message too long\n");
+    Homie.getLogger().printf("PMS3003: %s\n", PMS_ERROR_MSG_LENGHT);
     return;
   case pms.ERROR_MSG_CKSUM:
-    Homie.getLogger().printf("PMSx003 wrong message checksum\n");
+    Homie.getLogger().printf("PMS3003: %s\n", PMS_ERROR_MSG_CKSUM);
     return;
   default:
-    Homie.getLogger().printf("PMSx003 unknown error\n");
+    Homie.getLogger().printf("PMS3003: unknown error\n");
     return;
   }
-  // PMSx003: PM1 concentration
-  Homie.getLogger().printf("PMSx003 PM1:   %3d  ug/m3\n", pms.pm[0]);
-  pm01Node.setProperty("concentration").send(String(pms.pm[0]));
-  // PMSx003: PM2.5 concentration
-  Homie.getLogger().printf("PMSx003 PM2.5: %3d  ug/m3\n", pms.pm[1]);
-  pm25Node.setProperty("concentration").send(String(pms.pm[1]));
-  // PMSx003: PM10 concentration
-  Homie.getLogger().printf("PMSx003 PM10:  %3d  ug/m3\n", pms.pm[2]);
-  pm10Node.setProperty("concentration").send(String(pms.pm[2]));
+#else
+  if (pms.read() != pms.OK)
+    return;
+#endif
+  // PMS3003: PM1 concentration
+  pm01Node.setProperty("concentration").send(String(pms.pm01));
+  // PMS3003: PM2.5 concentration
+  pm25Node.setProperty("concentration").send(String(pms.pm25));
+  // PMS3003: PM10 concentration
+  pm10Node.setProperty("concentration").send(String(pms.pm10));
 }
