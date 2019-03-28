@@ -34,6 +34,7 @@ void loopHandler() {
 void setup() {
   Serial.begin(9600);
   Serial.printf("\n\n");
+  Serial.flush();
 
   Homie_setBrand("AQmon");
   Homie_setFirmware("AQmon", GIT_TAG);
@@ -87,21 +88,22 @@ void dhtSetup() {
 
 void dhtLoop(){
 #ifdef LOGGER
+  Homie.getLogger().print("DHT12: ");
   switch (dht.read()){
   case DHT12_OK:
-    Homie.getLogger().printf("DHT12: %5.1f °C, %5.1f %%\n", dht.temperature, dht.humidity);
+    Homie.getLogger().printf("%5.1f °C, %5.1f %%\n", dht.temperature, dht.humidity);
     break;
   case DHT12_ERROR_CHECKSUM:
-    Homie.getLogger().printf("DTH12: checksum error\n");
+    Homie.getLogger().println("Checksum error");
     return;
   case DHT12_ERROR_CONNECT:
-    Homie.getLogger().printf("DTH12: connect error\n");
+    Homie.getLogger().println("Connect error");
     return;
   case DHT12_MISSING_BYTES:
-    Homie.getLogger().printf("DTH12: missing bytes\n");
+    Homie.getLogger().println("Missing bytes");
     return;
   default:
-    Homie.getLogger().printf("DTH12: unknown bytes\n");
+    Homie.getLogger().println("Unknown bytes");
     return;
   }
 #else
@@ -128,31 +130,35 @@ void pmsSetup() {
 
 void pmsLoop(){
 #ifdef LOGGER
+  Homie.getLogger().print("PMS3003: ");
   switch (pms.read()) {
   case pms.OK:
-    Homie.getLogger().printf("PMS3003: %2d, %2d, %2d [ug/m3]\n",
+    Homie.getLogger().printf("%2d, %2d, %2d [ug/m3]\n",
       pms.pm01,pms.pm25,pms.pm10);
     break;
   case pms.ERROR_TIMEOUT:
-    Homie.getLogger().printf("PMS3003: %s\n", PMS_ERROR_TIMEOUT);
+    Homie.getLogger().println(PMS_ERROR_TIMEOUT);
     return;
   case pms.ERROR_MSG_HEADER:
-    Homie.getLogger().printf("PMS3003: %s\n", PMS_ERROR_MSG_HEADER);
+    Homie.getLogger().println(PMS_ERROR_MSG_HEADER);
     return;
   case pms.ERROR_MSG_BODY:
-    Homie.getLogger().printf("PMS3003: %s\n", PMS_ERROR_MSG_BODY);
+    Homie.getLogger().println(PMS_ERROR_MSG_BODY);
     return;
   case pms.ERROR_MSG_START:
-    Homie.getLogger().printf("PMS3003: %s\n", PMS_ERROR_MSG_START);
+    Homie.getLogger().println(PMS_ERROR_MSG_START);
     return;
   case pms.ERROR_MSG_LENGHT:
-    Homie.getLogger().printf("PMS3003: %s\n", PMS_ERROR_MSG_LENGHT);
+    Homie.getLogger().println(PMS_ERROR_MSG_LENGHT);
     return;
   case pms.ERROR_MSG_CKSUM:
-    Homie.getLogger().printf("PMS3003: %s\n", PMS_ERROR_MSG_CKSUM);
+    Homie.getLogger().println(PMS_ERROR_MSG_CKSUM);
     return;
+  case pms.ERROR_PMS_TYPE:
+    Homie.getLogger().println(PMS_ERROR_PMS_TYPE);
+    break;
   default:
-    Homie.getLogger().printf("PMS3003: unknown error\n");
+    Homie.getLogger().println("unknown error");
     return;
   }
 #else
