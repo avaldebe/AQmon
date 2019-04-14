@@ -40,7 +40,7 @@ Fortunatelly, almost all ESP-01 boards currently available come with **1 MiB** o
 ### Firmware
 
 It uses [Homie][] for MQTT messaging and WiFi configuration.
-The  handles The PMS3003 sensor is handeled by the [PMSerial][] library,
+The  handles the PMS3003 sensor is handeled by the [PMSerial][] library,
 and the [DHT12][] sensor by the [DHT12][DHT12lib] library.
 
 [Homie]: https://platformio.org/lib/show/555/Homie/installation
@@ -74,7 +74,7 @@ pio -e esp01 -e upload
 ### Config example
 
 The following example defines an AQmon named `"AQmon test"`,
-which will send sensor measurements every 300 s
+which will send sensor measurements every 60 s
 to test.mosquitto.org, which is a **public** MQTT broker.
 Replace the `wifi.ssid`, `wifi.password` and other relevant fields,
 such as `name`, `device_id` and `mqtt.host` before uploading the file.
@@ -83,7 +83,7 @@ such as `name`, `device_id` and `mqtt.host` before uploading the file.
 {
   "name": "AQmon test",
   "device_id": "test",
-  "device_stats_interval": 300,
+  "device_stats_interval": 60,
   "wifi": {
     "ssid": "Network_1",
     "password": "I'm a Wi-Fi password!"
@@ -121,7 +121,7 @@ aqmon/test/$fw/name AQmon
 aqmon/test/$fw/version v2.0.0-rc1
 aqmon/test/$fw/checksum 9eac70777e5daaf15dd75e24c1c4b60a
 aqmon/test/$implementation esp8266
-aqmon/test/$implementation/config {"name":"AQmon test","device_id":"test","device_stats_interval":300,"wifi":{"ssid":"Network_1"},"mqtt":{"host":"test.mosquitto.org","port":1883,"base_topic":"aqmon/"},"ota":{"enabled":false}}
+aqmon/test/$implementation/config {"name":"AQmon test","device_id":"test","device_stats_interval":60,"wifi":{"ssid":"Network_1"},"mqtt":{"host":"test.mosquitto.org","port":1883,"base_topic":"aqmon/"},"ota":{"enabled":false}}
 aqmon/test/$implementation/version 2.0.0
 aqmon/test/$implementation/ota/enabled false
 aqmon/test/temperature/$type temperature
@@ -154,8 +154,7 @@ aqmon/test/$stats/signal 82
 aqmon/test/$stats/uptime 338
 ```
 
-If the device looses conecction to the broker
-you should get a message like:
+If the device lose conecction to the broker you should get a message like:
 
 ```mqtt
 aqmon/test/$online false

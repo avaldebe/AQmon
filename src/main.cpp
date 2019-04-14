@@ -8,7 +8,7 @@ DHT12 dht;
 SerialPM pms(PMS3003, Serial);
 
 #include <Homie.h>
-const uint16_t SEND_INTERVAL = 300;
+const uint16_t SEND_INTERVAL = 60;
 HomieNode tempNode("temperature", "temperature");
 HomieNode rhumNode("humidity", "humidity");
 HomieNode pm01Node("pm01", "PM1");
