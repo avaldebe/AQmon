@@ -118,8 +118,8 @@ aqmon/test/$name AQmon test
 aqmon/test/$localip X.X.X.X
 aqmon/test/$stats/interval 0
 aqmon/test/$fw/name AQmon
-aqmon/test/$fw/version v2.0.0-rc1
-aqmon/test/$fw/checksum 9eac70777e5daaf15dd75e24c1c4b60a
+aqmon/test/$fw/version v2.0.0-rc2
+aqmon/test/$fw/checksum ab0ef7c4435e557a027a92c091360228
 aqmon/test/$implementation esp8266
 aqmon/test/$implementation/config {"name":"AQmon test","device_id":"test","device_stats_interval":60,"wifi":{"ssid":"Network_1"},"mqtt":{"host":"test.mosquitto.org","port":1883,"base_topic":"aqmon/"},"ota":{"enabled":false}}
 aqmon/test/$implementation/version 2.0.0
