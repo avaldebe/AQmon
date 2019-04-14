@@ -37,7 +37,6 @@ and [DHT12][] sensor for temperature and relative humidity.
 Alas, 512 KiB of flash memory is just too litle for this project.
 Fortunatelly, almost all ESP-01 boards currently available come with **1 MiB** of flash memmory.
 
-
 ### Firmware
 
 It uses [Homie][] for MQTT messaging and WiFi configuration.
@@ -54,3 +53,110 @@ The private broker, logging and visualization on the Raspberry Pi,
 follow the MQTT, InfluxDB and Grafana docker setup as descrbed by [Nilhcem][].
 
 [Nilhcem]: http://nilhcem.com/iot/home-monitoring-with-mqtt-influxdb-grafana
+
+## Configuration and testing
+
+### Setup a new AQmon device
+
+Write a [config file][config] in `data/homie/config.json`, and
+use the following commands to upload the firmware and configuration:
+
+```bash
+# upload the configuration
+pio -e esp01 -e uploadfs
+
+# upload the firmware
+pio -e esp01 -e upload
+```
+
+[config]: https://homieiot.github.io/homie-esp8266/docs/2.0.0/configuration/json-configuration-file/
+
+### Config example
+
+The following example defines an AQmon named `"AQmon test"`,
+which will send sensor measurements every 300 s
+to test.mosquitto.org, which is a **public** MQTT broker.
+Replace the `wifi.ssid`, `wifi.password` and other relevant fields,
+such as `name`, `device_id` and `mqtt.host` before uploading the file.
+
+```json
+{
+  "name": "AQmon test",
+  "device_id": "test",
+  "device_stats_interval": 300,
+  "wifi": {
+    "ssid": "Network_1",
+    "password": "I'm a Wi-Fi password!"
+  },
+  "mqtt": {
+    "host": "test.mosquitto.org",
+    "port": 1883,
+    "base_topic": "aqmon/"
+  },
+  "ota": {
+    "enabled": false
+  }
+}  
+```
+
+### MQTT messages
+
+The example configuration defined a new AQmon device with `device_id=test` and `mqtt.host=test.mosquitto.org`.
+
+Subscrive to the new device messages with:
+
+```bash
+mosquitto_sub -h test.mosquitto.org -t "aqmon/test/#" -v
+```
+
+Each time the device boots, you should see a something like:
+
+```mqtt
+aqmon/test/$homie 2.0.0
+aqmon/test/$mac XX:XX:XX:XX:XX
+aqmon/test/$name AQmon test
+aqmon/test/$localip X.X.X.X
+aqmon/test/$stats/interval 0
+aqmon/test/$fw/name AQmon
+aqmon/test/$fw/version v2.0.0-rc1
+aqmon/test/$fw/checksum 9eac70777e5daaf15dd75e24c1c4b60a
+aqmon/test/$implementation esp8266
+aqmon/test/$implementation/config {"name":"AQmon test","device_id":"test","device_stats_interval":300,"wifi":{"ssid":"Network_1"},"mqtt":{"host":"test.mosquitto.org","port":1883,"base_topic":"aqmon/"},"ota":{"enabled":false}}
+aqmon/test/$implementation/version 2.0.0
+aqmon/test/$implementation/ota/enabled false
+aqmon/test/temperature/$type temperature
+aqmon/test/temperature/$properties sensor,unit,degrees
+aqmon/test/humidity/$type humidity
+aqmon/test/humidity/$properties sensor,unit,percentage
+aqmon/test/pm01/$type PM1
+aqmon/test/pm01/$properties sensor,unit,concentration
+aqmon/test/pm25/$type PM2.5
+aqmon/test/pm25/$properties sensor,unit,concentration
+aqmon/test/pm10/$type PM10
+aqmon/test/pm10/$properties sensor,unit,concentration
+aqmon/test/$online true
+aqmon/test/temperature/sensor DHT12
+aqmon/test/temperature/unit c
+aqmon/test/humidity/sensor DHT12
+aqmon/test/$stats/signal 82
+aqmon/test/$stats/uptime 37
+```
+
+Every 5 minutes should get a new set of messages like:
+
+```mqtt
+aqmon/test/temperature/degrees 25.0
+aqmon/test/humidity/percentage 10.0
+aqmon/test/pm01/concentration 2
+aqmon/test/pm25/concentration 2
+aqmon/test/pm10/concentration 2
+aqmon/test/$stats/signal 82
+aqmon/test/$stats/uptime 338
+```
+
+If the device looses conecction to the broker
+you should get a message like:
+
+```mqtt
+aqmon/test/$online false
+```

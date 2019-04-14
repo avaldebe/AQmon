@@ -80,10 +80,10 @@ void loop() {
 void dhtSetup() {
   // DHT12: temperature
   tempNode.setProperty("sensor").send("DHT12");
-  tempNode.setProperty("unit").send("c");
+  tempNode.setProperty("unit").send("°C");
   // DHT12: (relative) humidity
   rhumNode.setProperty("sensor").send("DHT12");
-  rhumNode.setProperty("unit").send("percentage");
+  rhumNode.setProperty("unit").send("%");
 }
 
 void dhtLoop(){
@@ -113,7 +113,7 @@ void dhtLoop(){
   // DHT12: temperature (1 decimal place)
   tempNode.setProperty("degrees").send(String(dht.temperature, 1));
   // DHT12: (relative) humidity (1 decimal place)
-  tempNode.setProperty("percentage").send(String(dht.humidity, 1));
+  rhumNode.setProperty("percentage").send(String(dht.humidity, 1));
 }
 
 void pmsSetup() {
