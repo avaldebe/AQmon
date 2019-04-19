@@ -63,10 +63,10 @@ use the following commands to upload the firmware and configuration:
 
 ```bash
 # upload the configuration
-pio -e esp01 -e uploadfs
+pio run -d firmware -e esp01 -e uploadfs
 
 # upload the firmware
-pio -e esp01 -e upload
+pio run -d firmware -e esp01 -e upload
 ```
 
 [config]: https://homieiot.github.io/homie-esp8266/docs/2.0.0/configuration/json-configuration-file/
