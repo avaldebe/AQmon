@@ -9,7 +9,7 @@ It started before the esp8266 Arduino core,
 when the [nodemcu-firmware][] was the only game in town...
 
 It used a [nodemcu-devkit][] board with a [PMS3003][] sensor,
-and supported a variety of tempereture, relative humidity and preassure sensors.
+and supported a variety of temperature, relative humidity and preassure sensors.
 The measurements were logged to [thingspeak][].
 For more details, see [v1][]
 
@@ -23,24 +23,24 @@ For more details, see [v1][]
 ## Arduino version
 
 This version of the project takes advantage of the Arduino library ecosystem, and [PlatformIO](https://platformio.org/)
-for IDE, tooling and library mangement.
+for IDE, tooling and library management.
 
 The measurements are sent via MQTT. A private MQTT broker,
 logging and visualization are hosted on a Raspberry Pi on the local network.
 
 ### Hardware
 
-For compactnes, this version uses a
+For compactness, this version uses a
 ESP-01 board with a [PMS3003][] sensor,
 and [DHT12][] sensor for temperature and relative humidity.
 
 Alas, 512 KiB of flash memory is just too litle for this project.
-Fortunatelly, almost all ESP-01 boards currently available come with **1 MiB** of flash memmory.
+Fortunately, almost all ESP-01 boards currently available come with **1 MiB** of flash memory.
 
 ### Firmware
 
 It uses [Homie][] for MQTT messaging and WiFi configuration.
-The  handles the PMS3003 sensor is handeled by the [PMSerial][] library,
+The  handles the PMS3003 sensor is handled by the [PMSerial][] library,
 and the [DHT12][] sensor by the [DHT12][DHT12lib] library.
 
 [Homie]: https://platformio.org/lib/show/555/Homie/installation
@@ -50,7 +50,7 @@ and the [DHT12][] sensor by the [DHT12][DHT12lib] library.
 ### Software
 
 The private broker, logging and visualization on the Raspberry Pi,
-follow the MQTT, InfluxDB and Grafana docker setup as descrbed by [Nilhcem][].
+follow the MQTT, InfluxDB and Grafana docker setup as descried by [Nilhcem][].
 
 [Nilhcem]: http://nilhcem.com/iot/home-monitoring-with-mqtt-influxdb-grafana
 
@@ -103,7 +103,7 @@ such as `name`, `device_id` and `mqtt.host` before uploading the file.
 
 The example configuration defined a new AQmon device with `device_id=test` and `mqtt.host=test.mosquitto.org`.
 
-Subscrive to the new device messages with:
+Subscribe to the new device messages with:
 
 ```bash
 mosquitto_sub -h test.mosquitto.org -t "aqmon/test/#" -v
@@ -154,7 +154,7 @@ aqmon/test/$stats/signal 82
 aqmon/test/$stats/uptime 338
 ```
 
-If the device lose conecction to the broker you should get a message like:
+If the device lose connection to the broker you should get a message like:
 
 ```mqtt
 aqmon/test/$online false
