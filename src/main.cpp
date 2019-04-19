@@ -148,8 +148,8 @@ void pmsLoop(){
   case pms.ERROR_MSG_START:
     Homie.getLogger().println(PMS_ERROR_MSG_START);
     return;
-  case pms.ERROR_MSG_LENGHT:
-    Homie.getLogger().println(PMS_ERROR_MSG_LENGHT);
+  case pms.ERROR_MSG_LENGTH:
+    Homie.getLogger().println(PMS_ERROR_MSG_LENGTH);
     return;
   case pms.ERROR_MSG_CKSUM:
     Homie.getLogger().println(PMS_ERROR_MSG_CKSUM);
