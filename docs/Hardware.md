@@ -2,28 +2,32 @@
 
 ## Particulate Matter
 
-The PMS3003 is a laser dust sensor by [Plantower][].
-It reports PM1, PM2.5 and PM10 estimates from particle counts, under [Mie scattering][Mie] assumptions.
-
-All sensors on the PMSx003 needs 5V to power the laser,
-but communicate at 3.3V TTL via serial protocol.
+The PMSx003 sensors by [Plantower][]
+report PM1, PM2.5 and PM10 estimates from particle counts, under [Mie scattering][Mie] assumptions.
+They need 5V to power the laser and fan, but communicate at 3.3V TTL via serial protocol.
+Please refer to the [PMserial library][PMserial] for details about the sensor measurements and communication protocol.
 
 [Plantower]: http://www.plantower.com
 [Mie]: https://en.wikipedia.org/wiki/Mie_scattering#Atmospheric_science
+[PMserial]: https://github.com/avaldebe/PMserial
+[PMS1003]: https://datasheet.lcsc.com/szlcsc/PMS1003_C89289.pdf
 [PMS3003]: ../Documents/PMS3003_LOGOELE.pdf
 [PMS5003]: ../Documents/PMS5003_LOGOELE.pdf
+[PMS7003]: https://datasheet.lcsc.com/szlcsc/PMS7003_C84815.pdf
+[PMSA003]: https://datasheet.lcsc.com/szlcsc/PMSA003-A_C132744.pdf
 
 ### PMS1003, PMS3003 and PM5003
 
-The PMS1003, [PMS3003][] and [PMS5003][] sensors use a 8 pin connector (Molex 1.25mm "PicoBlade" 51021 compatible, found online as 1.25mm JST).
+The [PMS1003][], [PMS3003][] and [PMS5003][] sensors use a 8 pin connector (Molex 1.25mm "PicoBlade" 51021 compatible, found online as 1.25mm JST).
 
 ![pms3003](../Documents/pms3003_pinout.png)
-
 ![pms5003](../Documents/pms5003_pinout.png)
 
 ### PMS7003 and PMSA003
 
-The PMS7003 and PMSA003 sensors require a 10 pin connector (5x2 1.27mm female header).
+The [PMS7003][] and [PMSA003][] sensors require a 10 pin connector (5x2 1.27mm female header).
+
+![pmsA003](../Documents/pmsA003_pinout.png)
 
 ## Temperature and Humidity
 
@@ -35,7 +39,6 @@ via I2C. With a Vcc range of 2.7 to 5.5V is well suited for 3.3V operations.
 
 [Aosong]: http://aosong.com
 [DHT12]: ../Documents/DHT12_Aosong.pdf
-
 ![dht12](../Documents/dht12_pinout.png)
 
 ### BME280
@@ -68,9 +71,8 @@ It needs a reliable 3.3V supply and provides 4 GPIO pins.
 The original ESP-01 had only 512 KiB of flash memory.
 On this project we need the more modern version with 1 MiB of flash.
 
-![esp01](https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/ESP8266_01_PinOut.png/530px-ESP8266_01_PinOut.png)
-
 [ESP8266]: https://en.wikipedia.org/wiki/ESP8266
+![esp01](https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/ESP8266_01_PinOut.png/530px-ESP8266_01_PinOut.png)
 
 ### D1 mini
 
@@ -79,9 +81,8 @@ It comes with 4 MiB of flash and a CH340G USB to serial converter.
 It is easy to program thanks to the builtin reset circuitry
 and has enough memory for OTA updates.
 
-![d1mini](https://wiki.wemos.cc/_media/products:d1:d1_mini_v3.1.0_1_16x9.jpg)
-
 [d1_mini]: https://wiki.wemos.cc/products:d1:d1_mini
+![d1mini](https://wiki.wemos.cc/_media/products:d1:d1_mini_v3.1.0_1_16x9.jpg)
 
 ### AQmon Boards
 
@@ -96,10 +97,12 @@ Two boards with PMS3003 and DHT12 sensors, were successfully deployed with [v2.0
 [v2.0.0-rc2]: https://github.com/avaldebe/AQmon/releases/tag/v2.0.0-rc2
 ![AQmonV2-ESP01](https://image.easyeda.com/histories/c21576176590435a99e9380fa947cace.png)
 
-The [AQmonV2-USB][] board can be used to safely connect any of the PMSx003 sensor to a host computer via USB. The sensor data is easily read with a Python script. **This board is currently being manufactured, the Python script will be included when the board is fully tested**. 
+The [AQmonV2-USB][] board can be used to safely connect any of the PMSx003 sensor to a host computer via USB.
+The sensor data is easily read with a Python script.
+**This board is currently being manufactured, the Python script will be included when the board is fully tested**.
 This board provides 2 modules:
 
-- ``USB adapter module``: 3.3V UART to USB converter   with 8 pin connector.
+- ``USB adapter module``: 3.3V UART to USB converter with 8 pin connector.
 - ``Break out module``: expose sensors pins into a 6 pin 2.54mm header,
   from the 8 pin or 10 pin connectors.
 
