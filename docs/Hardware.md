@@ -13,13 +13,17 @@ but communicate at 3.3V TTL via serial protocol.
 [PMS3003]: ../Documents/PMS3003_LOGOELE.pdf
 [PMS5003]: ../Documents/PMS5003_LOGOELE.pdf
 
-### PMS3003
+### PMS1003, PMS3003 and PM5003
+
+The PMS1003, [PMS3003][] and [PMS5003][] sensors use a 8 pin connector (Molex 1.25mm "PicoBlade" 51021 compatible, found online as 1.25mm JST).
 
 ![pms3003](../Documents/pms3003_pinout.png)
 
-### PMS5003
-
 ![pms5003](../Documents/pms5003_pinout.png)
+
+### PMS7003 and PMSA003
+
+The PMS7003 and PMSA003 sensors require a 10 pin connector (5x2 1.27mm female header).
 
 ## Temperature and Humidity
 
@@ -79,23 +83,34 @@ and has enough memory for OTA updates.
 
 [d1_mini]: https://wiki.wemos.cc/products:d1:d1_mini
 
-### AQmon
+### AQmon Boards
 
-At the time of writing, 3 AQmon boards are in development.
+At the time of writing, 4 AQmon boards are in development.
 
 The [AQmonV2-ESP01][] is a compact board for the ESP-01.
-It has the 8-pin connector used by the PMS3003 and PMS5003
-(Molex 1.25mm "PicoBlade" 51021 compatible, found online as 1.25mm JST).
-This board also includes a footprint for the DHT12 and a 1.25mm 4 pin connetor
+It has the 8 pin connector used by the PMS1003, PMS3003 and PMS5003,
+and includes a footprint for the DHT12 and a 1.25mm 4 pin connector
 for a different I2C sensor, such as the BME280.
-The PCB for this board is currently been manufactured...
+Two boards with PMS3003 and DHT12 sensors, were successfully deployed with [v2.0.0-rc2][] firmware.
 
+[v2.0.0-rc2]: https://github.com/avaldebe/AQmon/releases/tag/v2.0.0-rc2
 ![AQmonV2-ESP01](https://image.easyeda.com/histories/c21576176590435a99e9380fa947cace.png)
 
+The [AQmonV2-USB][] board can be used to safely connect any of the PMSx003 sensor to a host computer via USB. The sensor data is easily read with a Python script. **This board is currently being manufactured, the Python script will be included when the board is fully tested**. 
+This board provides 2 modules:
+
+- ``USB adapter module``: 3.3V UART to USB converter   with 8 pin connector.
+- ``Break out module``: expose sensors pins into a 6 pin 2.54mm header,
+  from the 8 pin or 10 pin connectors.
+
+![AQmonV2-USB](https://image.easyeda.com/histories/c797fba5a1014eb09fe158300eec9ac9.png)
 
 The other 2 boards under development are for the [d1_mini][].
 One is a shield with connectors for the PMS3003/PMS5003 and BME280.
 The other is a base plate for a 5x7 cm2 case, with footprints for
-PMS3003/PMS5003 or PMS7003 sensor...
+PMS3003/PMS5003 or PMS7003/PMSA003 sensors.
 
 [AQmonV2-ESP01]: https://easyeda.com/avaldebe/AQmonV2-ESP01
+[AQmonV2-USB]:   https://easyeda.com/avaldebe/aqmonv2-usb
+[AQmonV2-D1mini]:https://easyeda.com/avaldebe/aqmonv2-d1mini
+[AQmonV2-base]:  https://easyeda.com/avaldebe/aqmonv2
