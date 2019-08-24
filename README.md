@@ -9,7 +9,7 @@ It started before the esp8266 Arduino core,
 when the [nodemcu-firmware][] was the only game in town...
 
 It used a [nodemcu-devkit][] board with a [PMS3003][] sensor,
-and supported a variety of temperature, relative humidity and preassure sensors.
+and supported a variety of temperature, relative humidity and pressure sensors.
 The measurements were logged to [thingspeak][].
 For more details, see [v1][]
 
@@ -34,7 +34,7 @@ For compactness, this version uses a
 ESP-01 board with a [PMS3003][] sensor,
 and [DHT12][] sensor for temperature and relative humidity.
 
-Alas, 512 KiB of flash memory is just too litle for this project.
+Alas, 512 KiB of flash memory is just too little for this project.
 Fortunately, almost all ESP-01 boards currently available come with **1 MiB** of flash memory.
 
 ### Firmware
@@ -44,7 +44,7 @@ The  handles the PMS3003 sensor is handled by the [PMSerial][] library,
 and the [DHT12][] sensor by the [DHT12][DHT12lib] library.
 
 [Homie]: https://platformio.org/lib/show/555/Homie/installation
-[PMSerial]: https:github.com/avaldebe/PMserial.git
+[PMSerial]: https:github.com/avaldebe/PMSerial.git
 [DHT12lib]: https://platformio.org/lib/show/5554/DHT12
 
 ### Software
