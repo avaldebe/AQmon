@@ -1,5 +1,7 @@
 .pio
 .pioenvs
 .piolibdeps
-.vscode
 .travis.yml
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
